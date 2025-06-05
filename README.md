@@ -382,3 +382,4 @@ This project is licensed under the Apache License 2.0. [License](LICENSE).
   <p><strong>Built with ❤️ for the scientific research community</strong></p>
   <p><em>NexusMind - Advancing scientific reasoning through intelligent graph structures</em></p>
 </div>
+# Aptive-Graph-of-Thought-MCP-
