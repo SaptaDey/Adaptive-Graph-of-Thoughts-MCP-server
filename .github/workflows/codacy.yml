@@ -38,9 +38,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # Set the remote URL for the origin
-      - name: Set remote URL
-        run: git remote set-url origin https://github.com/yourusername/Adaptive-Graph-of-Thoughts-MCP.git
+      # No need to set remote URL as it's handled by Actions checkout
 
       # Execute Codacy Analysis CLI and generate a SARIF output with the security issues identified during the analysis
       - name: Run Codacy Analysis CLI
@@ -48,7 +46,7 @@ jobs:
         with:
           # Check https://github.com/codacy/codacy-analysis-cli#project-token to get your project token from your Codacy repository
           # You can also omit the token and run the tools that support default configurations
-          project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
+          # project-token: ${{ secrets.CODACY_PROJECT_TOKEN }}
           verbose: true
           output: results.sarif
           format: sarif
