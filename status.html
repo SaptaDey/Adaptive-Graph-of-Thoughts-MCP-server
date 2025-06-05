@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusMind MCP Server Status</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+        }
+        .status-card {
+            background-color: #f8f9fa;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+        }
+        .endpoint-box {
+            background-color: #edf2f7;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            margin: 10px 0;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-good {
+            background-color: #2ecc71;
+        }
+        .status-warning {
+            background-color: #f39c12;
+        }
+        .status-error {
+            background-color: #e74c3c;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        pre {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .test-area {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <h1>NexusMind MCP Server Status</h1>
+    
+    <div class="status-card">
+        <h2><span class="status-indicator status-good" id="health-indicator"></span> Server Health</h2>
+        <p>Current status: <span id="health-status">Checking...</span></p>
+        <p>Version: <span id="health-version">Checking...</span></p>
+        <button onclick="checkHealth()">Check Health</button>
+    </div>
+
+    <div class="status-card">
+        <h2><span class="status-indicator status-warning" id="mcp-indicator"></span> MCP Endpoint</h2>
+        <p>Status: <span id="mcp-status">Checking...</span></p>
+        <div class="endpoint-box">
+            http://localhost:8000/mcp
+        </div>
+        <button onclick="testMCPEndpoint()">Test MCP Connection</button>
+        <div id="mcp-result" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="status-card">
+        <h2>Claude Desktop Integration</h2>
+        <p>Integration file: <code>config/claude_mcp_config.json</code></p>
+        <p>To integrate with Claude Desktop:</p>
+        <ol>
+            <li>Ensure the NexusMind server is running</li>
+            <li>Open Claude Desktop settings</li>
+            <li>Add a new Tool/Integration</li>
+            <li>Import the MCP configuration file</li>
+        </ol>
+        <p>See the <a href="claude_desktop_integration.md">integration guide</a> for complete instructions.</p>
+    </div>
+
+    <div class="test-area">
+        <h2>Test Query</h2>
+        <textarea id="test-query" rows="4" style="width: 100%">What is the relationship between climate change and ocean acidification?</textarea>
+        <button onclick="sendTestQuery()" style="margin-top: 10px;">Send Test Query</button>
+        <h3>Response:</h3>
+        <pre id="query-response">No query sent yet.</pre>
+    </div>
+
+    <script>
+        // Check server health
+        async function checkHealth() {
+            try {
+                const response = await fetch('http://localhost:8000/health');
+                const data = await response.json();
+                
+                document.getElementById('health-status').textContent = data.status;
+                document.getElementById('health-version').textContent = data.version;
+                
+                if (data.status === 'healthy') {
+                    document.getElementById('health-indicator').className = 'status-indicator status-good';
+                } else {
+                    document.getElementById('health-indicator').className = 'status-indicator status-warning';
+                }
+            } catch (error) {
+                document.getElementById('health-status').textContent = 'Error connecting to server';
+                document.getElementById('health-version').textContent = 'N/A';
+                document.getElementById('health-indicator').className = 'status-indicator status-error';
+            }
+        }
+
+        // Test MCP endpoint with initialize request
+        async function testMCPEndpoint() {
+            try {
+                const initializeRequest = {
+                    jsonrpc: '2.0',
+                    id: 'status-page-init-1',
+                    method: 'initialize',
+                    params: {
+                        client_info: {
+                            client_name: 'NexusMind Status Page'
+                        },
+                        process_id: 12345
+                    }
+                };
+
+                const response = await fetch('http://localhost:8000/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(initializeRequest)
+                });
+                
+                const data = await response.json();
+                document.getElementById('mcp-result').innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (response.ok && data.result) {
+                    document.getElementById('mcp-status').textContent = 'Connected';
+                    document.getElementById('mcp-indicator').className = 'status-indicator status-good';
+                } else {
+                    document.getElementById('mcp-status').textContent = 'Error in response';
+                    document.getElementById('mcp-indicator').className = 'status-indicator status-warning';
+                }
+            } catch (error) {
+                document.getElementById('mcp-status').textContent = 'Connection failed';
+                document.getElementById('mcp-indicator').className = 'status-indicator status-error';
+                document.getElementById('mcp-result').innerHTML = '<pre>Error: ' + error.message + '</pre>';
+            }
+        }
+
+        // Send test query
+        async function sendTestQuery() {
+            try {
+                const queryText = document.getElementById('test-query').value;
+                const queryRequest = {
+                    jsonrpc: '2.0',
+                    id: 'status-page-query-1',
+                    method: 'asr_got.query',
+                    params: {
+                        query: queryText,
+                        session_id: 'test-session-' + Date.now(),
+                        context: {
+                            conversation_id: 'status-page-convo',
+                            history: []
+                        },
+                        parameters: {
+                            include_reasoning_trace: true,
+                            include_graph_state: true,
+                            max_nodes_in_response_graph: 50,
+                            output_detail_level: 'summary'
+                        }
+                    }
+                };
+
+                document.getElementById('query-response').textContent = 'Sending query...';
+
+                const response = await fetch('http://localhost:8000/mcp', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(queryRequest)
+                });
+                
+                const data = await response.json();
+                document.getElementById('query-response').textContent = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('query-response').textContent = 'Error: ' + error.message;
+            }
+        }
+
+        // Initial check when page loads
+        window.onload = function() {
+            checkHealth();
+            // Don't auto-run MCP test to avoid unnecessary calls
+        }
+    </script>
+</body>
+</html>

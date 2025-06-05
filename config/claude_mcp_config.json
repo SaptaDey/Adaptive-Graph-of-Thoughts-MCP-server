@@ -1,0 +1,65 @@
+{
+  "name": "NexusMind MCP Integration",
+  "description": "Integrates Claude with the NexusMind server for advanced scientific reasoning.",
+  "version": "0.1.0",
+  "type": "mcp",
+  "icon": "",
+  "connection": {
+    "endpoint": "http://localhost:8000/mcp",
+    "method": "POST",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "requestFormat": {
+      "jsonrpc": "2.0",
+      "method": "asr_got.query",
+      "id": "$request_id",
+      "params": {
+        "query": "$message",
+        "context": {
+          "conversation_id": "$conversation_id",
+          "history": "$history",
+          "user_preferences": {}
+        },
+        "parameters": {
+          "include_reasoning_trace": true,
+          "include_graph_state": true,
+          "max_nodes_in_response_graph": 50,
+          "output_detail_level": "summary"
+        }
+      }
+    },
+    "responseMapping": {
+      "message": "result.answer",
+      "attachments": [
+        {
+          "type": "text/plain",
+          "title": "Reasoning Trace",
+          "content_path": "result.reasoning_trace_summary"
+        },
+        {
+          "type": "application/json",
+          "title": "ASR-GoT Graph State",
+          "content_path": "result.graph_state_full"
+        }
+      ],
+      "tool_output_metadata": {
+        "confidence_score_vector": "result.confidence_vector",
+        "execution_time_ms": "result.execution_time_ms",
+        "error_info": "error.data"
+      }
+    }
+  },
+  "capabilities": {
+    "messageParsing": true,
+    "contextTracking": true,
+    "stateManagement": true,
+    "attachmentsInput": false,
+    "attachmentsOutput": true
+  },
+  "defaults": {
+    "server_name": "NexusMind MCP Server",
+    "server_version": "0.1.0",
+    "mcp_version": "2024-11-05"
+  }
+}

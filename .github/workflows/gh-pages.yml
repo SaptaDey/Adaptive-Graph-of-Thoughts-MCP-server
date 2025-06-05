@@ -1,0 +1,51 @@
+name: Deploy Documentation to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main # Or your project's default branch, e.g., master
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{steps.deployment.outputs.page_url}}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Fetch all history for git info like last updated
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # Ensure this matches your project's Python version (e.g., check pyproject.toml)
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true # Recommended for CI
+
+      - name: Install dependencies (including MkDocs and theme)
+        run: poetry install --with dev
+
+      - name: Build MkDocs site
+        # The --dirtyreload flag can be useful if you encounter caching issues with mkdocs build
+        # but is not strictly necessary. --strict can be added to fail on warnings.
+        run: poetry run mkdocs build --clean --site-dir _site --config-file mkdocs.yml
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

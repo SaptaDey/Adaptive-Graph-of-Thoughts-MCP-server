@@ -1,0 +1,1118 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://sapta-dey.github.io/NexusMind-2.0/testing/testing_strategy_and_example/">
+      
+      
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.14">
+    
+    
+      
+        <title>Testing strategy and example - NexusMind Documentation</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.342714a4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#testing-strategy-outline" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="NexusMind Documentation" class="md-header__button md-logo" aria-label="NexusMind Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            NexusMind Documentation
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Testing strategy and example
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="blue" data-md-color-accent="lime"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/sapta-dey/NexusMind-2.0/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    NexusMind-2.0
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../getting_started/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../configuration/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../usage/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Usage
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/mcp_api/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../extending/custom_stages/" class="md-tabs__link">
+          
+  
+  
+  Extending NexusMind
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CONTRIBUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Contributing
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../ROADMAP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Roadmap
+
+      </a>
+    </li>
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+  
+
+<nav class="md-nav md-nav--primary md-nav--lifted md-nav--integrated" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="NexusMind Documentation" class="md-nav__button md-logo" aria-label="NexusMind Documentation" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    NexusMind Documentation
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/sapta-dey/NexusMind-2.0/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 6.7.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2024 Fonticons, Inc.--><path d="M439.55 236.05 244 40.45a28.87 28.87 0 0 0-40.81 0l-40.66 40.63 51.52 51.52c27.06-9.14 52.68 16.77 43.39 43.68l49.66 49.66c34.23-11.8 61.18 31 35.47 56.69-26.49 26.49-70.21-2.87-56-37.34L240.22 199v121.85c25.3 12.54 22.26 41.85 9.08 55a34.34 34.34 0 0 1-48.55 0c-17.57-17.6-11.07-46.91 11.25-56v-123c-20.8-8.51-24.6-30.74-18.64-45L142.57 101 8.45 235.14a28.86 28.86 0 0 0 0 40.81l195.61 195.6a28.86 28.86 0 0 0 40.8 0l194.69-194.69a28.86 28.86 0 0 0 0-40.81"/></svg>
+  </div>
+  <div class="md-source__repository">
+    NexusMind-2.0
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting_started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Configuration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Usage
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/mcp_api/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    MCP API
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    Extending NexusMind
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            Extending NexusMind
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../extending/custom_stages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Custom Stages
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../extending_with_claude/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Claude API Integration
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Contributing
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ROADMAP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Roadmap
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+  <h1>Testing strategy and example</h1>
+
+<h2 id="testing-strategy-outline">Testing Strategy Outline</h2>
+<p>A comprehensive testing strategy for the refactored Neo4j-native application should cover different levels of granularity to ensure correctness and robustness.</p>
+<h3 id="1-unit-tests">1. Unit Tests</h3>
+<ul>
+<li><strong>Focus:</strong><ul>
+<li>Test individual helper functions within each stage that do <em>not</em> involve direct database calls. This includes:<ul>
+<li>Property preparation logic (e.g., <code>_prepare_node_properties_for_neo4j</code>, <code>_prepare_edge_properties_for_neo4j</code> if they exist in stages or are moved to a utility).</li>
+<li>Data transformation and parsing logic (e.g., parsing JSON strings from Neo4j properties into Pydantic models if done within a stage).</li>
+<li>Complex business logic that determines what data to write (e.g., <code>_generate_hypothesis_content</code> in <code>HypothesisStage</code>, <code>_get_conceptual_dimensions</code> in <code>DecompositionStage</code>).</li>
+<li>Conditional logic within stages that determines flow based on input data (not DB state).</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Mocking:</strong><ul>
+<li>External dependencies like LLM calls (if any) should be mocked.</li>
+<li>Direct Neo4j <code>execute_query</code> calls should <strong>not</strong> be part of unit tests; these are covered by integration tests. If a helper function <em>unavoidably</em> prepares data and then calls <code>execute_query</code>, the <code>execute_query</code> part should be mocked to assert it's called with correct parameters.</li>
+</ul>
+</li>
+<li><strong>Tools:</strong><ul>
+<li><code>pytest</code> (for test structure, fixtures, assertions).</li>
+<li><code>unittest.mock.patch</code> or <code>pytest-mock</code> (for mocking).</li>
+</ul>
+</li>
+</ul>
+<h3 id="2-integration-tests-per-stage">2. Integration Tests (Per Stage)</h3>
+<ul>
+<li><strong>Focus:</strong> Verify the direct Neo4j interaction of each refactored stage. Ensure that each stage correctly reads from and/or writes to Neo4j as per its responsibilities.</li>
+<li><strong>Setup:</strong><ul>
+<li><strong>Testcontainers:</strong> Use <code>testcontainers-python</code> with the official Neo4j container (e.g., <code>Neo4jContainer</code>). This allows spinning up a clean, ephemeral Neo4j instance for each test module/suite or even per test if necessary (though per-module is often a good balance).</li>
+<li><strong>Neo4j Configuration:</strong> The <code>neo4j_utils</code> module (or wherever the Neo4j driver connection is managed) must be configured to connect to the dynamically created test Neo4j instance. This typically involves:<ul>
+<li>Modifying the URI, user, and password used by <code>neo4j_utils</code> at runtime within the test setup (e.g., via environment variables that <code>Neo4jSettings</code> in <code>neo4j_utils</code> can pick up, or by directly patching the settings object within <code>neo4j_utils</code> for the duration of the test).</li>
+<li>Ensuring the Neo4j driver instance is re-initialized with the test container's details.</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><strong>Test Flow (Arrange, Act, Assert):</strong><ol>
+<li><strong>Arrange:</strong><ul>
+<li>Before running the stage, use the Neo4j driver (connected to the test container) to populate the database with any prerequisite data specific to the test case. For example:<ul>
+<li>For <code>DecompositionStage</code>, ensure a root node with a specific ID and properties exists.</li>
+<li>For <code>HypothesisStage</code>, ensure dimension nodes (created by <code>DecompositionStage</code>) exist.</li>
+<li>For <code>EvidenceStage</code>, ensure hypothesis nodes exist.</li>
+</ul>
+</li>
+<li>Prepare <code>GoTProcessorSessionData</code> with the necessary input context for the stage being tested (e.g., <code>root_node_id</code> for <code>DecompositionStage</code>).</li>
+</ul>
+</li>
+<li><strong>Act:</strong><ul>
+<li>Instantiate the stage with appropriate settings.</li>
+<li>Execute the stage's <code>execute(current_session_data=...)</code> method.</li>
+</ul>
+</li>
+<li><strong>Assert:</strong><ul>
+<li><strong>Database State:</strong> Use the Neo4j driver to query the test database.<ul>
+<li>Verify that the expected nodes were created/updated/deleted.</li>
+<li>Verify that the expected relationships were created/updated/deleted.</li>
+<li>Check the properties, labels of these nodes and relationships.</li>
+</ul>
+</li>
+<li><strong>Stage Output:</strong><ul>
+<li>Validate the <code>StageOutput</code> object returned by the <code>execute</code> method.</li>
+<li>Check <code>next_stage_context_update</code> for correct data being passed on (e.g., new node IDs).</li>
+<li>Check <code>metrics</code> for accuracy (e.g., <code>nodes_created_in_neo4j</code>).</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><strong>Teardown:</strong><ul>
+<li>Testcontainers will automatically stop and remove the Neo4j container after tests.</li>
+<li>Ensure any modifications to global state (like <code>neo4j_utils</code> settings) are reverted if necessary (fixtures with <code>yield</code> can handle this).</li>
+</ul>
+</li>
+<li><strong>Tools:</strong><ul>
+<li><code>pytest</code> (especially for fixtures and async tests if stages are async).</li>
+<li><code>testcontainers-python</code>.</li>
+<li><code>neo4j</code> Python driver (for setting up DB state and making assertions against DB).</li>
+</ul>
+</li>
+</ul>
+<h3 id="3-end-to-end-tests-gotprocessor">3. End-to-End Tests (<code>GoTProcessor</code>)</h3>
+<ul>
+<li><strong>Focus:</strong> Test the entire <code>GoTProcessor.process_query</code> flow, ensuring all Neo4j-native stages integrate correctly and produce the expected final output and database state.</li>
+<li><strong>Setup:</strong><ul>
+<li>Use Testcontainers for a clean Neo4j instance.</li>
+<li>Configure <code>neo4j_utils</code> to point to this test instance.</li>
+</ul>
+</li>
+<li><strong>Test Flow:</strong><ol>
+<li><strong>Arrange:</strong><ul>
+<li>Optionally, pre-populate Neo4j with any baseline data relevant for a complex scenario.</li>
+<li>Prepare the input query string and any <code>operational_params</code> or <code>initial_context</code>.</li>
+</ul>
+</li>
+<li><strong>Act:</strong><ul>
+<li>Instantiate <code>GoTProcessor</code>.</li>
+<li>Call <code>GoTProcessor.process_query(...)</code>.</li>
+</ul>
+</li>
+<li><strong>Assert:</strong><ul>
+<li><strong>Final Database State:</strong> Query Neo4j to verify the overall graph structure created by the full pipeline (e.g., presence of root, dimensions, hypotheses, evidence, IBNs, hyperedges as expected for the input query). Check key properties.</li>
+<li><strong><code>GoTProcessorSessionData</code>:</strong> Inspect the session data object returned by <code>process_query</code>.<ul>
+<li>Verify <code>final_answer</code> and <code>final_confidence_vector</code>.</li>
+<li>Check the <code>stage_outputs_trace</code> for completeness and correctness of summaries/errors per stage.</li>
+<li>Verify the <code>accumulated_context</code> contains expected final outputs from key stages (like <code>CompositionStage</code>'s output).</li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+</li>
+<li><strong>Tools:</strong><ul>
+<li><code>pytest</code>.</li>
+<li><code>testcontainers-python</code>.</li>
+<li><code>neo4j</code> Python driver.</li>
+</ul>
+</li>
+</ul>
+<h3 id="4-dependency-management-for-tests">4. Dependency Management for Tests</h3>
+<ul>
+<li>Ensure test-specific dependencies like <code>testcontainers-python</code>, <code>pytest-asyncio</code> (if using async stages), and any other relevant testing utilities are added to the project's development dependencies (e.g., in <code>pyproject.toml</code> under <code>[tool.poetry.group.test.dependencies]</code> or equivalent for other package managers).</li>
+</ul>
+<h3 id="acknowledgment-on-neo4j_utils-configuration-for-testing">Acknowledgment on <code>neo4j_utils</code> Configuration for Testing:</h3>
+<p>The <code>neo4j_utils</code> module, due to its singleton-like nature for managing Neo4j settings and the driver, requires careful handling in a testing environment. The example integration test demonstrates a method of patching its internal settings (<code>_neo4j_settings</code>) and driver instance (<code>_driver</code>) within a pytest fixture. This allows tests to redirect Neo4j operations to a test-specific container. Alternatives include designing <code>neo4j_utils</code> to prioritize environment variables for connection details (which Testcontainers can provide) or adding an explicit re-initialization function to <code>neo4j_utils</code>. The patching approach in the example is a pragmatic way to test the current structure.</p>
+<h2 id="example-integration-test-for-initializationstage">Example Integration Test (for <code>InitializationStage</code>)</h2>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">pytest</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">Driver</span> <span class="c1"># type: ignore</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">testcontainers.neo4j</span><span class="w"> </span><span class="kn">import</span> <span class="n">Neo4jContainer</span> <span class="c1"># type: ignore</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="kn">import</span><span class="w"> </span><span class="nn">os</span> <span class="c1"># For potentially setting environment variables</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.asr_got_reimagined.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">Settings</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.asr_got_reimagined.domain.models.common_types</span><span class="w"> </span><span class="kn">import</span> <span class="n">GoTProcessorSessionData</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.asr_got_reimagined.domain.stages.stage_1_initialization</span><span class="w"> </span><span class="kn">import</span> <span class="n">InitializationStage</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="c1"># Import the neo4j_utils module itself to allow patching/re-evaluating its globals</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.asr_got_reimagined.domain.services</span><span class="w"> </span><span class="kn">import</span> <span class="n">neo4j_utils</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="kn">from</span><span class="w"> </span><span class="nn">src.asr_got_reimagined.domain.models.graph_elements</span><span class="w"> </span><span class="kn">import</span> <span class="n">NodeType</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;module&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="k">def</span><span class="w"> </span><span class="nf">settings_instance</span><span class="p">():</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides a Settings instance for tests.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="k">return</span> <span class="n">Settings</span><span class="p">()</span> <span class="c1"># Assumes Settings() can load from a test .env or has defaults</span>
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">scope</span><span class="o">=</span><span class="s2">&quot;module&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="k">def</span><span class="w"> </span><span class="nf">neo4j_test_container_manager</span><span class="p">():</span>
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a><span class="sd">    Manages a Neo4j test container for the test module.</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a><span class="sd">    This fixture demonstrates patching neo4j_utils internals.</span>
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="sd">    &quot;&quot;&quot;</span>
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>    <span class="n">original_settings</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>    <span class="n">original_driver</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>    <span class="c1"># Attempt to capture original state if neo4j_utils was already initialized</span>
+<a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">neo4j_utils</span><span class="p">,</span> <span class="s1">&#39;_neo4j_settings&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_neo4j_settings</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>        <span class="n">original_settings</span> <span class="o">=</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">Neo4jSettings</span><span class="p">(</span>
+<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>            <span class="n">uri</span><span class="o">=</span><span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_neo4j_settings</span><span class="o">.</span><span class="n">uri</span><span class="p">,</span>
+<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>            <span class="n">user</span><span class="o">=</span><span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_neo4j_settings</span><span class="o">.</span><span class="n">user</span><span class="p">,</span>
+<a id="__codelineno-0-33" name="__codelineno-0-33" href="#__codelineno-0-33"></a>            <span class="n">password</span><span class="o">=</span><span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_neo4j_settings</span><span class="o">.</span><span class="n">password</span><span class="p">,</span>
+<a id="__codelineno-0-34" name="__codelineno-0-34" href="#__codelineno-0-34"></a>            <span class="n">database</span><span class="o">=</span><span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_neo4j_settings</span><span class="o">.</span><span class="n">database</span>
+<a id="__codelineno-0-35" name="__codelineno-0-35" href="#__codelineno-0-35"></a>        <span class="p">)</span>
+<a id="__codelineno-0-36" name="__codelineno-0-36" href="#__codelineno-0-36"></a>    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">neo4j_utils</span><span class="p">,</span> <span class="s1">&#39;_driver&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-37" name="__codelineno-0-37" href="#__codelineno-0-37"></a>        <span class="n">original_driver</span> <span class="o">=</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_driver</span>
+<a id="__codelineno-0-38" name="__codelineno-0-38" href="#__codelineno-0-38"></a>
+<a id="__codelineno-0-39" name="__codelineno-0-39" href="#__codelineno-0-39"></a>    <span class="k">with</span> <span class="n">Neo4jContainer</span><span class="p">(</span><span class="s2">&quot;neo4j:5.18.0&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">neo4j_cont</span><span class="p">:</span>
+<a id="__codelineno-0-40" name="__codelineno-0-40" href="#__codelineno-0-40"></a>        <span class="c1"># Override settings in neo4j_utils</span>
+<a id="__codelineno-0-41" name="__codelineno-0-41" href="#__codelineno-0-41"></a>        <span class="c1"># Ensure _neo4j_settings exists; get_neo4j_settings() will create it if None</span>
+<a id="__codelineno-0-42" name="__codelineno-0-42" href="#__codelineno-0-42"></a>        <span class="n">current_settings_obj</span> <span class="o">=</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">get_neo4j_settings</span><span class="p">()</span> 
+<a id="__codelineno-0-43" name="__codelineno-0-43" href="#__codelineno-0-43"></a>
+<a id="__codelineno-0-44" name="__codelineno-0-44" href="#__codelineno-0-44"></a>        <span class="n">current_settings_obj</span><span class="o">.</span><span class="n">uri</span> <span class="o">=</span> <span class="n">neo4j_cont</span><span class="o">.</span><span class="n">get_connection_url</span><span class="p">()</span>
+<a id="__codelineno-0-45" name="__codelineno-0-45" href="#__codelineno-0-45"></a>        <span class="n">current_settings_obj</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="s2">&quot;neo4j&quot;</span> <span class="c1"># Default for container</span>
+<a id="__codelineno-0-46" name="__codelineno-0-46" href="#__codelineno-0-46"></a>        <span class="n">current_settings_obj</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">neo4j_cont</span><span class="o">.</span><span class="n">NEO4J_ADMIN_PASSWORD</span>
+<a id="__codelineno-0-47" name="__codelineno-0-47" href="#__codelineno-0-47"></a>        <span class="n">current_settings_obj</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="s2">&quot;neo4j&quot;</span> <span class="c1"># Default DB in container</span>
+<a id="__codelineno-0-48" name="__codelineno-0-48" href="#__codelineno-0-48"></a>
+<a id="__codelineno-0-49" name="__codelineno-0-49" href="#__codelineno-0-49"></a>        <span class="c1"># Force re-initialization of the driver in neo4j_utils if it was already set</span>
+<a id="__codelineno-0-50" name="__codelineno-0-50" href="#__codelineno-0-50"></a>        <span class="k">if</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-51" name="__codelineno-0-51" href="#__codelineno-0-51"></a>            <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">close_neo4j_driver</span><span class="p">()</span> <span class="c1"># Closes and sets _driver to None</span>
+<a id="__codelineno-0-52" name="__codelineno-0-52" href="#__codelineno-0-52"></a>
+<a id="__codelineno-0-53" name="__codelineno-0-53" href="#__codelineno-0-53"></a>        <span class="c1"># The next call to get_neo4j_driver() within tests will use these patched settings</span>
+<a id="__codelineno-0-54" name="__codelineno-0-54" href="#__codelineno-0-54"></a>        <span class="k">yield</span> <span class="n">neo4j_cont</span>
+<a id="__codelineno-0-55" name="__codelineno-0-55" href="#__codelineno-0-55"></a>
+<a id="__codelineno-0-56" name="__codelineno-0-56" href="#__codelineno-0-56"></a>    <span class="c1"># Teardown: Restore original settings and driver IF they existed</span>
+<a id="__codelineno-0-57" name="__codelineno-0-57" href="#__codelineno-0-57"></a>    <span class="k">if</span> <span class="n">original_settings</span><span class="p">:</span>
+<a id="__codelineno-0-58" name="__codelineno-0-58" href="#__codelineno-0-58"></a>        <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_neo4j_settings</span><span class="o">.</span><span class="n">uri</span> <span class="o">=</span> <span class="n">original_settings</span><span class="o">.</span><span class="n">uri</span>
+<a id="__codelineno-0-59" name="__codelineno-0-59" href="#__codelineno-0-59"></a>        <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_neo4j_settings</span><span class="o">.</span><span class="n">user</span> <span class="o">=</span> <span class="n">original_settings</span><span class="o">.</span><span class="n">user</span>
+<a id="__codelineno-0-60" name="__codelineno-0-60" href="#__codelineno-0-60"></a>        <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_neo4j_settings</span><span class="o">.</span><span class="n">password</span> <span class="o">=</span> <span class="n">original_settings</span><span class="o">.</span><span class="n">password</span>
+<a id="__codelineno-0-61" name="__codelineno-0-61" href="#__codelineno-0-61"></a>        <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_neo4j_settings</span><span class="o">.</span><span class="n">database</span> <span class="o">=</span> <span class="n">original_settings</span><span class="o">.</span><span class="n">database</span>
+<a id="__codelineno-0-62" name="__codelineno-0-62" href="#__codelineno-0-62"></a>    <span class="k">else</span><span class="p">:</span> <span class="c1"># If it was None before, reset to None so it can be lazy-loaded again</span>
+<a id="__codelineno-0-63" name="__codelineno-0-63" href="#__codelineno-0-63"></a>        <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_neo4j_settings</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-64" name="__codelineno-0-64" href="#__codelineno-0-64"></a>
+<a id="__codelineno-0-65" name="__codelineno-0-65" href="#__codelineno-0-65"></a>    <span class="k">if</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_driver</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="c1"># If a test driver was created</span>
+<a id="__codelineno-0-66" name="__codelineno-0-66" href="#__codelineno-0-66"></a>        <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">close_neo4j_driver</span><span class="p">()</span> <span class="c1"># Ensure it&#39;s closed</span>
+<a id="__codelineno-0-67" name="__codelineno-0-67" href="#__codelineno-0-67"></a>
+<a id="__codelineno-0-68" name="__codelineno-0-68" href="#__codelineno-0-68"></a>    <span class="c1"># If original_driver was something, restore it (though typically it&#39;d be None after close)</span>
+<a id="__codelineno-0-69" name="__codelineno-0-69" href="#__codelineno-0-69"></a>    <span class="c1"># Forcing a clean state for subsequent modules is often best:</span>
+<a id="__codelineno-0-70" name="__codelineno-0-70" href="#__codelineno-0-70"></a>    <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">_driver</span> <span class="o">=</span> <span class="kc">None</span>
+<a id="__codelineno-0-71" name="__codelineno-0-71" href="#__codelineno-0-71"></a>
+<a id="__codelineno-0-72" name="__codelineno-0-72" href="#__codelineno-0-72"></a>
+<a id="__codelineno-0-73" name="__codelineno-0-73" href="#__codelineno-0-73"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">fixture</span><span class="p">(</span><span class="n">autouse</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a id="__codelineno-0-74" name="__codelineno-0-74" href="#__codelineno-0-74"></a><span class="k">def</span><span class="w"> </span><span class="nf">auto_use_neo4j_container_manager</span><span class="p">(</span><span class="n">neo4j_test_container_manager</span><span class="p">):</span>
+<a id="__codelineno-0-75" name="__codelineno-0-75" href="#__codelineno-0-75"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Fixture to automatically apply the container manager for all tests in the module.&quot;&quot;&quot;</span>
+<a id="__codelineno-0-76" name="__codelineno-0-76" href="#__codelineno-0-76"></a>    <span class="k">pass</span>
+<a id="__codelineno-0-77" name="__codelineno-0-77" href="#__codelineno-0-77"></a>
+<a id="__codelineno-0-78" name="__codelineno-0-78" href="#__codelineno-0-78"></a>
+<a id="__codelineno-0-79" name="__codelineno-0-79" href="#__codelineno-0-79"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
+<a id="__codelineno-0-80" name="__codelineno-0-80" href="#__codelineno-0-80"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_initialization_stage_creates_new_root_node</span><span class="p">(</span><span class="n">settings_instance</span><span class="p">):</span>
+<a id="__codelineno-0-81" name="__codelineno-0-81" href="#__codelineno-0-81"></a>    <span class="n">stage</span> <span class="o">=</span> <span class="n">InitializationStage</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">settings_instance</span><span class="p">)</span>
+<a id="__codelineno-0-82" name="__codelineno-0-82" href="#__codelineno-0-82"></a>    <span class="n">session_data</span> <span class="o">=</span> <span class="n">GoTProcessorSessionData</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="s2">&quot;Test query for new root&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-83" name="__codelineno-0-83" href="#__codelineno-0-83"></a>
+<a id="__codelineno-0-84" name="__codelineno-0-84" href="#__codelineno-0-84"></a>    <span class="c1"># Driver will be configured by neo4j_test_container_manager fixture</span>
+<a id="__codelineno-0-85" name="__codelineno-0-85" href="#__codelineno-0-85"></a>    <span class="n">driver</span><span class="p">:</span> <span class="n">Driver</span> <span class="o">=</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">get_neo4j_driver</span><span class="p">()</span>
+<a id="__codelineno-0-86" name="__codelineno-0-86" href="#__codelineno-0-86"></a>    <span class="n">db_name</span> <span class="o">=</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">get_neo4j_settings</span><span class="p">()</span><span class="o">.</span><span class="n">database</span>
+<a id="__codelineno-0-87" name="__codelineno-0-87" href="#__codelineno-0-87"></a>
+<a id="__codelineno-0-88" name="__codelineno-0-88" href="#__codelineno-0-88"></a>    <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="n">db_name</span><span class="p">)</span> <span class="k">as</span> <span class="n">s</span><span class="p">:</span>
+<a id="__codelineno-0-89" name="__codelineno-0-89" href="#__codelineno-0-89"></a>        <span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;MATCH (n) DETACH DELETE n&quot;</span><span class="p">)</span> <span class="c1"># Clean database for this test</span>
+<a id="__codelineno-0-90" name="__codelineno-0-90" href="#__codelineno-0-90"></a>
+<a id="__codelineno-0-91" name="__codelineno-0-91" href="#__codelineno-0-91"></a>    <span class="n">output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">stage</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">current_session_data</span><span class="o">=</span><span class="n">session_data</span><span class="p">)</span>
+<a id="__codelineno-0-92" name="__codelineno-0-92" href="#__codelineno-0-92"></a>
+<a id="__codelineno-0-93" name="__codelineno-0-93" href="#__codelineno-0-93"></a>    <span class="k">assert</span> <span class="n">output</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;nodes_created_in_neo4j&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+<a id="__codelineno-0-94" name="__codelineno-0-94" href="#__codelineno-0-94"></a>    <span class="k">assert</span> <span class="n">output</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;used_existing_neo4j_node&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">False</span>
+<a id="__codelineno-0-95" name="__codelineno-0-95" href="#__codelineno-0-95"></a>    <span class="n">root_node_id</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">next_stage_context_update</span><span class="p">[</span><span class="n">InitializationStage</span><span class="o">.</span><span class="n">stage_name</span><span class="p">][</span><span class="s2">&quot;root_node_id&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-96" name="__codelineno-0-96" href="#__codelineno-0-96"></a>    <span class="k">assert</span> <span class="n">root_node_id</span> <span class="o">==</span> <span class="s2">&quot;n0&quot;</span> <span class="c1"># Default ID for new root</span>
+<a id="__codelineno-0-97" name="__codelineno-0-97" href="#__codelineno-0-97"></a>
+<a id="__codelineno-0-98" name="__codelineno-0-98" href="#__codelineno-0-98"></a>    <span class="c1"># Verify node in Neo4j</span>
+<a id="__codelineno-0-99" name="__codelineno-0-99" href="#__codelineno-0-99"></a>    <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="n">db_name</span><span class="p">)</span> <span class="k">as</span> <span class="n">s</span><span class="p">:</span>
+<a id="__codelineno-0-100" name="__codelineno-0-100" href="#__codelineno-0-100"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Node:ROOT {id: $id}) RETURN properties(n) as props, labels(n) as labels&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">root_node_id</span><span class="p">)</span>
+<a id="__codelineno-0-101" name="__codelineno-0-101" href="#__codelineno-0-101"></a>        <span class="n">record</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">single</span><span class="p">()</span>
+<a id="__codelineno-0-102" name="__codelineno-0-102" href="#__codelineno-0-102"></a>        <span class="k">assert</span> <span class="n">record</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<a id="__codelineno-0-103" name="__codelineno-0-103" href="#__codelineno-0-103"></a>        <span class="k">assert</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;props&quot;</span><span class="p">][</span><span class="s2">&quot;label&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">stage</span><span class="o">.</span><span class="n">root_node_label</span>
+<a id="__codelineno-0-104" name="__codelineno-0-104" href="#__codelineno-0-104"></a>        <span class="k">assert</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;props&quot;</span><span class="p">][</span><span class="s2">&quot;metadata_query_context&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Test query for new root&quot;</span>
+<a id="__codelineno-0-105" name="__codelineno-0-105" href="#__codelineno-0-105"></a>        <span class="k">assert</span> <span class="n">NodeType</span><span class="o">.</span><span class="n">ROOT</span><span class="o">.</span><span class="n">value</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;labels&quot;</span><span class="p">]</span> 
+<a id="__codelineno-0-106" name="__codelineno-0-106" href="#__codelineno-0-106"></a>        <span class="k">assert</span> <span class="s2">&quot;Node&quot;</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;labels&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-107" name="__codelineno-0-107" href="#__codelineno-0-107"></a>
+<a id="__codelineno-0-108" name="__codelineno-0-108" href="#__codelineno-0-108"></a><span class="nd">@pytest</span><span class="o">.</span><span class="n">mark</span><span class="o">.</span><span class="n">asyncio</span>
+<a id="__codelineno-0-109" name="__codelineno-0-109" href="#__codelineno-0-109"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">test_initialization_stage_uses_existing_root_node</span><span class="p">(</span><span class="n">settings_instance</span><span class="p">):</span>
+<a id="__codelineno-0-110" name="__codelineno-0-110" href="#__codelineno-0-110"></a>    <span class="n">stage</span> <span class="o">=</span> <span class="n">InitializationStage</span><span class="p">(</span><span class="n">settings</span><span class="o">=</span><span class="n">settings_instance</span><span class="p">)</span>
+<a id="__codelineno-0-111" name="__codelineno-0-111" href="#__codelineno-0-111"></a>    <span class="n">initial_query</span> <span class="o">=</span> <span class="s2">&quot;Test query for existing root&quot;</span>
+<a id="__codelineno-0-112" name="__codelineno-0-112" href="#__codelineno-0-112"></a>    <span class="n">op_params</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;initial_disciplinary_tags&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;physics&quot;</span><span class="p">,</span> <span class="s2">&quot;new_tag&quot;</span><span class="p">]}</span>
+<a id="__codelineno-0-113" name="__codelineno-0-113" href="#__codelineno-0-113"></a>    <span class="n">session_data</span> <span class="o">=</span> <span class="n">GoTProcessorSessionData</span><span class="p">(</span><span class="n">query</span><span class="o">=</span><span class="n">initial_query</span><span class="p">,</span> <span class="n">accumulated_context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;operational_params&quot;</span><span class="p">:</span> <span class="n">op_params</span><span class="p">})</span>
+<a id="__codelineno-0-114" name="__codelineno-0-114" href="#__codelineno-0-114"></a>
+<a id="__codelineno-0-115" name="__codelineno-0-115" href="#__codelineno-0-115"></a>    <span class="n">driver</span><span class="p">:</span> <span class="n">Driver</span> <span class="o">=</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">get_neo4j_driver</span><span class="p">()</span>
+<a id="__codelineno-0-116" name="__codelineno-0-116" href="#__codelineno-0-116"></a>    <span class="n">db_name</span> <span class="o">=</span> <span class="n">neo4j_utils</span><span class="o">.</span><span class="n">get_neo4j_settings</span><span class="p">()</span><span class="o">.</span><span class="n">database</span>
+<a id="__codelineno-0-117" name="__codelineno-0-117" href="#__codelineno-0-117"></a>
+<a id="__codelineno-0-118" name="__codelineno-0-118" href="#__codelineno-0-118"></a>    <span class="n">existing_node_id</span> <span class="o">=</span> <span class="s2">&quot;n0_existing&quot;</span> <span class="c1"># Using a different ID for existing node</span>
+<a id="__codelineno-0-119" name="__codelineno-0-119" href="#__codelineno-0-119"></a>    <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="n">db_name</span><span class="p">)</span> <span class="k">as</span> <span class="n">s</span><span class="p">:</span>
+<a id="__codelineno-0-120" name="__codelineno-0-120" href="#__codelineno-0-120"></a>        <span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;MATCH (n) DETACH DELETE n&quot;</span><span class="p">)</span> <span class="c1"># Clean first</span>
+<a id="__codelineno-0-121" name="__codelineno-0-121" href="#__codelineno-0-121"></a>        <span class="c1"># Create the node with the ROOT label and also the specific type label via property</span>
+<a id="__codelineno-0-122" name="__codelineno-0-122" href="#__codelineno-0-122"></a>        <span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<a id="__codelineno-0-123" name="__codelineno-0-123" href="#__codelineno-0-123"></a><span class="s2">            CREATE (r:Node:ROOT </span><span class="se">{{</span>
+<a id="__codelineno-0-124" name="__codelineno-0-124" href="#__codelineno-0-124"></a><span class="s2">                id: $id,</span>
+<a id="__codelineno-0-125" name="__codelineno-0-125" href="#__codelineno-0-125"></a><span class="s2">                label: &quot;Existing Task Understanding&quot;,</span>
+<a id="__codelineno-0-126" name="__codelineno-0-126" href="#__codelineno-0-126"></a><span class="s2">                type: &quot;</span><span class="si">{</span><span class="n">NodeType</span><span class="o">.</span><span class="n">ROOT</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;, </span>
+<a id="__codelineno-0-127" name="__codelineno-0-127" href="#__codelineno-0-127"></a><span class="s2">                metadata_query_context: $query,</span>
+<a id="__codelineno-0-128" name="__codelineno-0-128" href="#__codelineno-0-128"></a><span class="s2">                metadata_disciplinary_tags: [&quot;general&quot;, &quot;physics&quot;] </span>
+<a id="__codelineno-0-129" name="__codelineno-0-129" href="#__codelineno-0-129"></a><span class="s2">            </span><span class="se">}}</span><span class="s2">)</span>
+<a id="__codelineno-0-130" name="__codelineno-0-130" href="#__codelineno-0-130"></a><span class="s2">        &quot;&quot;&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">existing_node_id</span><span class="p">,</span> <span class="n">query</span><span class="o">=</span><span class="n">initial_query</span><span class="p">)</span>
+<a id="__codelineno-0-131" name="__codelineno-0-131" href="#__codelineno-0-131"></a>
+<a id="__codelineno-0-132" name="__codelineno-0-132" href="#__codelineno-0-132"></a>    <span class="n">output</span> <span class="o">=</span> <span class="k">await</span> <span class="n">stage</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">current_session_data</span><span class="o">=</span><span class="n">session_data</span><span class="p">)</span>
+<a id="__codelineno-0-133" name="__codelineno-0-133" href="#__codelineno-0-133"></a>
+<a id="__codelineno-0-134" name="__codelineno-0-134" href="#__codelineno-0-134"></a>    <span class="k">assert</span> <span class="n">output</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;nodes_created_in_neo4j&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span>
+<a id="__codelineno-0-135" name="__codelineno-0-135" href="#__codelineno-0-135"></a>    <span class="k">assert</span> <span class="n">output</span><span class="o">.</span><span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;used_existing_neo4j_node&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">True</span>
+<a id="__codelineno-0-136" name="__codelineno-0-136" href="#__codelineno-0-136"></a>    <span class="k">assert</span> <span class="n">output</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;updated_existing_node_tags&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">True</span> 
+<a id="__codelineno-0-137" name="__codelineno-0-137" href="#__codelineno-0-137"></a>
+<a id="__codelineno-0-138" name="__codelineno-0-138" href="#__codelineno-0-138"></a>    <span class="n">root_node_id_from_output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">next_stage_context_update</span><span class="p">[</span><span class="n">InitializationStage</span><span class="o">.</span><span class="n">stage_name</span><span class="p">][</span><span class="s2">&quot;root_node_id&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-139" name="__codelineno-0-139" href="#__codelineno-0-139"></a>    <span class="k">assert</span> <span class="n">root_node_id_from_output</span> <span class="o">==</span> <span class="n">existing_node_id</span>
+<a id="__codelineno-0-140" name="__codelineno-0-140" href="#__codelineno-0-140"></a>
+<a id="__codelineno-0-141" name="__codelineno-0-141" href="#__codelineno-0-141"></a>    <span class="n">updated_tags_from_output</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">next_stage_context_update</span><span class="p">[</span><span class="n">InitializationStage</span><span class="o">.</span><span class="n">stage_name</span><span class="p">][</span><span class="s2">&quot;initial_disciplinary_tags&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-142" name="__codelineno-0-142" href="#__codelineno-0-142"></a>    <span class="k">assert</span> <span class="s2">&quot;general&quot;</span> <span class="ow">in</span> <span class="n">updated_tags_from_output</span>
+<a id="__codelineno-0-143" name="__codelineno-0-143" href="#__codelineno-0-143"></a>    <span class="k">assert</span> <span class="s2">&quot;physics&quot;</span> <span class="ow">in</span> <span class="n">updated_tags_from_output</span>
+<a id="__codelineno-0-144" name="__codelineno-0-144" href="#__codelineno-0-144"></a>    <span class="k">assert</span> <span class="s2">&quot;new_tag&quot;</span> <span class="ow">in</span> <span class="n">updated_tags_from_output</span>
+<a id="__codelineno-0-145" name="__codelineno-0-145" href="#__codelineno-0-145"></a>
+<a id="__codelineno-0-146" name="__codelineno-0-146" href="#__codelineno-0-146"></a>    <span class="c1"># Verify tags in Neo4j</span>
+<a id="__codelineno-0-147" name="__codelineno-0-147" href="#__codelineno-0-147"></a>    <span class="k">with</span> <span class="n">driver</span><span class="o">.</span><span class="n">session</span><span class="p">(</span><span class="n">database</span><span class="o">=</span><span class="n">db_name</span><span class="p">)</span> <span class="k">as</span> <span class="n">s</span><span class="p">:</span>
+<a id="__codelineno-0-148" name="__codelineno-0-148" href="#__codelineno-0-148"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Node:ROOT {id: $id}) RETURN n.metadata_disciplinary_tags AS tags&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">existing_node_id</span><span class="p">)</span>
+<a id="__codelineno-0-149" name="__codelineno-0-149" href="#__codelineno-0-149"></a>        <span class="n">record</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">single</span><span class="p">()</span>
+<a id="__codelineno-0-150" name="__codelineno-0-150" href="#__codelineno-0-150"></a>        <span class="k">assert</span> <span class="n">record</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+<a id="__codelineno-0-151" name="__codelineno-0-151" href="#__codelineno-0-151"></a>        <span class="k">assert</span> <span class="s2">&quot;general&quot;</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;tags&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-152" name="__codelineno-0-152" href="#__codelineno-0-152"></a>        <span class="k">assert</span> <span class="s2">&quot;physics&quot;</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;tags&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-153" name="__codelineno-0-153" href="#__codelineno-0-153"></a>        <span class="k">assert</span> <span class="s2">&quot;new_tag&quot;</span> <span class="ow">in</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;tags&quot;</span><span class="p">]</span>
+<a id="__codelineno-0-154" name="__codelineno-0-154" href="#__codelineno-0-154"></a>
+<a id="__codelineno-0-155" name="__codelineno-0-155" href="#__codelineno-0-155"></a>        <span class="c1"># Ensure no &quot;n0&quot; node was created if the existing one was used</span>
+<a id="__codelineno-0-156" name="__codelineno-0-156" href="#__codelineno-0-156"></a>        <span class="n">result_n0</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;MATCH (n:Node:ROOT {id: &#39;n0&#39;}) RETURN n&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-157" name="__codelineno-0-157" href="#__codelineno-0-157"></a>        <span class="k">assert</span> <span class="n">result_n0</span><span class="o">.</span><span class="n">single</span><span class="p">()</span> <span class="ow">is</span> <span class="kc">None</span>
+</code></pre></div>
+This file (<code>testing_strategy_and_example.md</code>) contains the testing strategy and the example integration test.
+The example test has been updated to:
+1. Use a module-scoped fixture <code>neo4j_test_container_manager</code> that attempts to save and restore the state of <code>neo4j_utils._neo4j_settings</code> and <code>neo4j_utils._driver</code>. This makes it more robust if <code>neo4j_utils</code> was initialized before tests or by other test modules.
+2. Ensure the test Neo4j database is cleaned (<code>MATCH (n) DETACH DELETE n</code>) before each relevant test execution to ensure test isolation.
+3. Explicitly use the database name from <code>neo4j_utils.get_neo4j_settings().database</code> when opening sessions, which defaults to "neo4j" for the container.
+4. The existing node in the second test uses <code>id: "n0_existing"</code> to avoid collision if the stage accidentally creates "n0".
+5. Assert that the default "n0" node is <em>not</em> created when an existing node is used.
+6. The <code>auto_use_neo4j_container_manager</code> fixture ensures that the container setup and teardown logic is applied for all tests within the module where this fixture is defined or imported.</p>
+<p>The test file would typically reside in a path like <code>tests/integration/stages/test_integration_initialization_stage.py</code>.
+The <code>neo4j_utils</code> module's singleton pattern for driver and settings management makes testing a bit more involved regarding setup/teardown of this global state. The fixture tries to handle this gracefully.
+The use of <code>pytest-asyncio</code> would be necessary to run these <code>async def</code> tests (e.g., by installing it and <code>pytest</code> running normally).
+The <code>Neo4jContainer</code> version is specified as "neo4j:5.18.0" as an example; it should match a version compatible with the application's Cypher queries and features (like APOC if used by other stages).
+The <code>type: ignore</code> comments are for <code>testcontainers</code> as it might not have perfect type hints recognized by all static analyzers immediately.
+The <code>neo4j_utils._NEO4J_SETTINGS.uri = original_uri</code> line in the previous version of the test was incorrect as <code>_NEO4J_SETTINGS</code> is the Pydantic model instance itself, so its attributes should be set directly. This has been corrected in this version.
+Also corrected setting <code>neo4j_utils._neo4j_settings</code> to <code>None</code> if it was <code>None</code> originally, to ensure proper lazy loading behavior is restored.
+Final check of <code>test_initialization_stage_uses_existing_root_node</code>: the node creation query was updated to ensure the <code>ROOT</code> label is applied, and <code>type</code> property is set for consistency with how <code>InitializationStage</code> creates new nodes.
+The <code>neo4j_test_container_manager</code> fixture now correctly captures the original settings by instantiating a <code>Neo4jSettings</code> object if <code>_neo4j_settings</code> was initially <code>None</code>, ensuring that defaults are captured before patching.The file <code>testing_strategy_and_example.md</code> has been created with the testing strategy outline and the example integration test for <code>InitializationStage</code>.</p>
+<p>The testing strategy covers:
+1.  <strong>Unit Tests:</strong> Focusing on helper functions within stages, mocking external dependencies and Neo4j calls.
+2.  <strong>Integration Tests (Per Stage):</strong> Verifying direct Neo4j interactions using Testcontainers for ephemeral Neo4j instances. This involves an Arrange-Act-Assert pattern where the database state and stage output are checked.
+3.  <strong>End-to-End Tests (<code>GoTProcessor</code>):</strong> Testing the full processing pipeline with Neo4j-native stages, verifying the final database state and the overall output from <code>GoTProcessor</code>.
+4.  <strong>Dependency Management:</strong> Noting the need for test-specific dependencies.
+5.  <strong>Acknowledgment on <code>neo4j_utils</code> Configuration:</strong> Highlighting the need to manage the singleton-like nature of <code>neo4j_utils</code> for test isolation, with the example fixture demonstrating a patching approach.</p>
+<p>The example integration test for <code>InitializationStage</code> (<code>tests/integration/stages/test_integration_initialization_stage.py</code>) includes:
+*   A module-scoped <code>pytest</code> fixture (<code>neo4j_test_container_manager</code>) using <code>testcontainers.neo4j.Neo4jContainer</code> to manage an ephemeral Neo4j database.
+*   This fixture patches the <code>neo4j_utils._neo4j_settings</code> object and manages the <code>neo4j_utils._driver</code> instance to ensure that during the tests, the application connects to the test container. It also includes teardown logic to restore the original settings.
+*   An <code>autouse</code> fixture to apply this container management to all tests in the module.
+*   Two test cases for <code>InitializationStage</code>:
+    *   <code>test_initialization_stage_creates_new_root_node</code>: Verifies that a new root node ("n0") is created in Neo4j with correct properties and labels when no existing matching node is found.
+    *   <code>test_initialization_stage_uses_existing_root_node</code>: Pre-populates Neo4j with a root node matching the query, then verifies that the stage uses this existing node and correctly updates its disciplinary tags based on operational parameters. It also checks that a new "n0" node is <em>not</em> created in this scenario.
+*   Database cleaning (<code>MATCH (n) DETACH DELETE n</code>) is performed before tests that require a specific initial state.
+*   Assertions are made against both the <code>StageOutput</code> metrics/context and the actual data in the test Neo4j database.</p>
+<p>This fulfills the requirements of the subtask.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "toc.integrate", "navigation.top", "search.suggest", "search.highlight", "content.tabs.link", "content.code.annotation", "content.code.copy"], "search": "../../assets/javascripts/workers/search.d50fe291.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.13a4f30d.min.js"></script>
+      
+    
+  </body>
+</html>

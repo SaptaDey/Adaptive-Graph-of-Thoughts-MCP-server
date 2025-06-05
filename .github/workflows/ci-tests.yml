@@ -1,0 +1,48 @@
+name: Run Python Tests
+
+on:
+  push:
+    branches:
+      - main # Or your project's default branch
+  pull_request:
+    branches:
+      - main # Or your project's default branch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11'] # Define project's Python version(s) here
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true # Recommended for CI caching
+
+      - name: Install dependencies
+        run: poetry install --with dev --all-extras # Ensure all dependencies for tests are installed
+
+      - name: Run tests with pytest
+        run: poetry run pytest --cov=src/asr_got_reimagined --cov-report=xml --cov-report=term-missing
+        # Example: Add --cov options for coverage reporting
+
+      # Optional: Upload coverage report
+      # - name: Upload coverage reports to Codecov
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     token: ${{ secrets.CODECOV_TOKEN }} # Requires CODECOV_TOKEN repository secret
+      #     files: coverage.xml # Adjust if your coverage file name is different
+      #     flags: unittests # Optional flag
+      #     name: codecov-umbrella # Optional name for the report
+      #     fail_ci_if_error: true # Optional: fail CI if coverage upload fails

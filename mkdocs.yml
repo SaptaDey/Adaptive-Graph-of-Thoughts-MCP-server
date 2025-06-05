@@ -1,0 +1,61 @@
+site_name: NexusMind Documentation
+docs_dir: docs_src
+site_url: https://sapta-dey.github.io/NexusMind-2.0/
+repo_url: https://github.com/sapta-dey/NexusMind-2.0/
+repo_name: NexusMind-2.0
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - toc.integrate
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.tabs.link
+    - content.code.annotation
+    - content.code.copy
+  language: en
+  palette:
+    - scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+      primary: indigo
+      accent: indigo
+    - scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+      primary: blue
+      accent: lime
+
+plugins:
+  - search
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - attr_list
+  - md_in_html
+
+nav:
+  - Home: index.md
+  - Getting Started: getting_started.md
+  - Configuration: configuration.md
+  - Usage: usage.md
+  - API Reference: 
+    - MCP API: api/mcp_api.md
+  - Extending NexusMind:
+    - Custom Stages: extending/custom_stages.md # Placeholder
+    - Claude API Integration: extending_with_claude.md
+  - Contributing: CONTRIBUTING.md
+  - Roadmap: ROADMAP.md
+  # - License: LICENSE.md # Assuming LICENSE.md exists or will be added - Removed as LICENSE.md does not exist
+  # - Status Page Info: status_info.md # For status.html content

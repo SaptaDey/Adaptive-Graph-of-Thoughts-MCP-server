@@ -1,0 +1,350 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "NexusMind Configuration Schema",
+  "description": "Schema for validating the NexusMind application settings (settings.yaml).",
+  "type": "object",
+  "properties": {
+    "app": {
+      "type": "object",
+      "title": "Application Settings",
+      "description": "Main application settings for NexusMind.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "default": "NexusMind",
+          "description": "Application name."
+        },
+        "version": {
+          "type": "string",
+          "default": "0.1.0",
+          "description": "Application version. Should ideally match pyproject.toml."
+        },
+        "host": {
+          "type": "string",
+          "default": "0.0.0.0",
+          "description": "Host address for Uvicorn server."
+        },
+        "port": {
+          "type": "integer",
+          "default": 8000,
+          "description": "Default port for Uvicorn server. Can be overridden by APP__PORT environment variable."
+        },
+        "log_level": {
+          "type": "string",
+          "default": "INFO",
+          "description": "Default log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)."
+        },
+        "cors_allowed_origins_str": {
+          "type": "string",
+          "default": "*",
+          "description": "Comma-separated list of allowed CORS origins, or '*' for all. Environment variable: APP_CORS_ALLOWED_ORIGINS_STR."
+        },
+        "uvicorn_reload": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable Uvicorn auto-reload (True for dev, False for prod). Environment variable: APP_UVICORN_RELOAD."
+        },
+        "uvicorn_workers": {
+          "type": "integer",
+          "default": 1,
+          "description": "Number of Uvicorn workers (e.g., (2 * CPU_CORES) + 1). Default is 1. Environment variable: APP_UVICORN_WORKERS."
+        },
+        "auth_token": {
+          "type": ["string", "null"],
+          "default": null,
+          "description": "Optional API authentication token for MCP endpoint. If set, requests to /mcp require this token in the Authorization header. Environment variable: APP_AUTH_TOKEN."
+        },
+        "mcp_transport_type": {
+          "type": "string",
+          "enum": ["http", "stdio", "both"],
+          "default": "http",
+          "description": "Allowed values: 'http', 'stdio', or 'both'. Environment variable: MCP_TRANSPORT_TYPE."
+        },
+        "mcp_stdio_enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable STDIO transport for MCP. Environment variable: MCP_STDIO_ENABLED."
+        },
+        "mcp_http_enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable HTTP transport for MCP. Environment variable: MCP_HTTP_ENABLED."
+        }
+      },
+      "required": [
+        "name",
+        "version",
+        "host",
+        "port",
+        "log_level",
+        "cors_allowed_origins_str",
+        "uvicorn_reload",
+        "uvicorn_workers",
+        "mcp_transport_type",
+        "mcp_stdio_enabled",
+        "mcp_http_enabled"
+      ],
+      "additionalProperties": false
+    },
+    "asr_got": {
+      "type": "object",
+      "title": "ASR-GoT Core Parameters",
+      "description": "Configuration for the NexusMind ASR-GoT (Automated Scientific Reasoning - Graph of Thoughts) engine.",
+      "properties": {
+        "default_parameters": {
+          "type": "object",
+          "title": "Default ASR-GoT Parameters",
+          "properties": {
+            "initial_confidence": {
+              "type": "array",
+              "items": { "type": "number", "format": "float" },
+              "default": [0.9, 0.9, 0.9, 0.9],
+              "description": "Initial confidence scores for hypotheses/nodes."
+            },
+            "initial_layer": {
+              "type": "string",
+              "default": "root_layer",
+              "description": "Default layer for initial task decomposition."
+            },
+            "default_decomposition_dimensions": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "label": { "type": "string" },
+                  "description": { "type": "string" }
+                },
+                "required": ["label", "description"],
+                "additionalProperties": false
+              },
+              "default": [],
+              "description": "Predefined dimensions for task decomposition."
+            },
+            "dimension_confidence": {
+              "type": "array",
+              "items": { "type": "number", "format": "float" },
+              "default": [0.8, 0.8, 0.8, 0.8],
+              "description": "Confidence scores associated with decomposition dimensions."
+            },
+            "hypotheses_per_dimension": {
+              "type": "object",
+              "title": "Hypotheses per Dimension",
+              "properties": {
+                "min": { "type": "integer", "default": 2 },
+                "max": { "type": "integer", "default": 4 }
+              },
+              "required": ["min", "max"],
+              "additionalProperties": false,
+              "description": "Range for the number of hypotheses generated per dimension."
+            },
+            "hypothesis_confidence": {
+              "type": "array",
+              "items": { "type": "number", "format": "float" },
+              "default": [0.5, 0.5, 0.5, 0.5],
+              "description": "Default confidence scores for newly generated hypotheses."
+            },
+            "default_disciplinary_tags": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "Default disciplinary tags applied to tasks or hypotheses."
+            },
+            "default_plan_types": {
+              "type": "array",
+              "items": { "type": "string" },
+              "default": [],
+              "description": "Default types of plans that can be generated."
+            },
+            "evidence_max_iterations": {
+              "type": "integer",
+              "default": 5,
+              "description": "Maximum iterations for evidence gathering and integration."
+            },
+            "pruning_confidence_threshold": {
+              "type": "number",
+              "format": "float",
+              "default": 0.2,
+              "description": "Minimum confidence for a node to avoid pruning."
+            },
+            "pruning_impact_threshold": {
+              "type": "number",
+              "format": "float",
+              "default": 0.3,
+              "description": "Minimum impact for a node to avoid pruning."
+            },
+            "merging_semantic_overlap_threshold": {
+              "type": "number",
+              "format": "float",
+              "default": 0.8,
+              "description": "Semantic similarity threshold for merging nodes."
+            },
+            "subgraph_min_confidence_threshold": {
+              "type": "number",
+              "format": "float",
+              "default": 0.6,
+              "description": "Minimum confidence for nodes in extracted subgraphs."
+            },
+            "subgraph_min_impact_threshold": {
+              "type": "number",
+              "format": "float",
+              "default": 0.5,
+              "description": "Minimum impact for nodes in extracted subgraphs."
+            }
+          },
+          "required": [
+            "initial_confidence",
+            "initial_layer",
+            "default_decomposition_dimensions",
+            "dimension_confidence",
+            "hypotheses_per_dimension",
+            "hypothesis_confidence",
+            "default_disciplinary_tags",
+            "default_plan_types",
+            "evidence_max_iterations",
+            "pruning_confidence_threshold",
+            "pruning_impact_threshold",
+            "merging_semantic_overlap_threshold",
+            "subgraph_min_confidence_threshold",
+            "subgraph_min_impact_threshold"
+          ],
+          "additionalProperties": false
+        },
+        "layers": {
+          "type": "object",
+          "title": "Layer Definitions",
+          "description": "Definitions for different layers in the multi-layer network.",
+          "patternProperties": {
+            "^[a-zA-Z0-9_]+$": {
+              "type": "object",
+              "properties": {
+                "description": { "type": "string" }
+              },
+              "required": ["description"],
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false,
+          "default": {}
+        },
+        "pipeline_stages": {
+          "type": "array",
+          "title": "ASR-GoT Pipeline Stages",
+          "description": "Defines the sequence of stages in the ASR-GoT processing pipeline. Stages are executed in the order they appear in this list.",
+          "items": {
+            "type": "object",
+            "title": "Stage Item Configuration",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "A friendly name for the stage (e.g., 'Initialization')."
+              },
+              "module_path": {
+                "type": "string",
+                "description": "The full Python path to the stage class (e.g., 'src.asr_got_reimagined.domain.stages.InitializationStage')."
+              },
+              "enabled": {
+                "type": "boolean",
+                "default": true,
+                "description": "Whether this stage is enabled and should be included in the pipeline."
+              }
+            },
+            "required": ["name", "module_path"],
+            "additionalProperties": false
+          },
+          "default": []
+        }
+      },
+      "required": ["default_parameters", "layers", "pipeline_stages"],
+      "additionalProperties": false
+    },
+    "mcp_settings": {
+      "type": "object",
+      "title": "MCP Server Settings",
+      "description": "Configuration for Model Context Protocol (MCP) server behavior.",
+      "properties": {
+        "protocol_version": {
+          "type": "string",
+          "default": "2024-11-05",
+          "description": "MCP protocol version."
+        },
+        "server_name": {
+          "type": "string",
+          "default": "NexusMind MCP Server",
+          "description": "Name of the MCP server."
+        },
+        "server_version": {
+          "type": "string",
+          "default": "0.1.0",
+          "description": "Version of the MCP server, should match app.version."
+        },
+        "vendor_name": {
+          "type": "string",
+          "default": "AI Research Group",
+          "description": "Vendor name for MCP."
+        }
+      },
+      "required": [
+        "protocol_version",
+        "server_name",
+        "server_version",
+        "vendor_name"
+      ],
+      "additionalProperties": false
+    },
+    "claude_api": {
+      "type": ["object", "null"],
+      "title": "Claude API Configuration",
+      "description": "Optional settings for direct Claude API integration.",
+      "properties": {
+        "api_key": {
+          "type": ["string", "null"],
+          "description": "API key for Claude. Can be the key itself or 'env_var:YOUR_ENV_VAR_NAME'."
+        },
+        "default_model": {
+          "type": "string",
+          "default": "claude-3-opus-20240229",
+          "description": "Default Claude model to use."
+        },
+        "timeout_seconds": {
+          "type": "integer",
+          "default": 120,
+          "description": "Timeout for Claude API requests in seconds."
+        },
+        "max_retries": {
+          "type": "integer",
+          "default": 2,
+          "description": "Maximum number of retries for Claude API requests."
+        }
+      },
+      "required": ["default_model", "timeout_seconds", "max_retries"],
+      "additionalProperties": false,
+      "default": null
+    },
+    "knowledge_domains": {
+      "type": "array",
+      "title": "Knowledge Domains",
+      "description": "List of predefined knowledge domains or disciplines.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "keywords": {
+            "type": "array",
+            "items": { "type": "string" },
+            "default": []
+          },
+          "description": { "type": ["string", "null"] }
+        },
+        "required": ["name"],
+        "additionalProperties": false
+      },
+      "default": []
+    }
+  },
+  "required": [
+    "app",
+    "asr_got",
+    "mcp_settings"
+  ],
+  "additionalProperties": false
+}

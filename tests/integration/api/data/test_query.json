@@ -1,0 +1,19 @@
+{
+  "jsonrpc": "2.0",
+  "id": "query-test-1",
+  "method": "asr_got.query",
+  "params": {
+    "query": "What is the relationship between climate change and ocean acidification?",
+    "session_id": "test-session-123",
+    "context": {
+      "conversation_id": "test-convo-123",
+      "history": []
+    },
+    "parameters": {
+      "include_reasoning_trace": true,
+      "include_graph_state": true,
+      "max_nodes_in_response_graph": 50,
+      "output_detail_level": "summary"
+    }
+  }
+}

@@ -1,0 +1,92 @@
+[tool.poetry]
+name = "nexusmind"
+version = "0.1.0"
+description = "NexusMind: Intelligent Scientific Reasoning through Graph-of-Thoughts MCP Server"
+authors = ["NexusMind Development Team <saptaswadey@gmail.com>"] 
+readme = "README.md"
+license = "Apache-2.0"
+repository = "https://github.com/SaptaDey/NexusMind-2.0"
+homepage = "https://github.com/SaptaDey/NexusMind-2.0"
+keywords = ["nexusmind", "got", "graph-of-thoughts", "mcp", "ai", "reasoning", "scientific-computing"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+]
+
+[tool.poetry.dependencies]
+python = "^3.11" #  Python 3.11 or higher, now supports Python 3.13
+fastapi = "^0.111.0"
+uvicorn = {extras = ["standard"], version = "^0.30.0"} # For running the FastAPI app
+pydantic = "^2.7.0"
+pydantic-settings = "^2.3.0" # For loading settings from files/env vars
+networkx = "^3.3"          # For graph data structures and algorithms
+httpx = "^0.27.0"          # For making HTTP requests (e.g., to external services)
+python-dotenv = "^1.0.1"   # For loading .env files
+PyYAML = "^6.0.1"          # For YAML configuration files
+typer = {extras = ["all"], version = "^0.12.3"} # For CLI commands (optional, but good for management scripts)
+loguru = "^0.7.2"          # For enhanced logging
+requests = "^2.31.0"       # For HTTP requests in test scripts
+mcp = "^1.2.0"             # Official MCP Python SDK
+jsonschema = "^4.21.0"     # For configuration schema validation
+sse-starlette = "^2.1.0"   # For Server-Sent Events in FastAPI
+
+# Optional for graph visualization utils later, uncomment if needed
+# matplotlib = "^3.8.0"
+
+# Optional for community detection in graph utils later, uncomment if needed
+# python-louvain = "^0.16" # Also known as community
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+pytest-cov = "^5.0.0"      # For test coverage
+pytest-asyncio = "^0.23.0" # For testing async code
+ruff = "^0.4.0"            # Linter and formatter
+pre-commit = "^3.7.0"      # For running checks before commit
+mypy = "^1.10.0"           # Static type checker
+types-pyyaml = "^6.0.12.20250516"
+types-jsonschema = "^4.21.0.20250518" # Type hints for jsonschema
+mkdocs = "^1.6.0"  # Updated to a more recent version
+mkdocs-material = "^9.5.0" # Updated to a more recent version
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+# See https://docs.astral.sh/ruff/rules/ for all rules
+# For now, enable a good set of default rules and Pycodestyle 'E'/'W'
+select = ["E", "W", "F", "I", "UP", "B", "C4", "SIM", "ARG", "RUF"]
+ignore = [
+    "E501",  # Line too long, handled by formatter
+]
+line-length = 88 # Matches black's default
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+warn_unused_configs = true
+ignore_missing_imports = true # Start with this, can be made stricter later
+# Add paths for mypy to check, typically your source directory
+files = "src/"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"] # Add src to pythonpath for tests
+asyncio_mode = "auto"
+# Add more options as needed, e.g., test file patterns
+# python_files = "tests.py test_*.py *_tests.py"
+
+[[tool.poetry.packages]]
+include = "asr_got_reimagined"
+from = "src"

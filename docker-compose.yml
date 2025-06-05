@@ -1,0 +1,82 @@
+# Docker Compose configuration for NexusMind
+
+services:
+  # Backend API service for NexusMind
+  nexusmind-api:
+    build:
+      context: . # Use the Dockerfile in the current directory
+      dockerfile: Dockerfile
+      # MCP_TRANSPORT_TYPE build arg removed, will be controlled by environment variable
+    container_name: nexusmind-api
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8000}:8000" # Expose port 8000 from container, configurable via .env
+    volumes:
+      # Mount the source code for development with hot-reloading (Uvicorn --reload)
+      # For production, you might remove this or have a different Dockerfile stage
+      - type: bind
+        source: ./src
+        target: /app/src
+      - type: bind
+        source: ./config
+        target: /app/config
+      # Mount scripts directory
+      - type: bind
+        source: ./scripts
+        target: /app/scripts
+      # Optional: Mount logs directory if your app writes logs to a file within the container
+      # - ./logs:/app/logs
+    environment:
+      # Environment variables can be set here or in an .env file
+      # Example:
+      # LOG_LEVEL: "INFO"
+      # APP_ENV: "development"
+      # CONFIG_FILE_PATH: "/app/config/settings.yaml" # Path inside the container
+      PYTHONUNBUFFERED: "1" # Ensures Python output is sent straight to terminal/logs
+      PYTHONDONTWRITEBYTECODE: "1" # Prevents .pyc files
+      MCP_TRANSPORT_TYPE: "${MCP_TRANSPORT_TYPE:-http}"
+      HOST: "0.0.0.0"
+      PORT: "8000"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+    env_file:
+      - .env # Load environment variables from a .env file
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"] # Health check endpoint
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s # Give more time for the app to start, especially with --reload
+    networks:
+      - nexusmind_network
+    depends_on:
+      - nexusmind-neo4j
+
+  # Neo4j service
+  nexusmind-neo4j:
+    image: neo4j:5.17.0
+    container_name: nexusmind-neo4j
+    restart: unless-stopped
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    volumes:
+      - neo4j_data:/data
+    environment:
+      NEO4J_AUTH: neo4j/password
+      NEO4J_PLUGINS: '["apoc"]'
+    networks:
+      - nexusmind_network
+    healthcheck:
+      test: ["CMD-SHELL", "cypher-shell -u neo4j -p password 'RETURN 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  nexusmind_network:
+    driver: bridge
+    name: nexusmind_network
+
+volumes:
+  neo4j_data: {}
