@@ -38,6 +38,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # Set the remote URL for the origin
+      - name: Set remote URL
+        run: git remote set-url origin https://github.com/yourusername/Adaptive-Graph-of-Thoughts-MCP.git
+
       # Execute Codacy Analysis CLI and generate a SARIF output with the security issues identified during the analysis
       - name: Run Codacy Analysis CLI
         uses: codacy/codacy-analysis-cli-action@d840f886c4bd4edc059706d09c6a1586111c540b
