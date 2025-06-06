@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wrapper script to run NexusMind MCP Inspector tests
+# Wrapper script to run Adaptive Graph of Thoughts MCP Inspector tests
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -1,6 +1,6 @@
 # Configuration
 
-NexusMind's behavior can be configured through a combination of YAML files and environment variables. Pydantic is used for settings management, allowing for type validation and clear defaults.
+Adaptive Graph of Thoughts's behavior can be configured through a combination of YAML files and environment variables. Pydantic is used for settings management, allowing for type validation and clear defaults.
 
 ## Main Application Settings (`config/settings.yaml`)
 
@@ -15,7 +15,7 @@ The settings are defined by Pydantic models in `src/asr_got_reimagined/config.py
 
 # Core application settings (corresponds to AppSettings in config.py)
 app:
-  name: "NexusMind"
+  name: "Adaptive Graph of Thoughts"
   version: "0.1.0"
   log_level: "INFO" # Env: APP__LOG_LEVEL or LOG_LEVEL
   host: "0.0.0.0"   # Env: APP__HOST
@@ -49,7 +49,7 @@ asr_got:
 # MCP Server Settings (corresponds to MCPSettings in config.py)
 mcp_settings:
   protocol_version: "2024-11-05"
-  server_name: "NexusMind MCP Server"
+  server_name: "Adaptive Graph of Thoughts MCP Server"
   # ... other mcp_settings fields ...
 
 # Optional Claude API integration (corresponds to ClaudeAPIConfig in config.py)
@@ -101,7 +101,7 @@ NEO4J_PASSWORD="your_local_neo4j_password" # Replace with your actual password
 
 ## Production Environment Variables
 
-When deploying NexusMind to a production environment (e.g., Smithery.ai, Heroku, AWS, Azure, GCP), it's crucial to manage configuration securely using the platform's environment variable or secrets management system.
+When deploying Adaptive Graph of Thoughts to a production environment (e.g., Smithery.ai, Heroku, AWS, Azure, GCP), it's crucial to manage configuration securely using the platform's environment variable or secrets management system.
 
 **Essential Production Variables:**
 
@@ -122,7 +122,7 @@ When deploying NexusMind to a production environment (e.g., Smithery.ai, Heroku,
 
 ## MCP Client Configuration (`config/claude_mcp_config.json`)
 
-This file is used when registering NexusMind as an external tool with an MCP client like Claude Desktop. It describes the capabilities and endpoint of your NexusMind instance to the client.
+This file is used when registering Adaptive Graph of Thoughts as an external tool with an MCP client like Claude Desktop. It describes the capabilities and endpoint of your Adaptive Graph of Thoughts instance to the client.
 
  {
    "endpoints": {
@@ -137,11 +137,11 @@ This file is used when registering NexusMind as an external tool with an MCP cli
   ]
 }
 ```
-When deploying, ensure the `endpoints.mcp` URL in this file (or a version of it used for registration) points to the publicly accessible URL of your deployed NexusMind MCP endpoint.
+When deploying, ensure the `endpoints.mcp` URL in this file (or a version of it used for registration) points to the publicly accessible URL of your deployed Adaptive Graph of Thoughts MCP endpoint.
 
 ## Docker Configuration Override
 
-When running NexusMind using Docker (not Docker Compose), the image includes a default set of configurations from the `config/` directory. To use a custom `settings.yaml` or other configuration files:
+When running Adaptive Graph of Thoughts using Docker (not Docker Compose), the image includes a default set of configurations from the `config/` directory. To use a custom `settings.yaml` or other configuration files:
 
 1.  Prepare your custom configuration files in a local directory (e.g., `./my_custom_config`).
 2.  Mount this directory to `/app/config` in the container using the `-v` flag:
@@ -150,7 +150,7 @@ When running NexusMind using Docker (not Docker Compose), the image includes a d
       -p 8000:8000 \
       -v /path/to/your/my_custom_config:/app/config \
       --env-file .env \
-      nexusmind:latest 
+      adaptive-graph-of-thoughts:latest 
     ```
     Replace `/path/to/your/my_custom_config` with the actual path to your configuration directory.
     Ensure your custom directory contains all necessary files (e.g., `settings.yaml`).

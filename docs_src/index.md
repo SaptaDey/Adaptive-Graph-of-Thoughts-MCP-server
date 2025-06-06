@@ -1,11 +1,11 @@
-# 🧠 NexusMind
+# 🧠 Adaptive Graph of Thoughts
 
 <div align="center">
 
 ```
     ╔══════════════════════════════════════╗
     ║                                      ║
-    ║           🧠 NexusMind 🧠            ║
+    ║           🧠 Adaptive Graph of Thoughts 🧠            ║
     ║                                      ║
     ║     Intelligent Scientific           ║
     ║     Reasoning through                ║
@@ -16,7 +16,7 @@
 
 #### **Intelligent Scientific Reasoning through Graph-of-Thoughts**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/SaptaDey/NexusMind/releases) <!-- Adjust link if repo changes -->
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/SaptaDey/Adaptive Graph of Thoughts/releases) <!-- Adjust link if repo changes -->
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE.md) <!-- Link to license in docs_src -->
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](../Dockerfile) <!-- Link to Dockerfile in root -->
@@ -33,7 +33,7 @@
 
 ## 🔍 Overview
 
-NexusMind leverages a **Neo4j graph database** to perform sophisticated scientific reasoning, with graph operations managed within its pipeline stages. It implements the **Model Context Protocol (MCP)** to integrate with AI applications like Claude Desktop, providing an Advanced Scientific Reasoning Graph-of-Thoughts (ASR-GoT) framework designed for complex research tasks.
+Adaptive Graph of Thoughts leverages a **Neo4j graph database** to perform sophisticated scientific reasoning, with graph operations managed within its pipeline stages. It implements the **Model Context Protocol (MCP)** to integrate with AI applications like Claude Desktop, providing an Advanced Scientific Reasoning Graph-of-Thoughts (ASR-GoT) framework designed for complex research tasks.
 
 **Key highlights:**
 - Process complex scientific queries using graph-based reasoning
@@ -145,7 +145,7 @@ The core reasoning process follows a sophisticated 8-stage pipeline:
 
 ### Architectural Highlights
 
-NexusMind is built around a flexible 8-stage pipeline architecture, where each stage encapsulates specific reasoning logic. This design promotes modularity and clarity.
+Adaptive Graph of Thoughts is built around a flexible 8-stage pipeline architecture, where each stage encapsulates specific reasoning logic. This design promotes modularity and clarity.
 
 -   **8-Stage Pipeline Design**: The core reasoning process is broken down into eight distinct stages, from initialization to reflection. Each stage has a well-defined responsibility.
 -   **Stage-Specific Logic and Neo4j Interaction**: Graph operations and interactions with the Neo4j database are primarily handled within individual stages. Each stage formulates and executes Cypher queries relevant to its task, utilizing `neo4j_utils` for database communication. This means the graph representation is persisted and manipulated directly within Neo4j.

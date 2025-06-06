@@ -1,13 +1,13 @@
-# Docker Compose configuration for NexusMind - PRODUCTION
+# Docker Compose configuration for Adaptive Graph of Thoughts - PRODUCTION
 version: '3.8' # Specify docker-compose version
 
 services:
-  # Backend API service for NexusMind
-  nexusmind-api:
+  # Backend API service for Adaptive Graph of Thoughts
+  adaptive-graph-of-thoughts-api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: nexusmind-api-prod
+    container_name: adaptive-graph-of-thoughts-api-prod
     restart: unless-stopped
     ports:
       - "${APP_PORT:-8000}:8000" # Expose port 8000, configurable via .env or environment
@@ -31,15 +31,15 @@ services:
       retries: 3
       start_period: 30s
     networks:
-      - nexusmind_network
+      - adaptive-graph-of-thoughts_network
     depends_on:
-      nexusmind-neo4j:
+      adaptive-graph-of-thoughts-neo4j:
         condition: service_healthy # Wait for Neo4j to be healthy
 
   # Neo4j service
-  nexusmind-neo4j:
+  adaptive-graph-of-thoughts-neo4j:
     image: neo4j:5.17.0 # Consider using a more specific patch version if available/tested
-    container_name: nexusmind-neo4j-prod
+    container_name: adaptive-graph-of-thoughts-neo4j-prod
     restart: unless-stopped
     ports:
       - "7474:7474" # Standard Neo4j browser port
@@ -59,12 +59,12 @@ services:
       retries: 5
       start_period: 20s
     networks:
-      - nexusmind_network
+      - adaptive-graph-of-thoughts_network
 
 networks:
-  nexusmind_network:
+  adaptive-graph-of-thoughts_network:
     driver: bridge
-    name: nexusmind_prod_network # Separate network for production
+    name: adaptive-graph-of-thoughts_prod_network # Separate network for production
 
 volumes:
   neo4j_prod_data: {} # Define the production data volume

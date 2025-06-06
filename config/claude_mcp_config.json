@@ -1,6 +1,6 @@
 {
-  "name": "NexusMind MCP Integration",
-  "description": "Integrates Claude with the NexusMind server for advanced scientific reasoning.",
+  "name": "Adaptive Graph of Thoughts MCP Integration",
+  "description": "Integrates Claude with the Adaptive Graph of Thoughts server for advanced scientific reasoning.",
   "version": "0.1.0",
   "type": "mcp",
   "icon": "",
@@ -58,7 +58,7 @@
     "attachmentsOutput": true
   },
   "defaults": {
-    "server_name": "NexusMind MCP Server",
+    "server_name": "Adaptive Graph of Thoughts MCP Server",
     "server_version": "0.1.0",
     "mcp_version": "2024-11-05"
   }

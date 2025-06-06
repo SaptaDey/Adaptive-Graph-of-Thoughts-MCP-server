@@ -1,10 +1,10 @@
-# Connecting Claude Desktop with NexusMind
+# Connecting Claude Desktop with Adaptive Graph of Thoughts
 
-This guide will help you set up Claude Desktop to use the NexusMind Graph of Thoughts server for enhanced scientific reasoning.
+This guide will help you set up Claude Desktop to use the Adaptive Graph of Thoughts Graph of Thoughts server for enhanced scientific reasoning.
 
 ## Prerequisites
 
-1. NexusMind server running (either locally or in a Docker container)
+1. Adaptive Graph of Thoughts server running (either locally or in a Docker container)
 2. Claude Desktop application installed on your computer
 3. Access to Claude 3.7 Sonnet model
 
@@ -19,8 +19,8 @@ This guide will help you set up Claude Desktop to use the NexusMind Graph of Tho
 
 Alternatively, you can manually configure the connection with the following settings:
 
-- **Name**: NexusMind MCP Integration
-- **Description**: Integrates Claude with the NexusMind server for advanced scientific reasoning
+- **Name**: Adaptive Graph of Thoughts MCP Integration
+- **Description**: Integrates Claude with the Adaptive Graph of Thoughts server for advanced scientific reasoning
 - **Icon**: 🔬
 - **Endpoint**: http://localhost:8000/mcp
 - **Method**: POST
@@ -30,7 +30,7 @@ Alternatively, you can manually configure the connection with the following sett
 
 1. In Claude Desktop, create a new conversation
 2. Ensure the Claude 3.7 Sonnet model is selected
-3. Enable the NexusMind integration from the tools panel
+3. Enable the Adaptive Graph of Thoughts integration from the tools panel
 4. Ask a scientific reasoning question, for example:
    - "What is the relationship between climate change and ocean acidification?"
    - "Explain how mRNA vaccines work and compare them to traditional vaccines."
@@ -40,7 +40,7 @@ Alternatively, you can manually configure the connection with the following sett
 
 When you ask a question, Claude Desktop will:
 
-1. Send your query to the NexusMind MCP server
+1. Send your query to the Adaptive Graph of Thoughts MCP server
 2. The server will process it through the Graph of Thoughts reasoning process
 3. Return a structured response with:
    - The answer to your question
@@ -51,14 +51,14 @@ When you ask a question, Claude Desktop will:
 
 If you encounter issues:
 
-1. Check that the NexusMind server is running by visiting http://localhost:8000/health
+1. Check that the Adaptive Graph of Thoughts server is running by visiting http://localhost:8000/health
 2. Verify your network connection and firewall settings
-3. Check the NexusMind server logs for error messages
+3. Check the Adaptive Graph of Thoughts server logs for error messages
 4. Ensure the Claude Desktop app has the correct MCP configuration
 
 ## Advanced Configuration
 
-The `config/claude_mcp_config.json` file is primarily used to define the NexusMind service for Claude Desktop. It specifies details like the service name, description, endpoint URL, and capabilities.
+The `config/claude_mcp_config.json` file is primarily used to define the Adaptive Graph of Thoughts service for Claude Desktop. It specifies details like the service name, description, endpoint URL, and capabilities.
 
 Parameters that control the reasoning process at runtime, such as:
 - The level of detail in responses (e.g., including the reasoning trace or full graph state)

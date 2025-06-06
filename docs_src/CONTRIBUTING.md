@@ -1,14 +1,14 @@
-# Contributing to NexusMind
+# Contributing to Adaptive Graph of Thoughts
 
-We welcome contributions to NexusMind! Please follow these general guidelines when contributing:
+We welcome contributions to Adaptive Graph of Thoughts! Please follow these general guidelines when contributing:
 
 ## Getting Started
 
-*   **Fork the Repository:** Start by forking the main NexusMind repository to your own GitHub account.
+*   **Fork the Repository:** Start by forking the main Adaptive Graph of Thoughts repository to your own GitHub account.
 *   **Clone your fork:**
     ```bash
-    git clone https://github.com/YOUR_USERNAME/NexusMind.git
-    cd NexusMind
+    git clone https://github.com/YOUR_USERNAME/Adaptive Graph of Thoughts.git
+    cd Adaptive Graph of Thoughts
     ```
 *   **Install Dependencies:** Ensure you have [Poetry](https://python-poetry.org/) (version 1.2+) installed and run:
     ```bash
@@ -18,11 +18,11 @@ We welcome contributions to NexusMind! Please follow these general guidelines wh
 
 ## Branching Strategy
 
-1.  **Branch from `main`:** Always create your new feature or bugfix branches from the latest `main` branch of the upstream (original) NexusMind repository.
+1.  **Branch from `main`:** Always create your new feature or bugfix branches from the latest `main` branch of the upstream (original) Adaptive Graph of Thoughts repository.
     ```bash
     # Ensure your main branch is up-to-date with upstream
     git checkout main
-    git pull upstream main # Assuming 'upstream' remote is configured to git@github.com:CognitiveAreNa/NexusMind.git
+    git pull upstream main # Assuming 'upstream' remote is configured to git@github.com:CognitiveAreNa/Adaptive Graph of Thoughts.git
     
     # Create your new branch
     git checkout -b feature/your-descriptive-feature-name
@@ -61,7 +61,7 @@ We welcome contributions to NexusMind! Please follow these general guidelines wh
     git push origin feature/your-descriptive-feature-name
     ```
 6.  **Submit a Pull Request:** 
-    *   Open a pull request from your feature branch in your fork to the `main` branch of the `CognitiveAreNa/NexusMind` repository.
+    *   Open a pull request from your feature branch in your fork to the `main` branch of the `CognitiveAreNa/Adaptive Graph of Thoughts` repository.
     *   Provide a clear title and a detailed description of your changes in the pull request. Link any relevant issues.
     *   Ensure all automated checks (CI/CD pipeline) pass.
 

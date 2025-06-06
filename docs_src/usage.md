@@ -1,10 +1,10 @@
-# Using NexusMind
+# Using Adaptive Graph of Thoughts
 
-This section describes how to interact with the NexusMind application, primarily through its API, and details on session handling and testing.
+This section describes how to interact with the Adaptive Graph of Thoughts application, primarily through its API, and details on session handling and testing.
 
 ## API Endpoints
 
-NexusMind exposes its functionalities via a FastAPI backend. The primary interaction points are:
+Adaptive Graph of Thoughts exposes its functionalities via a FastAPI backend. The primary interaction points are:
 
 ### MCP Protocol Endpoint
 
@@ -55,21 +55,21 @@ The `session_id` parameter is available in API requests (e.g., for `asr_got.quer
 *   **Correlation:** Used for correlating progress notifications (e.g., `got/queryProgress` if implemented via Server-Sent Events or WebSockets) with the originating query.
 
 **Current Limitations:**
-NexusMind does not currently support true multi-turn conversational continuity where the detailed graph state or reasoning context from a previous query is automatically loaded and reused for a follow-up query using the same `session_id`. Each query is processed independently at this time.
+Adaptive Graph of Thoughts does not currently support true multi-turn conversational continuity where the detailed graph state or reasoning context from a previous query is automatically loaded and reused for a follow-up query using the same `session_id`. Each query is processed independently at this time.
 
 ### Future Enhancement: Persistent Sessions
 
-A potential future enhancement for NexusMind is the implementation of persistent sessions. This would enable more interactive and evolving reasoning processes by allowing users to:
+A potential future enhancement for Adaptive Graph of Thoughts is the implementation of persistent sessions. This would enable more interactive and evolving reasoning processes by allowing users to:
 
 1.  **Persist State:** Store the generated graph state and relevant reasoning context from a query, associated with its `session_id`, likely within the Neo4j database.
 2.  **Reload State:** When a new query is submitted with an existing `session_id`, the system could reload this saved state as the starting point for further processing.
 3.  **Refine and Extend:** Allow the new query to interact with the loaded graph—for example, by refining previous hypotheses, adding new evidence to existing structures, or exploring alternative reasoning paths based on the established context.
 
-This is a significant feature that could greatly enhance the interactive capabilities of NexusMind.
+This is a significant feature that could greatly enhance the interactive capabilities of Adaptive Graph of Thoughts.
 
 ### Future Enhancement: Asynchronous and Parallel Stage Execution
 
-Currently, the 8 stages of the NexusMind reasoning pipeline are executed sequentially. For complex queries or to further optimize performance, exploring asynchronous or parallel execution for certain parts of the pipeline is a potential future enhancement.
+Currently, the 8 stages of the Adaptive Graph of Thoughts reasoning pipeline are executed sequentially. For complex queries or to further optimize performance, exploring asynchronous or parallel execution for certain parts of the pipeline is a potential future enhancement.
 
 **Potential Areas for Parallelism:**
 
@@ -81,7 +81,7 @@ Implementing parallelism requires careful management of data consistency, transa
 
 ## Testing & Quality Assurance
 
-NexusMind uses Pytest for testing, Ruff for linting and formatting, and MyPy/Pyright for type checking.
+Adaptive Graph of Thoughts uses Pytest for testing, Ruff for linting and formatting, and MyPy/Pyright for type checking.
 
 <div align="center">
   <table>

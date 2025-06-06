@@ -1,5 +1,5 @@
 """
-Test script for the NexusMind MCP server endpoints.
+Test script for the Adaptive Graph of Thoughts MCP server endpoints.
 """
 import json
 from typing import Any, Dict, Optional
@@ -23,7 +23,7 @@ def test_initialize_endpoint() -> Dict[str, Any]:
         "method": "initialize",
         "params": {
             "client_info": {
-                "client_name": "NexusMind Test Client",
+                "client_name": "Adaptive Graph of Thoughts Test Client",
                 "client_version": "1.0.0"
             },
             "process_id": 12345
@@ -46,7 +46,7 @@ def test_initialize_endpoint() -> Dict[str, Any]:
             assert result["jsonrpc"] == "2.0", "Invalid JSON-RPC version"
             assert result["id"] == "test-init-1", "Invalid response ID"
             assert "result" in result, "Missing result in response"
-            assert result["result"]["server_name"] == "NexusMind MCP Server", "Invalid server name"
+            assert result["result"]["server_name"] == "Adaptive Graph of Thoughts MCP Server", "Invalid server name"
             assert result["result"]["server_version"] == "0.1.0", "Invalid server version"
             assert result["result"]["mcp_version"] == "2024-11-05", "Invalid MCP version"
 

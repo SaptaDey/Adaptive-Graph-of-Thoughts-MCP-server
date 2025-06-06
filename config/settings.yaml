@@ -1,6 +1,6 @@
-# Main Application Settings for NexusMind
+# Main Application Settings for Adaptive Graph of Thoughts
 app:
-  name: "NexusMind"
+  name: "Adaptive Graph of Thoughts"
   version: "0.1.0" # Should ideally match pyproject.toml
   host: "0.0.0.0"
   port: 8000 # Default port for Uvicorn
@@ -12,7 +12,7 @@ app:
   log_level: "INFO" # Default log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
   # debug: false # Set to true for development if needed, enables more verbose errors
 
-# NexusMind Core Parameters
+# Adaptive Graph of Thoughts Core Parameters
 asr_got:
   default_parameters:
     # Parameters for Stage 1: Initialization
@@ -118,11 +118,11 @@ asr_got:
 
 # Configuration for Model Context Protocol (MCP) Server behavior
 mcp_settings:
-  protocol_version: "2024-11-05" # As per original claude_desktop_config.json  server_name: "NexusMind MCP Server"
+  protocol_version: "2024-11-05" # As per original claude_desktop_config.json  server_name: "Adaptive Graph of Thoughts MCP Server"
   server_version: "0.1.0" # Match app.version
-  vendor_name: "NexusMind Development Team"
-  # display_name: "NexusMind" # If needed by MCP client
-  # description: "NexusMind provides advanced scientific reasoning capabilities." # If needed
+  vendor_name: "Adaptive Graph of Thoughts Development Team"
+  # display_name: "Adaptive Graph of Thoughts" # If needed by MCP client
+  # description: "Adaptive Graph of Thoughts provides advanced scientific reasoning capabilities." # If needed
 
 # Optional: Direct Claude API integration settings (if the app needs to call Claude API itself)
 # claude_api:

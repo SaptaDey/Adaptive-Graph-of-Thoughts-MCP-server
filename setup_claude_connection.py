@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Helper script to set up the NexusMind MCP connection with Claude Desktop.
+Helper script to set up the Adaptive Graph of Thoughts MCP connection with Claude Desktop.
 This script:
-1. Tests if the NexusMind server is running
+1. Tests if the Adaptive Graph of Thoughts server is running
 2. Displays instructions for connecting with Claude Desktop
 """
 
@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 def check_health():
-    """Check if the NexusMind server is running by testing the health endpoint."""
+    """Check if the Adaptive Graph of Thoughts server is running by testing the health endpoint."""
     try:
         response = requests.get(HEALTH_ENDPOINT)
         if response.status_code == 200:
@@ -51,7 +51,7 @@ def test_mcp_initialize():
         "method": "initialize",
         "params": {
             "client_info": {
-                "client_name": "NexusMind Setup Script"
+                "client_name": "Adaptive Graph of Thoughts Setup Script"
             },
             "process_id": 12345
         }
@@ -68,7 +68,7 @@ def test_mcp_initialize():
             result = response.json()
             if result.get("result"):
                 logger.info("✅ MCP endpoint initialized successfully")
-                logger.info("   Server name: NexusMind MCP Server")
+                logger.info("   Server name: Adaptive Graph of Thoughts MCP Server")
                 logger.info("   Server version: 0.1.0")
                 logger.info("   MCP version: 2024-11-05")
                 return True
@@ -137,7 +137,7 @@ def display_instructions():
     logger.info("5. Import the MCP configuration file from:")
     logger.info(f"   {os.path.abspath(CONFIG_FILE)}")
     logger.info("\nAlternative manual setup:")
-    logger.info("- Name: NexusMind MCP Integration")
+    logger.info("- Name: Adaptive Graph of Thoughts MCP Integration")
     logger.info("- Description: Scientific reasoning with Graph of Thoughts")
     logger.info(f"- Endpoint: {MCP_ENDPOINT}")
     logger.info("- Method: POST")
@@ -148,14 +148,14 @@ def display_instructions():
 
 def main():
     """
-    Runs the NexusMind MCP setup process, performing server checks, configuration validation, and displaying connection instructions.
+    Runs the Adaptive Graph of Thoughts MCP setup process, performing server checks, configuration validation, and displaying connection instructions.
     
-    Executes a sequence of steps to verify server health, test the MCP endpoint, validate the MCP configuration file, and provide instructions for connecting Claude Desktop to the NexusMind server. Exits the program if the server is not running.
+    Executes a sequence of steps to verify server health, test the MCP endpoint, validate the MCP configuration file, and provide instructions for connecting Claude Desktop to the Adaptive Graph of Thoughts server. Exits the program if the server is not running.
     """
-    logger.info("\n=== NexusMind MCP Setup ===\n")
+    logger.info("\n=== Adaptive Graph of Thoughts MCP Setup ===\n")
 
     # Step 1: Check if server is running
-    logger.info("Step 1: Checking if NexusMind server is running...")
+    logger.info("Step 1: Checking if Adaptive Graph of Thoughts server is running...")
     if not check_health():
         logger.warning("\n⚠️  WARNING: Server not running. Please start the server and try again.")
         logger.warning("   Docker command: docker-compose up -d")
@@ -175,7 +175,7 @@ def main():
     logger.info("\nStep 4: Connection instructions...")
     display_instructions()
 
-    logger.info("\nSetup complete! You can now connect Claude Desktop to the NexusMind server.")
+    logger.info("\nSetup complete! You can now connect Claude Desktop to the Adaptive Graph of Thoughts server.")
     logger.info("Test the integration by asking a scientific reasoning question.")
 
 if __name__ == "__main__":

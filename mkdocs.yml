@@ -1,8 +1,8 @@
-site_name: NexusMind Documentation
+site_name: Adaptive Graph of Thoughts Documentation
 docs_dir: docs_src
-site_url: https://sapta-dey.github.io/NexusMind-2.0/
-repo_url: https://github.com/sapta-dey/NexusMind-2.0/
-repo_name: NexusMind-2.0
+site_url: https://sapta-dey.github.io/Adaptive Graph of Thoughts-2.0/
+repo_url: https://github.com/sapta-dey/Adaptive Graph of Thoughts-2.0/
+repo_name: Adaptive Graph of Thoughts-2.0
 
 theme:
   name: material
@@ -52,7 +52,7 @@ nav:
   - Usage: usage.md
   - API Reference: 
     - MCP API: api/mcp_api.md
-  - Extending NexusMind:
+  - Extending Adaptive Graph of Thoughts:
     - Custom Stages: extending/custom_stages.md # Placeholder
     - Claude API Integration: extending_with_claude.md
   - Contributing: CONTRIBUTING.md

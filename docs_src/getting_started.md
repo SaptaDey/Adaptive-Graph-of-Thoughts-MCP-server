@@ -1,12 +1,12 @@
-# Getting Started with NexusMind
+# Getting Started with Adaptive Graph of Thoughts
 
-This guide will help you get NexusMind up and running, whether for local development or Docker-based deployment.
+This guide will help you get Adaptive Graph of Thoughts up and running, whether for local development or Docker-based deployment.
 
 ## Deployment Prerequisites
 
-Before running NexusMind (either locally or via Docker if not using the provided `docker-compose.prod.yml` which includes Neo4j), ensure you have:
+Before running Adaptive Graph of Thoughts (either locally or via Docker if not using the provided `docker-compose.prod.yml` which includes Neo4j), ensure you have:
 
--   **A running Neo4j Instance**: NexusMind requires a connection to a Neo4j graph database.
+-   **A running Neo4j Instance**: Adaptive Graph of Thoughts requires a connection to a Neo4j graph database.
     -   **APOC Library**: The Neo4j instance **must** have the APOC (Awesome Procedures On Cypher) library installed. Many Cypher queries rely on APOC procedures. See the [official APOC website](https://neo4j.com/labs/apoc/installation/) for installation.
     -   **Indexing**: For optimal performance, ensure appropriate Neo4j indexes are created. See [Neo4j Indexing Strategy](neo4j_indexing.md) for details. <!-- TODO: Ensure this link works after file moves -->
 
@@ -22,8 +22,8 @@ Before running NexusMind (either locally or via Docker if not using the provided
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/SaptaDey/NexusMind.git # Adjust if your fork/repo is different
-    cd NexusMind
+    git clone https://github.com/SaptaDey/Adaptive Graph of Thoughts.git # Adjust if your fork/repo is different
+    cd Adaptive Graph of Thoughts
     ```
 
 2.  **Install dependencies using Poetry**:
@@ -38,7 +38,7 @@ Before running NexusMind (either locally or via Docker if not using the provided
     ```
 
 4.  **Configure Neo4j Connection (Critical)**:
-    NexusMind connects to Neo4j using environment variables. See the [Configuration Guide](configuration.md#neo4j-database-configuration) for detailed instructions on setting `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, and `NEO4J_DATABASE`. For local development, using a `.env` file is recommended.
+    Adaptive Graph of Thoughts connects to Neo4j using environment variables. See the [Configuration Guide](configuration.md#neo4j-database-configuration) for detailed instructions on setting `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, and `NEO4J_DATABASE`. For local development, using a `.env` file is recommended.
 
 5.  **Application Configuration**:
     Other application settings are in `config/settings.yaml`. You can review and customize this file if needed. See the [Configuration Guide](configuration.md#application-settings) for more details.
@@ -58,7 +58,7 @@ Before running NexusMind (either locally or via Docker if not using the provided
 
 ## Docker Deployment
 
-NexusMind is designed to be easily deployed using Docker.
+Adaptive Graph of Thoughts is designed to be easily deployed using Docker.
 
 <!-- Mermaid diagram for Docker deployment can be included here if desired -->
 <!-- ```mermaid
@@ -68,12 +68,12 @@ graph TB
     end
     
     subgraph "Container Orchestration"
-        B --> C[📦 NexusMind Container]
+        B --> C[📦 Adaptive Graph of Thoughts Container]
         B --> D[📊 Monitoring Container] # Placeholder if you add monitoring
         B --> E[🗄️ Database Container]
     end
     
-    subgraph "NexusMind Application"
+    subgraph "Adaptive Graph of Thoughts Application"
         C --> F[⚡ FastAPI Server]
         F --> G[🧠 ASR-GoT Engine]
         F --> H[🔌 MCP Protocol]
@@ -87,7 +87,7 @@ graph TB
 
 ### 1. Quick Start with Docker Compose (Recommended for Development)
 
-The `docker-compose.yml` file is pre-configured for local development and includes the NexusMind API service and a Neo4j service with APOC.
+The `docker-compose.yml` file is pre-configured for local development and includes the Adaptive Graph of Thoughts API service and a Neo4j service with APOC.
 
    ```bash
    # Build and run all services
@@ -97,7 +97,7 @@ The `docker-compose.yml` file is pre-configured for local development and includ
    docker-compose up --build -d
    
    # View logs for the API service
-   docker-compose logs -f nexusmind-api
+   docker-compose logs -f adaptive-graph-of-thoughts-api
    ```
    Ensure you have a `.env` file with your `NEO4J_PASSWORD` (and other Neo4j settings if not using defaults) as `docker-compose.yml` is set up to use it.
 
@@ -105,14 +105,14 @@ The `docker-compose.yml` file is pre-configured for local development and includ
 
    ```bash
    # Build the image
-   docker build -t nexusmind:latest .
+   docker build -t adaptive-graph-of-thoughts:latest .
    
    # Run the container (ensure NEO4J_* env vars are set, e.g., via --env-file)
    docker run -d \
      -p 8000:8000 \
      --env-file .env \
      -v /path/to/your/local/config:/app/config \
-     nexusmind:latest
+     adaptive-graph-of-thoughts:latest
    ```
    Replace `/path/to/your/local/config` with the actual path to your *custom* configuration directory if you need to override the defaults baked into the image. See the [Configuration Guide](configuration.md#docker-configuration-override) for more details.
 
@@ -130,8 +130,8 @@ For production, use the `docker-compose.prod.yml` file:
 
 -   **Smithery.ai**: Deployment to the Smithery.ai platform typically involves using the provided Docker image directly.
     *   Consult Smithery.ai's specific documentation for instructions on deploying custom Docker images.
-    *   **Port Configuration**: Ensure that the platform is configured to expose port 8000 (or the port configured via `APP_PORT` if overridden) for the NexusMind container.
-    *   **Health Checks**: The NexusMind Docker image includes a `HEALTHCHECK` instruction verifying `/health`. Ensure Smithery.ai is configured to use this endpoint.
+    *   **Port Configuration**: Ensure that the platform is configured to expose port 8000 (or the port configured via `APP_PORT` if overridden) for the Adaptive Graph of Thoughts container.
+    *   **Health Checks**: The Adaptive Graph of Thoughts Docker image includes a `HEALTHCHECK` instruction verifying `/health`. Ensure Smithery.ai is configured to use this endpoint.
     *   **Environment Variables**: Configure all necessary environment variables (especially `NEO4J_PASSWORD` and other Neo4j connection details) through the Smithery.ai platform.
 
 ### Accessing the Services (after deployment)

@@ -5,7 +5,7 @@ import subprocess
 import pytest
 from pathlib import Path
 
-from asr_got_reimagined.config import settings
+from adaptive_graph_of_thoughts.config import settings
 
 @pytest.fixture(scope="module")
 def stdio_process():
@@ -13,7 +13,7 @@ def stdio_process():
     cmd = [
         "python",
         "-m",
-        "asr_got_reimagined.main_stdio"
+        "adaptive_graph_of_thoughts.main_stdio"
     ]
     proc = subprocess.Popen(
         cmd,

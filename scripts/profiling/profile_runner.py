@@ -4,11 +4,11 @@ import pstats # Imported pstats
 import sys
 import os
 
-# Add src to sys.path to allow importing from asr_got_reimagined
+# Add src to sys.path to allow importing from adaptive_graph_of_thoughts
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
-from asr_got_reimagined.domain.services.got_processor import GoTProcessor
-from asr_got_reimagined.config import settings # Use the global settings instance
+from adaptive_graph_of_thoughts.domain.services.got_processor import GoTProcessor
+from adaptive_graph_of_thoughts.config import settings # Use the global settings instance
 
 async def main(): # Renamed back to main as per instruction
     """

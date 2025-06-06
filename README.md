@@ -1,11 +1,11 @@
-# 🧠 NexusMind
+# 🧠 Adaptive Graph of Thoughts
 
 <div align="center">
 
 ```
                                               ╔══════════════════════════════════════╗
                                               ║                                      ║
-                                              ║           🧠 NexusMind 🧠           ║
+                                              ║    🧠 Adaptive Graph of Thoughts 🧠 ║
                                               ║                                      ║
                                               ║     Intelligent Scientific           ║
                                               ║     Reasoning through                ║
@@ -16,7 +16,7 @@
 
 #### **Intelligent Scientific Reasoning through Graph-of-Thoughts**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/SaptaDey/NexusMind/releases)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/SaptaDey/Adaptive Graph of Thoughts/releases)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE) <!-- Assuming LICENSE file will be added -->
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](Dockerfile)
@@ -24,7 +24,7 @@
 [![neo4j](https://img.shields.io/badge/NetworkX-3.3-orange.svg)](https://neo4j.com)
 [![Last Updated](https://img.shields.io/badge/last_updated-May_2024-lightgrey.svg)](CHANGELOG.md)
 <!-- Add a GitHub Actions badge for documentation build once active -->
-<!-- [![Docs](https://github.com/sapta-dey/NexusMind-2.0/actions/workflows/gh-pages.yml/badge.svg)](https://github.com/sapta-dey/NexusMind-2.0/actions/workflows/gh-pages.yml) -->
+<!-- [![Docs](https://github.com/sapta-dey/Adaptive Graph of Thoughts-2.0/actions/workflows/gh-pages.yml/badge.svg)](https://github.com/sapta-dey/Adaptive Graph of Thoughts-2.0/actions/workflows/gh-pages.yml) -->
 
 </div>
 
@@ -35,14 +35,14 @@
 
 ## 📚 Documentation
 
-**For comprehensive information on NexusMind, including detailed installation instructions, usage guides, configuration options, API references, contribution guidelines, and the project roadmap, please visit our full documentation site:**
+**For comprehensive information on Adaptive Graph of Thoughts, including detailed installation instructions, usage guides, configuration options, API references, contribution guidelines, and the project roadmap, please visit our full documentation site:**
 
-**[➡️ NexusMind Documentation Site](https://saptadey.github.io/NexusMind-2.0/)** 
+**[➡️ Adaptive Graph of Thoughts Documentation Site](https://saptadey.github.io/Adaptive Graph of Thoughts-2.0/)** 
 *(Note: This link will be active once the GitHub Pages site is deployed via the new workflow.)*
 
 ## 🔍 Overview
 
-NexusMind leverages a **Neo4j graph database** to perform sophisticated scientific reasoning, with graph operations managed within its pipeline stages. It implements the **Model Context Protocol (MCP)** to integrate with AI applications like Claude Desktop, providing an Advanced Scientific Reasoning Graph-of-Thoughts (ASR-GoT) framework designed for complex research tasks.
+Adaptive Graph of Thoughts leverages a **Neo4j graph database** to perform sophisticated scientific reasoning, with graph operations managed within its pipeline stages. It implements the **Model Context Protocol (MCP)** to integrate with AI applications like Claude Desktop, providing an Advanced Scientific Reasoning Graph-of-Thoughts (ASR-GoT) framework designed for complex research tasks.
 
 **Key highlights:**
 - Process complex scientific queries using graph-based reasoning
@@ -56,7 +56,7 @@ NexusMind leverages a **Neo4j graph database** to perform sophisticated scientif
 
 The project is organized as follows (see the documentation site for more details):
 ```
-NexusMind/
+Adaptive Graph of Thoughts/
 ├── 📁 .github/                           # GitHub specific files (workflows)
 ├── 📁 config/                             # Configuration files (settings.yaml)
 ├── 📁 docs_src/                           # Source files for MkDocs documentation
@@ -78,9 +78,9 @@ NexusMind/
 
 ### Deployment Prerequisites
 
-Before running NexusMind (either locally or via Docker if not using the provided `docker-compose.prod.yml` which includes Neo4j), ensure you have:
+Before running Adaptive Graph of Thoughts (either locally or via Docker if not using the provided `docker-compose.prod.yml` which includes Neo4j), ensure you have:
 
--   **A running Neo4j Instance**: NexusMind requires a connection to a Neo4j graph database.
+-   **A running Neo4j Instance**: Adaptive Graph of Thoughts requires a connection to a Neo4j graph database.
     -   **APOC Library**: Crucially, the Neo4j instance **must** have the APOC (Awesome Procedures On Cypher) library installed. Several Cypher queries within the application's reasoning stages utilize APOC procedures (e.g., `apoc.create.addLabels`, `apoc.merge.node`). Without APOC, the application will not function correctly. You can find installation instructions on the [official APOC website](https://neo4j.com/labs/apoc/installation/).
     -   **Configuration**: Ensure that your `config/settings.yaml` (or corresponding environment variables) correctly points to your Neo4j instance URI, username, and password.
     -   **Indexing**: For optimal performance, ensure appropriate Neo4j indexes are created. See [Neo4j Indexing Strategy](docs/neo4j_indexing.md) for details.
@@ -97,8 +97,8 @@ Before running NexusMind (either locally or via Docker if not using the provided
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/SaptaDey/NexusMind.git
-   cd NexusMind
+   git clone https://github.com/SaptaDey/Adaptive Graph of Thoughts.git
+   cd Adaptive Graph of Thoughts
    ```
 
 2. **Install dependencies using Poetry**:
@@ -150,12 +150,12 @@ graph TB
     end
     
     subgraph "Container Orchestration"
-        B --> C[📦 NexusMind Container]
+        B --> C[📦 Adaptive Graph of Thoughts Container]
         B --> D[📊 Monitoring Container]
         B --> E[🗄️ Database Container]
     end
     
-    subgraph "NexusMind Application"
+    subgraph "Adaptive Graph of Thoughts Application"
         C --> F[⚡ FastAPI Server]
         F --> G[🧠 ASR-GoT Engine]
         F --> H[🔌 MCP Protocol]
@@ -183,16 +183,16 @@ graph TB
    docker-compose up --build -d
    
    # View logs
-   docker-compose logs -f nexusmind
+   docker-compose logs -f adaptive-graph-of-thoughts
    ```
 
 2. **Individual Docker Container**:
    ```bash
    # Build the image
-   docker build -t nexusmind:latest .
+   docker build -t adaptive-graph-of-thoughts:latest .
    
    # Run the container
-   docker run -p 8000:8000 -v $(pwd)/config:/app/config nexusmind:latest
+   docker run -p 8000:8000 -v $(pwd)/config:/app/config adaptive-graph-of-thoughts:latest
    ```
 
 3. **Production Deployment**:
@@ -205,8 +205,8 @@ graph TB
 
 -   **Smithery.ai**: Deployment to the Smithery.ai platform typically involves using the provided Docker image directly.
     *   Consult Smithery.ai's specific documentation for instructions on deploying custom Docker images.
-    *   **Port Configuration**: Ensure that the platform is configured to expose port 8000 (or the port configured via `APP_PORT` if overridden) for the NexusMind container, as this is the default port used by the FastAPI application.
-    *   **Health Checks**: Smithery.ai may use health checks to monitor container status. The NexusMind Docker image includes a `HEALTHCHECK` instruction that verifies the `/health` endpoint (e.g., `http://localhost:8000/health`). Ensure Smithery.ai is configured to use this endpoint if it requires a specific health check path.
+    *   **Port Configuration**: Ensure that the platform is configured to expose port 8000 (or the port configured via `APP_PORT` if overridden) for the Adaptive Graph of Thoughts container, as this is the default port used by the FastAPI application.
+    *   **Health Checks**: Smithery.ai may use health checks to monitor container status. The Adaptive Graph of Thoughts Docker image includes a `HEALTHCHECK` instruction that verifies the `/health` endpoint (e.g., `http://localhost:8000/health`). Ensure Smithery.ai is configured to use this endpoint if it requires a specific health check path.
     *   The provided `Dockerfile` and `docker-compose.prod.yml` serve as a baseline for understanding the container setup. Adapt as per Smithery.ai's requirements.
 
 4. **Access the Services**:
@@ -216,7 +216,7 @@ graph TB
 
 ## 🔌 API Endpoints
 
-The primary API endpoints exposed by NexusMind are:
+The primary API endpoints exposed by Adaptive Graph of Thoughts are:
 
 - **MCP Protocol Endpoint**: `POST /mcp`
   - This endpoint is used for communication with MCP clients like Claude Desktop.
@@ -254,11 +254,11 @@ The advanced API endpoints previously listed (e.g., `/api/v1/graph/query`) are n
 
 Currently, the `session_id` parameter available in API requests (e.g., for `asr_got.query`) and present in responses serves primarily to identify and track a single, complete query-response cycle. It is also used for correlating progress notifications (like `got/queryProgress`) with the originating query.
 
-While the system generates and utilizes `session_id`s, NexusMind does not currently support true multi-turn conversational continuity where the detailed graph state or reasoning context from a previous query is automatically loaded and reused for a follow-up query using the same `session_id`. Each query is processed independently at this time.
+While the system generates and utilizes `session_id`s, Adaptive Graph of Thoughts does not currently support true multi-turn conversational continuity where the detailed graph state or reasoning context from a previous query is automatically loaded and reused for a follow-up query using the same `session_id`. Each query is processed independently at this time.
 
 ### Future Enhancement: Persistent Sessions
 
-A potential future enhancement for NexusMind is the implementation of persistent sessions. This would enable more interactive and evolving reasoning processes by allowing users to:
+A potential future enhancement for Adaptive Graph of Thoughts is the implementation of persistent sessions. This would enable more interactive and evolving reasoning processes by allowing users to:
 
 1.  **Persist State:** Store the generated graph state and relevant reasoning context from a query, associated with its `session_id`, likely within the Neo4j database.
 2.  **Reload State:** When a new query is submitted with an existing `session_id`, the system could reload this saved state as the starting point for further processing.
@@ -269,11 +269,11 @@ Implementing persistent sessions would involve developing robust strategies for:
 *   Managing the lifecycle (e.g., creation, update, expiration) of session data.
 *   Designing sophisticated logic for how new queries merge with, modify, or extend pre-existing session contexts and graphs.
 
-This is a significant feature that could greatly enhance the interactive capabilities of NexusMind. Contributions from the community in designing and implementing persistent session functionality are welcome.
+This is a significant feature that could greatly enhance the interactive capabilities of Adaptive Graph of Thoughts. Contributions from the community in designing and implementing persistent session functionality are welcome.
 
 ### Future Enhancement: Asynchronous and Parallel Stage Execution
 
-Currently, the 8 stages of the NexusMind reasoning pipeline are executed sequentially. For complex queries or to further optimize performance, exploring asynchronous or parallel execution for certain parts of the pipeline is a potential future enhancement.
+Currently, the 8 stages of the Adaptive Graph of Thoughts reasoning pipeline are executed sequentially. For complex queries or to further optimize performance, exploring asynchronous or parallel execution for certain parts of the pipeline is a potential future enhancement.
 
 **Potential Areas for Parallelism:**
 
@@ -290,7 +290,7 @@ Implementing parallel stage execution would introduce complexities that need car
 *   **Resource Utilization:** Parallel execution could increase resource demands (CPU, memory, database connections).
 *   **Complexity:** The overall control flow of the `GoTProcessor` would become more complex.
 
-While the current sequential execution ensures a clear and manageable data flow, targeted parallelism in areas like hypothesis generation for independent dimensions could offer performance benefits for future versions of NexusMind. This remains an open area for research and development.
+While the current sequential execution ensures a clear and manageable data flow, targeted parallelism in areas like hypothesis generation for independent dimensions could offer performance benefits for future versions of Adaptive Graph of Thoughts. This remains an open area for research and development.
 
 ## 🧪 Testing & Quality Assurance
 
@@ -351,13 +351,13 @@ poetry run pre-commit run --all-files       # Run all hooks
 
 ## 🗺️ Roadmap and Future Directions
 
-We have an exciting vision for the future of NexusMind! Our roadmap includes plans for enhanced graph visualization, integration with more data sources like Arxiv, and further refinements to the core reasoning engine.
+We have an exciting vision for the future of Adaptive Graph of Thoughts! Our roadmap includes plans for enhanced graph visualization, integration with more data sources like Arxiv, and further refinements to the core reasoning engine.
 
 For more details on our planned features and long-term goals, please see our [Roadmap](ROADMAP.md) (also available on the documentation site).
 
 ## 🗺️ Roadmap and Future Directions
 
-We have an exciting vision for the future of NexusMind! Our roadmap includes plans for enhanced graph visualization, integration with more data sources like Arxiv, and further refinements to the core reasoning engine.
+We have an exciting vision for the future of Adaptive Graph of Thoughts! Our roadmap includes plans for enhanced graph visualization, integration with more data sources like Arxiv, and further refinements to the core reasoning engine.
 
 For more details on our planned features and long-term goals, please see our [Roadmap](ROADMAP.md).
 
@@ -380,6 +380,6 @@ This project is licensed under the Apache License 2.0. [License](LICENSE).
 
 <div align="center">
   <p><strong>Built with ❤️ for the scientific research community</strong></p>
-  <p><em>NexusMind - Advancing scientific reasoning through intelligent graph structures</em></p>
+  <p><em>Adaptive Graph of Thoughts - Advancing scientific reasoning through intelligent graph structures</em></p>
 </div>
 # Aptive-Graph-of-Thought-MCP-

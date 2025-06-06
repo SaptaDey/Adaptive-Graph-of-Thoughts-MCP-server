@@ -2,7 +2,7 @@
 
 ## Introduction
 
-NexusMind's ASR-GoT (Automated Scientific Reasoning - Graph of Thoughts) pipeline is designed for modularity, allowing developers to extend its capabilities by creating custom processing stages. Each stage in the pipeline performs a specific task, transforming or analyzing the data within the `GoTProcessorSessionData` and contributing to the overall reasoning process.
+Adaptive Graph of Thoughts's ASR-GoT (Automated Scientific Reasoning - Graph of Thoughts) pipeline is designed for modularity, allowing developers to extend its capabilities by creating custom processing stages. Each stage in the pipeline performs a specific task, transforming or analyzing the data within the `GoTProcessorSessionData` and contributing to the overall reasoning process.
 
 This guide provides a basic outline for developing your own custom stages.
 

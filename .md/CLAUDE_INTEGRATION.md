@@ -1,10 +1,10 @@
 # Integrating with Claude Desktop
 
-NexusMind is designed to work with Claude Desktop through the Model Context Protocol (MCP). This allows Claude 3.7 Sonnet to use the Graph of Thoughts reasoning process when answering complex scientific questions.
+Adaptive Graph of Thoughts is designed to work with Claude Desktop through the Model Context Protocol (MCP). This allows Claude 3.7 Sonnet to use the Graph of Thoughts reasoning process when answering complex scientific questions.
 
 ## Getting Started
 
-1. **Start the NexusMind Server**:
+1. **Start the Adaptive Graph of Thoughts Server**:
    ```
    docker-compose up -d
    ```
@@ -26,15 +26,15 @@ NexusMind is designed to work with Claude Desktop through the Model Context Prot
 
 4. **Test the Integration**:
    - Start a new conversation in Claude Desktop
-   - Enable the NexusMind integration
+   - Enable the Adaptive Graph of Thoughts integration
    - Ask a scientific question
    - Claude will use the Graph of Thoughts process to analyze and answer your question
 
 ## What Happens Behind the Scenes
 
-When you ask a question with the NexusMind integration enabled:
+When you ask a question with the Adaptive Graph of Thoughts integration enabled:
 
-1. Claude Desktop sends your question to the NexusMind server
+1. Claude Desktop sends your question to the Adaptive Graph of Thoughts server
 2. The server processes your query through several stages:
    - Initialization and understanding
    - Question decomposition
@@ -52,10 +52,10 @@ When you ask a question with the NexusMind integration enabled:
 
 ## Configuration Options
 
-The `config/claude_mcp_config.json` file defines how NexusMind registers itself with MCP clients like Claude Desktop. It typically includes:
--   `name`: A short name for the integration (e.g., "nexusmind").
--   `description`: A brief description of what NexusMind does.
--   `version`: The version of NexusMind.
+The `config/claude_mcp_config.json` file defines how Adaptive Graph of Thoughts registers itself with MCP clients like Claude Desktop. It typically includes:
+-   `name`: A short name for the integration (e.g., "adaptive-graph-of-thoughts").
+-   `description`: A brief description of what Adaptive Graph of Thoughts does.
+-   `version`: The version of Adaptive Graph of Thoughts.
 -   `endpoints`: The URL for the MCP endpoint (e.g., `http://localhost:8000/mcp`).
 -   `capabilities`: A list of capabilities the server offers (e.g., "scientific_reasoning").
 

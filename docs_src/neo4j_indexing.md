@@ -1,12 +1,12 @@
-# Neo4j Indexing and Constraints Strategy for NexusMind
+# Neo4j Indexing and Constraints Strategy for Adaptive Graph of Thoughts
 
-This document outlines the recommended Neo4j indexing and constraint strategy to ensure optimal performance for the NexusMind application. These commands are typically run manually by a database administrator or as part of an initial database setup script.
+This document outlines the recommended Neo4j indexing and constraint strategy to ensure optimal performance for the Adaptive Graph of Thoughts application. These commands are typically run manually by a database administrator or as part of an initial database setup script.
 
 ## Rationale
 
 Indexes are crucial for speeding up query performance, especially for `MATCH` operations with `WHERE` clauses on specific properties. Constraints (like uniqueness) also implicitly create indexes and ensure data integrity.
 
-The following recommendations are based on common query patterns observed in the NexusMind stages.
+The following recommendations are based on common query patterns observed in the Adaptive Graph of Thoughts stages.
 
 ## Uniqueness Constraints
 

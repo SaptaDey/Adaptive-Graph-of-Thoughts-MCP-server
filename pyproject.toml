@@ -1,13 +1,13 @@
 [tool.poetry]
-name = "nexusmind"
+name = "adaptive-graph-of-thoughts"
 version = "0.1.0"
-description = "NexusMind: Intelligent Scientific Reasoning through Graph-of-Thoughts MCP Server"
-authors = ["NexusMind Development Team <saptaswadey@gmail.com>"] 
+description = "Adaptive Graph of Thoughts: Intelligent Scientific Reasoning through Graph-of-Thoughts MCP Server"
+authors = ["Adaptive Graph of Thoughts Development Team <saptaswadey@gmail.com>"] 
 readme = "README.md"
 license = "Apache-2.0"
-repository = "https://github.com/SaptaDey/NexusMind-2.0"
-homepage = "https://github.com/SaptaDey/NexusMind-2.0"
-keywords = ["nexusmind", "got", "graph-of-thoughts", "mcp", "ai", "reasoning", "scientific-computing"]
+repository = "https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP"
+homepage = "https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP"
+keywords = ["adaptive-graph-of-thoughts", "got", "graph-of-thoughts", "mcp", "ai", "reasoning", "scientific-computing"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",

@@ -1,10 +1,10 @@
 # MCP API Reference
 
-This section provides details about the Model Context Protocol (MCP) API endpoints implemented by NexusMind.
+This section provides details about the Model Context Protocol (MCP) API endpoints implemented by Adaptive Graph of Thoughts.
 
 ## Overview
 
-NexusMind implements an MCP server to allow integration with MCP clients such as Claude Desktop. The primary endpoint for MCP communication is `/mcp`.
+Adaptive Graph of Thoughts implements an MCP server to allow integration with MCP clients such as Claude Desktop. The primary endpoint for MCP communication is `/mcp`.
 
 ## Methods
 
@@ -12,13 +12,13 @@ The following JSON-RPC methods are supported via the `/mcp` endpoint:
 
 ### `initialize`
 
-*   **Description:** Initializes the session between the MCP client and the NexusMind server. Provides server information to the client.
+*   **Description:** Initializes the session between the MCP client and the Adaptive Graph of Thoughts server. Provides server information to the client.
 *   **Parameters:** See `MCPInitializeParams` in `src/asr_got_reimagined/api/schemas.py`.
 *   **Returns:** `MCPInitializeResult` (see `src/asr_got_reimagined/api/schemas.py`).
 
 ### `asr_got.query`
 
-*   **Description:** Submits a natural language query to the NexusMind ASR-GoT engine for processing through its 8-stage pipeline.
+*   **Description:** Submits a natural language query to the Adaptive Graph of Thoughts ASR-GoT engine for processing through its 8-stage pipeline.
 *   **Parameters:** See `MCPASRGoTQueryParams` in `src/asr_got_reimagined/api/schemas.py`. This includes:
     *   `query` (str): The main query string.
     *   `session_id` (Optional\[str]): An optional session identifier.

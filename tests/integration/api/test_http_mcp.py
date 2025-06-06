@@ -13,7 +13,7 @@ def test_mcp_server():
     Returns:
         True if the server responds with the expected MCP initialization fields; False otherwise.
     """
-    print("Testing NexusMind MCP Server...")
+    print("Testing Adaptive Graph of Thoughts MCP Server...")
 
     # The initialize request payload
     payload = {
@@ -22,7 +22,7 @@ def test_mcp_server():
         "method": "initialize",
         "params": {
             "client_info": {
-                "client_name": "NexusMind Test Client",
+                "client_name": "Adaptive Graph of Thoughts Test Client",
                 "client_version": "1.0.0"
             },
             "process_id": 12345

@@ -1,10 +1,10 @@
-# Extending NexusMind with Direct Claude API Calls
+# Extending Adaptive Graph of Thoughts with Direct Claude API Calls
 
 ## Introduction
 
-NexusMind's ASR-GoT (Automated Scientific Reasoning - Graph of Thoughts) pipeline is designed to be modular. While many reasoning tasks can be handled by its core stages, there might be scenarios where directly leveraging a powerful Large Language Model (LLM) like Anthropic's Claude can be beneficial for specific, complex sub-tasks or to use Claude as a specialized tool within the pipeline.
+Adaptive Graph of Thoughts's ASR-GoT (Automated Scientific Reasoning - Graph of Thoughts) pipeline is designed to be modular. While many reasoning tasks can be handled by its core stages, there might be scenarios where directly leveraging a powerful Large Language Model (LLM) like Anthropic's Claude can be beneficial for specific, complex sub-tasks or to use Claude as a specialized tool within the pipeline.
 
-This guide outlines how to configure NexusMind for direct Claude API calls and provides conceptual examples for integrating these calls within custom service functions or ASR-GoT stages.
+This guide outlines how to configure Adaptive Graph of Thoughts for direct Claude API calls and provides conceptual examples for integrating these calls within custom service functions or ASR-GoT stages.
 
 ## Configuration
 
@@ -41,7 +41,7 @@ claude_api:
     *   The maximum number of times the application will attempt to retry a failed API request.
     *   Default: `2`
 
-If the `claude_api` section is omitted or commented out, NexusMind will not be able to make direct calls to the Claude API. The settings loader will treat `settings.claude_api` as `None`.
+If the `claude_api` section is omitted or commented out, Adaptive Graph of Thoughts will not be able to make direct calls to the Claude API. The settings loader will treat `settings.claude_api` as `None`.
 
 ## Service Function Implementation (Conceptual)
 
@@ -240,5 +240,5 @@ Integrating direct LLM calls like those to the Claude API is an advanced extensi
 *   **Error Handling:** Implement comprehensive error handling for API unavailability, timeouts, invalid responses, etc.
 *   **Data Privacy and Security:** Ensure that data sent to external APIs complies with privacy policies and security requirements.
 
-By understanding these considerations, developers can effectively extend NexusMind's capabilities using the Claude API.
+By understanding these considerations, developers can effectively extend Adaptive Graph of Thoughts's capabilities using the Claude API.
 ```

@@ -1,17 +1,17 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "NexusMind Configuration Schema",
-  "description": "Schema for validating the NexusMind application settings (settings.yaml).",
+  "title": "Adaptive Graph of Thoughts Configuration Schema",
+  "description": "Schema for validating the Adaptive Graph of Thoughts application settings (settings.yaml).",
   "type": "object",
   "properties": {
     "app": {
       "type": "object",
       "title": "Application Settings",
-      "description": "Main application settings for NexusMind.",
+      "description": "Main application settings for Adaptive Graph of Thoughts.",
       "properties": {
         "name": {
           "type": "string",
-          "default": "NexusMind",
+          "default": "Adaptive Graph of Thoughts",
           "description": "Application name."
         },
         "version": {
@@ -89,7 +89,7 @@
     "asr_got": {
       "type": "object",
       "title": "ASR-GoT Core Parameters",
-      "description": "Configuration for the NexusMind ASR-GoT (Automated Scientific Reasoning - Graph of Thoughts) engine.",
+      "description": "Configuration for the Adaptive Graph of Thoughts ASR-GoT (Automated Scientific Reasoning - Graph of Thoughts) engine.",
       "properties": {
         "default_parameters": {
           "type": "object",
@@ -269,7 +269,7 @@
         },
         "server_name": {
           "type": "string",
-          "default": "NexusMind MCP Server",
+          "default": "Adaptive Graph of Thoughts MCP Server",
           "description": "Name of the MCP server."
         },
         "server_version": {

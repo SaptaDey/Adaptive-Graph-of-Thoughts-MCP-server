@@ -1,6 +1,6 @@
-# NexusMind Roadmap
+# Adaptive Graph of Thoughts Roadmap
 
-This document outlines potential future development directions for NexusMind.
+This document outlines potential future development directions for Adaptive Graph of Thoughts.
 These are ideas for community contribution and project evolution. Priorities and timelines are subject to change.
 
 ## Near-Term Goals
