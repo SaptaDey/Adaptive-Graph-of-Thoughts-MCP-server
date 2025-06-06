@@ -37,7 +37,7 @@
 
 **For comprehensive information on Adaptive Graph of Thoughts, including detailed installation instructions, usage guides, configuration options, API references, contribution guidelines, and the project roadmap, please visit our full documentation site:**
 
-**[➡️ Adaptive Graph of Thoughts Documentation Site](https://saptadey.github.io/Adaptive-Graph-of-Thoughts-2.0/)** 
+**[➡️ Adaptive Graph of Thoughts Documentation Site](https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/)** 
 *(Note: This link will be active once the GitHub Pages site is deployed via the new workflow.)*
 
 ## 🔍 Overview
