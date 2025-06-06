@@ -88,5 +88,5 @@ asyncio_mode = "auto"
 # python_files = "tests.py test_*.py *_tests.py"
 
 [[tool.poetry.packages]]
-include = "asr_got_reimagined"
+include = "adaptive_graph_of_thoughts"
 from = "src"
