@@ -1,18 +1,18 @@
+---
+hide:
+  - toc
+title: Home
+---
+
 # 🧠 Adaptive Graph of Thoughts
 
-<div align="center">
+**Transforming Scientific Discovery with Intelligent Graph-Based Reasoning**
 
-```
-    ╔══════════════════════════════════════╗
-    ║                                      ║
-    ║           🧠 Adaptive Graph of Thoughts 🧠            ║
-    ║                                      ║
-    ║     Intelligent Scientific           ║
-    ║     Reasoning through                ║
-    ║     Graph-of-Thoughts                ║
-    ║                                      ║
-    ╚══════════════════════════════════════╝
-```
+[Get Started](getting_started.md){ .md-button .md-button--primary }
+[Explore Features](#key-features){ .md-button }
+[View on GitHub]({{ repo_url }}){ .md-button }
+
+<div align="center">
 
 #### **Intelligent Scientific Reasoning through Graph-of-Thoughts**
 

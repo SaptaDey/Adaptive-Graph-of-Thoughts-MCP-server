@@ -2,9 +2,9 @@
 
 This guide will help you get Adaptive Graph of Thoughts up and running, whether for local development or Docker-based deployment.
 
-## Deployment Prerequisites
+!!! important "Deployment Prerequisites"
 
-Before running Adaptive Graph of Thoughts (either locally or via Docker if not using the provided `docker-compose.prod.yml` which includes Neo4j), ensure you have:
+    Before running Adaptive Graph of Thoughts (either locally or via Docker if not using the provided `docker-compose.prod.yml` which includes Neo4j), ensure you have:
 
 -   **A running Neo4j Instance**: Adaptive Graph of Thoughts requires a connection to a Neo4j graph database.
     -   **APOC Library**: The Neo4j instance **must** have the APOC (Awesome Procedures On Cypher) library installed. Many Cypher queries rely on APOC procedures. See the [official APOC website](https://neo4j.com/labs/apoc/installation/) for installation.
@@ -22,8 +22,8 @@ Before running Adaptive Graph of Thoughts (either locally or via Docker if not u
 
 1.  **Clone the repository**:
     ```bash
-    git clone https://github.com/SaptaDey/Adaptive Graph of Thoughts.git # Adjust if your fork/repo is different
-    cd Adaptive Graph of Thoughts
+    git clone https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP.git # Adjust if your fork/repo is different
+    cd Adaptive-Graph-of-Thoughts-MCP
     ```
 
 2.  **Install dependencies using Poetry**:
@@ -37,7 +37,7 @@ Before running Adaptive Graph of Thoughts (either locally or via Docker if not u
     poetry shell
     ```
 
-4.  **Configure Neo4j Connection (Critical)**:
+!!! danger "Configure Neo4j Connection (Critical)"
     Adaptive Graph of Thoughts connects to Neo4j using environment variables. See the [Configuration Guide](configuration.md#neo4j-database-configuration) for detailed instructions on setting `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD`, and `NEO4J_DATABASE`. For local development, using a `.env` file is recommended.
 
 5.  **Application Configuration**:
@@ -48,11 +48,11 @@ Before running Adaptive Graph of Thoughts (either locally or via Docker if not u
     
     If you haven't set `NEO4J_PASSWORD` in a `.env` file, you might need to provide it directly (though `.env` is preferred):
     ```bash
-    NEO4J_PASSWORD="your_neo4j_password" poetry run uvicorn src.asr_got_reimagined.main:app --reload --host 0.0.0.0 --port 8000
+    NEO4J_PASSWORD="your_neo4j_password" poetry run uvicorn src.adaptive_graph_of_thoughts.main:app --reload --host 0.0.0.0 --port 8000
     ```
     If using a `.env` file (recommended for all Neo4j credentials):
     ```bash
-    poetry run uvicorn src.asr_got_reimagined.main:app --reload --host 0.0.0.0 --port 8000
+    poetry run uvicorn src.adaptive_graph_of_thoughts.main:app --reload --host 0.0.0.0 --port 8000
     ```
     The API will be available at `http://localhost:8000` (or the port you configured, e.g., via `APP_PORT` in your `.env` file).
 
