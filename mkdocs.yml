@@ -1,8 +1,8 @@
 site_name: Adaptive Graph of Thoughts Documentation
 docs_dir: docs_src
-site_url: https://sapta-dey.github.io/Adaptive Graph of Thoughts-2.0/
-repo_url: https://github.com/sapta-dey/Adaptive Graph of Thoughts-2.0/
-repo_name: Adaptive Graph of Thoughts-2.0
+site_url: https://SaptaDey.github.io/Adaptive-Graph-of-Thoughts-MCP/
+repo_url: https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP
+repo_name: Adaptive-Graph-of-Thoughts-MCP
 
 theme:
   name: material
