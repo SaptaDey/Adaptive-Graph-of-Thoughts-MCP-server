@@ -8,7 +8,7 @@ The primary configuration file is `config/settings.yaml`. This file defines sett
 
 **Structure Overview:**
 
-The settings are defined by Pydantic models in `src/asr_got_reimagined/config.py`. Environment variables can override values from `settings.yaml`. For nested structures, use double underscores for environment variables (e.g., `APP__PORT=8001` overrides `app.port`).
+The settings are defined by Pydantic models in `src/adaptive_graph_of_thoughts/config.py`. Environment variables can override values from `settings.yaml`. For nested structures, use double underscores for environment variables (e.g., `APP__PORT=8001` overrides `app.port`).
 
 ```yaml
 # config/settings.yaml (Illustrative Snippet)
@@ -44,7 +44,7 @@ asr_got:
 
   pipeline_stages:
     - name: "Initialization"
-      module_path: "asr_got_reimagined.domain.stages.InitializationStage"
+      module_path: "adaptive_graph_of_thoughts.domain.stages.InitializationStage"
     # ... other stages ...
 # MCP Server Settings (corresponds to MCPSettings in config.py)
 mcp_settings:
@@ -65,11 +65,11 @@ mcp_settings:
 #     description: "Study of the immune system."
 ```
 
-Refer to `config/config.schema.json` for the full schema and `src/asr_got_reimagined/config.py` for the Pydantic models defining these settings.
+Refer to `config/config.schema.json` for the full schema and `src/adaptive_graph_of_thoughts/config.py` for the Pydantic models defining these settings.
 
 ## Neo4j Database Configuration (Critical)
 
-Connection to your Neo4j instance is managed via environment variables. These settings are defined in the `Neo4jSettings` model within `src/asr_got_reimagined/domain/services/neo4j_utils.py`.
+Connection to your Neo4j instance is managed via environment variables. These settings are defined in the `Neo4jSettings` model within `src/adaptive_graph_of_thoughts/domain/services/neo4j_utils.py`.
 
 *   **`NEO4J_URI`**: The URI for your Neo4j instance.
     *   Default: `neo4j://localhost:7687`
@@ -77,6 +77,7 @@ Connection to your Neo4j instance is managed via environment variables. These se
 *   **`NEO4J_USER`**: The Neo4j username.
     *   Default: `neo4j`
 *   **`NEO4J_PASSWORD`**: (Required) The password for your Neo4j database.
+!!! critical
     *   **This variable is mandatory and has no default.** The application will not start if this is not set.
     *   **Security:** For production, always set this as a secure environment variable provided by your deployment platform. Do not hardcode it in configuration files or commit it to version control.
 *   **`NEO4J_DATABASE`**: The Neo4j database name to use.
@@ -97,7 +98,9 @@ NEO4J_PASSWORD="your_local_neo4j_password" # Replace with your actual password
 # APP__LOG_LEVEL="DEBUG"
 # APP__PORT="8001"
 # APP__AUTH_TOKEN="your-secret-dev-token"
-**Important**: Ensure `.env` is listed in your `.gitignore` file to prevent accidental commits of credentials.
+
+!!! warning "Ensure .env is in .gitignore"
+    Ensure `.env` is listed in your `.gitignore` file to prevent accidental commits of credentials.
 
 ## Production Environment Variables
 
@@ -115,20 +118,19 @@ When deploying Adaptive Graph of Thoughts to a production environment (e.g., Smi
 *   `APP__CORS_ALLOWED_ORIGINS_STR="<your_frontend_domain_here>"`: Configure allowed CORS origins if your API is accessed from a specific frontend.
 *   `APP__AUTH_TOKEN="<your_secure_random_token>"`: If MCP endpoint authentication is desired, set this to a strong, randomly generated token.
 
-**Security Notes on Passwords & Secrets:**
-
-*   **Never hardcode `NEO4J_PASSWORD` or other secrets** (like `APP_AUTH_TOKEN`) directly in `config/settings.yaml` or any committed files.
-*   Always use environment variables for sensitive data, configured through your deployment platform's secure mechanisms.
+!!! danger "Security Notes on Passwords & Secrets"
+    *   **Never hardcode `NEO4J_PASSWORD` or other secrets** (like `APP_AUTH_TOKEN`) directly in `config/settings.yaml` or any committed files.
+    *   Always use environment variables for sensitive data, configured through your deployment platform's secure mechanisms.
 
 ## MCP Client Configuration (`config/claude_mcp_config.json`)
 
 This file is used when registering Adaptive Graph of Thoughts as an external tool with an MCP client like Claude Desktop. It describes the capabilities and endpoint of your Adaptive Graph of Thoughts instance to the client.
 
- {
-   "endpoints": {
-     "mcp": "http://localhost:8000/mcp"
-   }
- }
+```json
+{
+  "endpoints": {
+    "mcp": "http://localhost:8000/mcp"
+  },
   "capabilities": [
     "scientific_reasoning",
     "graph_analysis",
