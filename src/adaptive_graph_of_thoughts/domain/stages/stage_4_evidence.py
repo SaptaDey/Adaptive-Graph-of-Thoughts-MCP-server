@@ -41,22 +41,22 @@ from datetime import datetime as dt # Alias dt for datetime.datetime
 from enum import Enum # For property preparation
 
 class EvidenceStage(BaseStage):
-     ...
-# -- utilities ---------------------------------------------------------
-     def _deserialize_tags(self, raw) -> Set[str]:
-         """
-         Helper to normalise discipline tag payloads originating from Neo4j.
-         Accepts JSON strings, lists, sets, or None.
-         """
-         if raw is None:
-             return set()
-         if isinstance(raw, (set, list)):
-             return set(raw)
-         try:
-             return set(json.loads(raw))
-         except Exception:
-             logger.warning("Could not deserialize tags payload '%s'", raw)
-             return set()
+    # -- utilities ---------------------------------------------------------
+    def _deserialize_tags(self, raw) -> Set[str]:
+        """
+        Helper to normalise discipline tag payloads originating from Neo4j.
+        Accepts JSON strings, lists, sets, or None.
+        """
+        if raw is None:
+            return set()
+        if isinstance(raw, (set, list)):
+            return set(raw)
+        try:
+            return set(json.loads(raw))
+        except Exception:
+            logger.warning("Could not deserialize tags payload '%s'", raw)
+            return set()
+
     stage_name: str = "EvidenceStage"
 
     def __init__(self, settings: Settings):
@@ -101,22 +101,12 @@ class EvidenceStage(BaseStage):
         if edge_pydantic is None: return {}
         props = {"id": edge_pydantic.id}
         if hasattr(edge_pydantic, 'confidence') and edge_pydantic.confidence is not None:
-             if isinstance(edge_pydantic.confidence, (int, float)):
-     if isinstance(edge_pydantic.confidence, (int, float)):
-     if isinstance(edge_pydantic.confidence, (int, float)):
-     if isinstance(edge_pydantic.confidence, (int, float)):
-     if isinstance(edge_pydantic.confidence, (int, float)):
-     props["confidence"] = edge_pydantic.confidence
- elif edge_pydantic.confidence:
-     props["confidence_json"] = json.dumps(edge_pydantic.confidence.model_dump())
- elif edge_pydantic.confidence:
-     props["confidence_json"] = json.dumps(edge_pydantic.confidence.model_dump())
- elif edge_pydantic.confidence:
-     props["confidence_json"] = json.dumps(edge_pydantic.confidence.model_dump())
- elif edge_pydantic.confidence:
-     props["confidence_json"] = json.dumps(edge_pydantic.confidence.model_dump())
- elif edge_pydantic.confidence:
-     props["confidence_json"] = json.dumps(edge_pydantic.confidence.model_dump())
+            if isinstance(edge_pydantic.confidence, (int, float)):
+                props["confidence"] = edge_pydantic.confidence
+            elif hasattr(edge_pydantic.confidence, 'model_dump'): # Assuming ConfidenceVector or similar
+                props["confidence_json"] = json.dumps(edge_pydantic.confidence.model_dump())
+            # else: # Optional: handle other types or log a warning
+            #     logger.warning(f"Unhandled confidence type for edge {edge_pydantic.id}")
         if edge_pydantic.metadata:
             for meta_field, meta_val in edge_pydantic.metadata.model_dump().items():
                 if meta_val is None: continue
@@ -273,19 +263,18 @@ class EvidenceStage(BaseStage):
                 metadata=EdgeMetadata(description=f"Evidence '{evidence_node_pydantic.label[:20]}...' {'supports' if evidence_data['supports_hypothesis'] else 'contradicts'} hypothesis.")
             )
             edge_props_for_neo4j = self._prepare_edge_properties_for_neo4j(edge_pydantic)
-create_rel_query = f"""
+            create_rel_query = f"""
              MATCH (ev:Node {{id: $evidence_id}})
              MATCH (hyp:Node {{id: $hypothesis_id}})
             MERGE (ev)-[r:`{edge_type.value}` {{id: $props.id}}]->(hyp)
              SET r += $props
              RETURN r.id as rel_id
             """
-@@
- params_rel = {"evidence_id": created_evidence_id, "hypothesis_id": hypothesis_id, "props": edge_props_for_neo4j}
+            params_rel = {"evidence_id": created_evidence_id, "hypothesis_id": hypothesis_id, "props": edge_props_for_neo4j}
 
-result_rel = await execute_query(create_rel_query, params_rel, tx_type="write")
+            result_rel = await execute_query(create_rel_query, params_rel, tx_type="write")
 
-if not result_rel or not result_rel[0].get("rel_id"):
+            if not result_rel or not result_rel[0].get("rel_id"):
                 logger.error(f"Failed to link evidence {created_evidence_id} to hypothesis {hypothesis_id}.")
                 # Potentially delete orphaned evidence node or mark for cleanup
                 return None
@@ -412,9 +401,9 @@ if not result_rel or not result_rel[0].get("rel_id"):
                 "edge1_props": edge1_props,
                 "edge2_props": edge2_props
             }
-link_results = await execute_query(link_ibn_query, params_link, tx_type="write")
+            link_results = await execute_query(link_ibn_query, params_link, tx_type="write")
 
-if link_results and link_results[0].get("r1_id") and link_results[0].get("r2_id"):
+            if link_results and link_results[0].get("r1_id") and link_results[0].get("r2_id"):
                 logger.info(f"Created IBN {created_ibn_id} and linked it between {evidence_node_data['id']} and {hypothesis_node_data['id']}.")
                 return created_ibn_id
             else:
@@ -497,9 +486,9 @@ if link_results and link_results[0].get("r1_id") and link_results[0].get("r2_id"
                 MATCH (member:Node {id: link_data.member_node_id})
                 MERGE (hc)-[r:HAS_MEMBER {id: link_data.props.id}]->(member)
                 SET r += link_data.props
-RETURN count(r) AS total_links_created
+                RETURN count(r) AS total_links_created
                 """
-                 link_results = await execute_query(link_members_query, {"links": batch_member_links_data}, tx_type='write')
+                link_results = await execute_query(link_members_query, {"links": batch_member_links_data}, tx_type='write')
                 if link_results and link_results[0].get("total_links_created") is not None:
                     logger.debug(f"Batch created {link_results[0]['total_links_created']} HAS_MEMBER links for hyperedge {created_hyperedge_center_id}.")
                 else:

@@ -37,6 +37,7 @@ requests = "^2.31.0"       # For HTTP requests in test scripts
 mcp = "^1.2.0"             # Official MCP Python SDK
 jsonschema = "^4.21.0"     # For configuration schema validation
 sse-starlette = "^2.1.0"   # For Server-Sent Events in FastAPI
+neo4j = "^5.17.0"          # For Neo4j database interaction
 
 # Optional for graph visualization utils later, uncomment if needed
 # matplotlib = "^3.8.0"
