@@ -74,28 +74,28 @@ asr_got:
 
   pipeline_stages:
     - name: "Initialization"
-      module_path: "src.asr_got_reimagined.domain.stages.stage_1_initialization.InitializationStage"
+      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_1_initialization.InitializationStage"
       enabled: true
     - name: "Decomposition"
-      module_path: "src.asr_got_reimagined.domain.stages.stage_2_decomposition.DecompositionStage"
+      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_2_decomposition.DecompositionStage"
       enabled: true
     - name: "Hypothesis Generation" # Renamed for clarity from "HypothesisStage"
-      module_path: "src.asr_got_reimagined.domain.stages.stage_3_hypothesis.HypothesisStage"
+      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_3_hypothesis.HypothesisStage"
       enabled: true
     - name: "Evidence Integration" # Renamed for clarity from "EvidenceStage"
-      module_path: "src.asr_got_reimagined.domain.stages.stage_4_evidence.EvidenceStage"
+      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.EvidenceStage"
       enabled: true
     - name: "Pruning and Merging" # Renamed for clarity from "PruningMergingStage"
-      module_path: "src.asr_got_reimagined.domain.stages.stage_5_pruning_merging.PruningMergingStage"
+      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_5_pruning_merging.PruningMergingStage"
       enabled: true
     - name: "Subgraph Extraction" # Renamed for clarity from "SubgraphExtractionStage"
-      module_path: "src.asr_got_reimagined.domain.stages.stage_6_subgraph_extraction.SubgraphExtractionStage"
+      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_6_subgraph_extraction.SubgraphExtractionStage"
       enabled: true
     - name: "Composition" # Renamed for clarity from "CompositionStage"
-      module_path: "src.asr_got_reimagined.domain.stages.stage_7_composition.CompositionStage"
+      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_7_composition.CompositionStage"
       enabled: true
     - name: "Reflection" # Renamed for clarity from "ReflectionStage"
-      module_path: "src.asr_got_reimagined.domain.stages.stage_8_reflection.ReflectionStage"
+      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_8_reflection.ReflectionStage"
       enabled: true
 
   # Multi-layer network configuration (P1.23)

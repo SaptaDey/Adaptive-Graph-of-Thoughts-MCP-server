@@ -1,4 +1,4 @@
 version: 1
 start:
-  command: ["python", "server.py"]
+  command: ["python", "src/adaptive_graph_of_thoughts/main.py"]
   port: 8000

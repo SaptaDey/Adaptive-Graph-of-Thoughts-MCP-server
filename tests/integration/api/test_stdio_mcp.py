@@ -67,9 +67,10 @@ def test_stdio_initialize(stdio_process):
     assert response is not None, "Response was not successfully parsed."
     assert response.get("id") == "init-1"
     assert "result" in response
-    server_info = response["result"].get("server_info", {})
-    assert "name" in server_info and isinstance(server_info["name"], str)
-    assert "version" in server_info and isinstance(server_info["version"], str)
+    result_data = response.get("result", {})
+    assert "server_name" in result_data and isinstance(result_data["server_name"], str)
+    assert "server_version" in result_data and isinstance(result_data["server_version"], str)
+    assert "mcp_version" in result_data and isinstance(result_data["mcp_version"], str)
 
 @pytest.mark.parametrize("query", ["test question"])
 def test_stdio_call_tool(stdio_process, query):
