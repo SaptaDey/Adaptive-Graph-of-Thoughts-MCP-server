@@ -85,6 +85,7 @@ The `neo4j_utils` module, due to its singleton-like nature for managing Neo4j se
 
 ## Example Integration Test (for `InitializationStage`)
 
+{% raw %}
 ```python
 import pytest
 from neo4j import Driver # type: ignore
@@ -244,6 +245,7 @@ async def test_initialization_stage_uses_existing_root_node(settings_instance):
         result_n0 = s.run("MATCH (n:Node:ROOT {id: 'n0'}) RETURN n")
         assert result_n0.single() is None
 ```
+{% endraw %}
 This file (`testing_strategy_and_example.md`) contains the testing strategy and the example integration test.
 The example test has been updated to:
 1. Use a module-scoped fixture `neo4j_test_container_manager` that attempts to save and restore the state of `neo4j_utils._neo4j_settings` and `neo4j_utils._driver`. This makes it more robust if `neo4j_utils` was initialized before tests or by other test modules.
