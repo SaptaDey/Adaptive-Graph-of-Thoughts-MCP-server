@@ -23,7 +23,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.11" #  Python 3.11 or higher, now supports Python 3.13
-fastapi = "^0.111.0"
+fastapi = "^0.111.1"
 uvicorn = {extras = ["standard"], version = "^0.30.0"} # For running the FastAPI app
 pydantic = "^2.7.0"
 pydantic-settings = "^2.3.0" # For loading settings from files/env vars
@@ -37,6 +37,7 @@ requests = "^2.31.0"       # For HTTP requests in test scripts
 mcp = "^1.2.0"             # Official MCP Python SDK
 jsonschema = "^4.21.0"     # For configuration schema validation
 sse-starlette = "^2.1.0"   # For Server-Sent Events in FastAPI
+neo4j = "^5.17.0"          # For Neo4j database interaction
 
 # Optional for graph visualization utils later, uncomment if needed
 # matplotlib = "^3.8.0"
@@ -88,5 +89,5 @@ asyncio_mode = "auto"
 # python_files = "tests.py test_*.py *_tests.py"
 
 [[tool.poetry.packages]]
-include = "asr_got_reimagined"
+include = "adaptive_graph_of_thoughts"
 from = "src"

@@ -5,7 +5,7 @@ import os
 import re
 from pathlib import Path
 
-def update_adaptive-graph-of-thoughts_references(file_path):
+def update_adaptive_graph_of_thoughts_references(file_path):
     """Update Adaptive Graph of Thoughts references in a single file"""
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -103,7 +103,7 @@ def main():
     print(f"Found {total_count} files to process...")
     
     for file_path in files_to_process:
-        if update_adaptive-graph-of-thoughts_references(file_path):
+        if update_adaptive_graph_of_thoughts_references(file_path):
             updated_count += 1
     
     print(f"\nCompleted! Updated {updated_count} out of {total_count} files.")

@@ -1,11 +1,12 @@
 site_name: Adaptive Graph of Thoughts Documentation
 docs_dir: docs_src
-site_url: https://sapta-dey.github.io/Adaptive Graph of Thoughts-2.0/
-repo_url: https://github.com/sapta-dey/Adaptive Graph of Thoughts-2.0/
-repo_name: Adaptive Graph of Thoughts-2.0
+site_url: https://SaptaDey.github.io/Adaptive-Graph-of-Thoughts-MCP/
+repo_url: https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP
+repo_name: Adaptive-Graph-of-Thoughts-MCP
 
 theme:
   name: material
+  favicon: assets/images/favicon.png
   features:
     - navigation.tabs
     - navigation.sections
@@ -16,20 +17,23 @@ theme:
     - content.tabs.link
     - content.code.annotation
     - content.code.copy
+    - navigation.indexes
+    - navigation.expand
+    - header.autohide
   language: en
   palette:
     - scheme: default
       toggle:
         icon: material/brightness-7
         name: Switch to dark mode
-      primary: indigo
-      accent: indigo
+      primary: teal
+      accent: amber
     - scheme: slate
       toggle:
         icon: material/brightness-4
         name: Switch to light mode
-      primary: blue
-      accent: lime
+      primary: blue grey
+      accent: orange
 
 plugins:
   - search
@@ -59,3 +63,6 @@ nav:
   - Roadmap: ROADMAP.md
   # - License: LICENSE.md # Assuming LICENSE.md exists or will be added - Removed as LICENSE.md does not exist
   # - Status Page Info: status_info.md # For status.html content
+
+extra_css:
+  - assets/stylesheets/custom.css
