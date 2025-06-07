@@ -16,7 +16,7 @@
 
 #### **Intelligent Scientific Reasoning through Graph-of-Thoughts**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/SaptaDey/Adaptive Graph of Thoughts/releases)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE) <!-- Assuming LICENSE file will be added -->
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](Dockerfile)
@@ -37,7 +37,7 @@
 
 **For comprehensive information on Adaptive Graph of Thoughts, including detailed installation instructions, usage guides, configuration options, API references, contribution guidelines, and the project roadmap, please visit our full documentation site:**
 
-**[➡️ Adaptive Graph of Thoughts Documentation Site](https://saptadey.github.io/Adaptive Graph of Thoughts-2.0/)** 
+**[➡️ Adaptive Graph of Thoughts Documentation Site](https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/)** 
 *(Note: This link will be active once the GitHub Pages site is deployed via the new workflow.)*
 
 ## 🔍 Overview
