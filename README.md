@@ -59,10 +59,10 @@ The project is organized as follows (see the documentation site for more details
 ```
 Adaptive Graph of Thoughts/
 ├── 📁 .github/                           # GitHub specific files (workflows)
-├── 📁 config/                             # Configuration files (settings.yaml)
-├── 📁 docs_src/                           # Source files for MkDocs documentation
-├── 📁 src/                                # Source code
-│   └── 📁 asr_got_reimagined/            # Main application package
+├── 📁 config/                            # Configuration files (settings.yaml)
+├── 📁 docs_src/                          # Source files for MkDocs documentation
+├── 📁 src/                               # Source code
+│   └── 📁 adaptive_graph_of_thoughts     # Main application package
 ├── 📁 tests/                             # Test suite
 ├── Dockerfile                            # Docker container definition
 ├── docker-compose.yml                    # Docker Compose for development
