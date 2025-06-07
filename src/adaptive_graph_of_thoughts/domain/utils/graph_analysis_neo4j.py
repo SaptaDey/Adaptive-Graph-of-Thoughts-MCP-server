@@ -229,5 +229,3 @@ def drop_graph_gds(graph_name: str) -> bool:
 
     logger.warning("This is a placeholder for dropping GDS graph. Real implementation would execute the query.")
     return True
-
-```

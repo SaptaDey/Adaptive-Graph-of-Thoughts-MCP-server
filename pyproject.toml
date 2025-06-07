@@ -23,7 +23,7 @@ classifiers = [
 
 [tool.poetry.dependencies]
 python = "^3.11" #  Python 3.11 or higher, now supports Python 3.13
-fastapi = "^0.111.0"
+fastapi = "^0.111.1"
 uvicorn = {extras = ["standard"], version = "^0.30.0"} # For running the FastAPI app
 pydantic = "^2.7.0"
 pydantic-settings = "^2.3.0" # For loading settings from files/env vars
