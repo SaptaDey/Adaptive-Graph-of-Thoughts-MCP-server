@@ -23,6 +23,7 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-009688.svg)](https://fastapi.tiangolo.com)
 [![neo4j](https://img.shields.io/badge/NetworkX-3.3-orange.svg)](https://neo4j.com)
 [![Last Updated](https://img.shields.io/badge/last_updated-May_2024-lightgrey.svg)](CHANGELOG.md)
+[![smithery badge](https://smithery.ai/badge/@SaptaDey/graph-of-thought-mcp)](https://smithery.ai/server/@SaptaDey/graph-of-thought-mcp)
 <!-- Add a GitHub Actions badge for documentation build once active -->
 <!-- [![Docs](https://github.com/sapta-dey/Adaptive Graph of Thoughts-2.0/actions/workflows/gh-pages.yml/badge.svg)](https://github.com/sapta-dey/Adaptive Graph of Thoughts-2.0/actions/workflows/gh-pages.yml) -->
 
