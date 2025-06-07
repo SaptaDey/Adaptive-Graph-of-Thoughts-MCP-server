@@ -81,6 +81,8 @@ class MCPServerFactory:
         got_processor = GoTProcessor(settings=settings)
 
         try:
+            # Send a newline to stdout to signal readiness or wake up mcp-inspector
+            print("", flush=True)
             # Main STDIO loop
             while True:
                 try:
