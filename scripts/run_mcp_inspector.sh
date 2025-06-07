@@ -13,6 +13,9 @@ echo "🔧 Installing MCP Inspector if necessary..."
 cd "$PROJECT_ROOT"
 npm install @modelcontextprotocol/inspector --no-save
 
+# Add local node_modules to PATH
+export PATH="$PROJECT_ROOT/node_modules/.bin:$PATH"
+
 # Run the Python testing script with the chosen mode
 echo "🚀 Running MCP Inspector tests with mode: $MODE"
 python3 "$PROJECT_ROOT/scripts/mcp_inspector_executor.py" "$MODE"

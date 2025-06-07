@@ -1,17 +1,43 @@
 import sys
+import subprocess
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1 and sys.argv[1] == "http":
-        print("HTTP transport test passed")
-        sys.exit(0)
-    elif len(sys.argv) > 1 and sys.argv[1] == "stdio":
-        # The original test for stdio is skipped in pytest,
-        # but the run_mcp_inspector.sh might still call this.
-        # The pytest test asserts "MCP Inspector started successfully"
-        # which seems to be an output of the mcp-inspector tool itself, not this script.
-        # For now, let's just exit cleanly for stdio if called.
-        print("STDIO mode called - MCP Inspector should provide further output if it were fully running.")
-        sys.exit(0)
+    if len(sys.argv) < 2:
+        print("Usage: python mcp_inspector_executor.py <http|stdio>")
+        sys.exit(1)
+
+    mode = sys.argv[1]
+    command = []
+
+    if mode == "http":
+        command = ["mcp-inspector", "-v", "validate", "http://localhost:8000/mcp"]
+    elif mode == "stdio":
+        command = ["mcp-inspector", "-v", "validate", "stdio", "--program", "python3", "src/adaptive_graph_of_thoughts/main_stdio.py"]
     else:
-        print(f"Unknown mode or no mode provided: {sys.argv[1:] if len(sys.argv) > 1 else 'None'}")
+        print(f"Unknown mode: {mode}. Supported modes are http, stdio.")
+        sys.exit(1)
+
+    try:
+        print(f"Running command: {' '.join(command)}")
+        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        print("MCP Inspector output:")
+        print(result.stdout)
+        if result.stderr:
+            print("MCP Inspector errors:")
+            print(result.stderr)
+        print(f"MCP Inspector test for {mode} transport passed.")
+        sys.exit(0)
+    except subprocess.CalledProcessError as e:
+        print(f"MCP Inspector command failed with exit code {e.returncode}")
+        print("Output:")
+        print(e.stdout)
+        print("Errors:")
+        print(e.stderr)
+        print(f"MCP Inspector test for {mode} transport failed.")
+        sys.exit(e.returncode)
+    except FileNotFoundError:
+        print(f"Error: mcp-inspector command not found. Make sure it is installed and in your PATH.")
+        sys.exit(1)
+    except Exception as e:
+        print(f"An unexpected error occurred: {e}")
         sys.exit(1)

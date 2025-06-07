@@ -27,12 +27,13 @@ except Exception as e:
 from src.adaptive_graph_of_thoughts.server_factory import MCPServerFactory
 # It's possible MCPServerFactory or its dependencies (like app_setup) also configure logging.
 # Re-adding a basic stderr sink if no handlers exist or if log output isn't appearing.
-if not logger._core.handlers:
-    logger.add(sys.stderr, level="INFO")
+# Redirect all logs to a file for stdio mode to keep stderr clean for mcp-inspector
+logger.remove() # Remove existing handlers
+logger.add("stdio_server.log", level=os.getenv("LOG_LEVEL", "INFO").upper(), rotation="10 MB")
 
 
 async def main():
-    logger.info("Attempting to start STDIO server via main_stdio.py...")
+    logger.info("Attempting to start STDIO server via main_stdio.py... (logging to stdio_server.log)")
     # This script is intended to *force* STDIO mode or be the dedicated entry for it.
     # We could override settings here if MCPServerFactory.run_stdio_server()
     # doesn't already imply/force STDIO mode.
@@ -50,9 +51,9 @@ if __name__ == "__main__":
     # This ensures that if this script is run directly, logs are visible.
     # Check if any handlers are configured for the root logger.
     # The logger in app_setup is comprehensive; here, just ensure something is present.
-    if not logger._core.handlers: # Check if Loguru has any handlers
-         logger.remove() # Remove default handler if any (usually none unless configured)
-         logger.add(sys.stderr, level=os.getenv("LOG_LEVEL", "INFO").upper())
+    # Ensure logger is configured if running as main, now redirecting to file
+    # logger.remove() # Already removed above
+    # logger.add("stdio_main.log", level=os.getenv("LOG_LEVEL", "INFO").upper())
 
-    logger.info(f"Executing main_stdio.py with __name__ == '__main__'")
+    logger.info(f"Executing main_stdio.py with __name__ == '__main__' (logging to stdio_server.log)")
     asyncio.run(main())
