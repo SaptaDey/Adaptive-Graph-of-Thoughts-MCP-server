@@ -19,7 +19,7 @@ if __name__ == "__main__":
 
     try:
         print(f"Running command: {' '.join(command)}")
-        result = subprocess.run(command, capture_output=True, text=True, check=True)
+        result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=480) # e.g., 480 seconds, or make configurable
         print("MCP Inspector output:")
         print(result.stdout)
         if result.stderr:
