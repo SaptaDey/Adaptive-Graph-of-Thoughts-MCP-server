@@ -166,3 +166,54 @@ def test_gather_evidence_invalid_prompt_type(sample_thoughts):
     # Non-string prompt should raise a TypeError
     with pytest.raises(TypeError):
         gather_evidence(123, sample_thoughts)
+# --- Additional robustness and edge-case tests (added) ---------------------
+
+def test_gather_evidence_malformed_llm_response(monkeypatch, sample_prompt, sample_thoughts):
+    # Fake response where content lacks the expected 'id|text' delimiter.
+    bad_contents = ["MissingDelimiterText"]
+    import adaptive_graph_of_thoughts.stage_4_evidence as s4
+    monkeypatch.setattr(
+        s4.openai.ChatCompletion,
+        "create",
+        lambda **kwargs: FakeResponse(bad_contents),
+    )
+    with pytest.raises(ValueError):
+        gather_evidence(sample_prompt, sample_thoughts)
+
+def test_gather_evidence_duplicate_ids(monkeypatch, sample_prompt, sample_thoughts):
+    dup_contents = ["X|First", "X|Second"]
+    import adaptive_graph_of_thoughts.stage_4_evidence as s4
+    monkeypatch.setattr(
+        s4.openai.ChatCompletion,
+        "create",
+        lambda **kwargs: FakeResponse(dup_contents),
+    )
+    with pytest.raises(ValueError):
+        gather_evidence(sample_prompt, sample_thoughts)
+
+def test_score_evidence_nan_scores():
+    import math
+    evs = [Evidence(id="nan", text="bad", score=math.nan)]
+    with pytest.raises(ValueError):
+        score_evidence(evs)
+
+def test_select_best_evidence_default_max_items(sample_evidence):
+    result = select_best_evidence(sample_evidence)
+    assert len(result) == len(sample_evidence)
+    assert result == sorted(sample_evidence, key=lambda e: e.score, reverse=True)
+
+@given(
+    st.lists(
+        st.builds(
+            lambda id, text, score: Evidence(id=id, text=text, score=score),
+            id=st.text(min_size=1),
+            text=st.text(),
+            score=st.floats(allow_nan=False, allow_infinity=False),
+        ),
+        min_size=1,
+    )
+)
+def test_select_best_evidence_input_immutable(evidence_list):
+    orig = list(evidence_list)  # shallow copy
+    select_best_evidence(evidence_list, max_items=len(evidence_list))
+    assert evidence_list == orig

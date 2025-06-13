@@ -61,3 +61,53 @@ def test_run_with_invalid_evidence_type(minimal_state):
     invalid_items = [1, 2, 3]
     with pytest.raises(TypeError):
         stage.run(minimal_state, invalid_items, config={})
+def test_run_with_duplicate_evidence(minimal_state, monkeypatch):
+    """Duplicate evidence strings should be preserved (business rule: duplicates allowed)."""
+    monkeypatch.setattr(Stage4Evidence, "_fetch_additional_info", lambda self, x: {})
+    stage = Stage4Evidence()
+    items = ["e1", "e2", "e1"]  # duplicate 'e1'
+    updated_state, success = stage.run(minimal_state, items, config={})
+    assert success is True
+    assert updated_state.evidence == items  # duplicates kept
+
+def test_run_with_none_evidence(minimal_state):
+    """Passing None instead of a list should raise TypeError."""
+    stage = Stage4Evidence()
+    with pytest.raises(TypeError):
+        stage.run(minimal_state, None, config={})
+
+def test_run_with_wrong_step(monkeypatch):
+    """Stage4Evidence expects state.step == 4; otherwise ValueError is raised."""
+    wrong_state = MinimalState()
+    wrong_state.step = 3
+    stage = Stage4Evidence()
+    with pytest.raises(ValueError):
+        stage.run(wrong_state, ["e1"], config={})
+
+def test_fetch_additional_info_merges_into_state(minimal_state, monkeypatch):
+    """_fetch_additional_info return dict should be merged into state.data."""
+    extra = {"foo": "bar", "num": 42}
+    monkeypatch.setattr(Stage4Evidence, "_fetch_additional_info", lambda self, x: extra)
+    stage = Stage4Evidence()
+    updated_state, success = stage.run(minimal_state, ["e1"], config={})
+    assert success is True
+    for k, v in extra.items():
+        assert updated_state.data[k] == v
+
+def test_evidence_whitespace_trim(minimal_state, monkeypatch):
+    """Evidence strings should be trimmed of leading/trailing whitespace."""
+    monkeypatch.setattr(Stage4Evidence, "_fetch_additional_info", lambda self, x: {})
+    stage = Stage4Evidence()
+    items = ["  ev1  ", "\tev2\n"]
+    updated_state, _ = stage.run(minimal_state, items, config={})
+    assert updated_state.evidence == ["ev1", "ev2"]
+
+def test_run_idempotent(minimal_state, monkeypatch):
+    """Running Stage4Evidence twice with same evidence should yield identical state."""
+    monkeypatch.setattr(Stage4Evidence, "_fetch_additional_info", lambda self, x: {})
+    stage = Stage4Evidence()
+    items = ["ev1"]
+    state1, _ = stage.run(minimal_state, items, config={})
+    state2, _ = stage.run(state1, items, config={})
+    assert state1.evidence == state2.evidence
+    assert state1.data == state2.data
