@@ -24,15 +24,6 @@ services:
       HOST: "${HOST:-0.0.0.0}"
       PORT: "${PORT:-8000}"
       LOG_LEVEL: "${LOG_LEVEL:-info}"
-      # Secrets Management: Pass API keys and sensitive config from environment
-      # These should be set in the environment where docker-compose is run (e.g., GitHub Secrets)
-      PUBMED__API_KEY: "${PUBMED_API_KEY}"
-      EXA_SEARCH__API_KEY: "${EXA_SEARCH_API}"
-      NEO4J__URI: "${NEO4J_URI}"
-      NEO4J__USERNAME: "${NEO4J_USERNAME}"
-      NEO4J__PASSWORD: "${NEO4J_PASSWORD}"
-      CLAUDE_API__API_KEY: "${CLAUDE_API_KEY}"
-      OPENAI_API__API_KEY: "${OPENAI_API_KEY}"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s

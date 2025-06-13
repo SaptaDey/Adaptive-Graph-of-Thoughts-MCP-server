@@ -320,6 +320,68 @@
       "additionalProperties": false,
       "default": null
     },
+    "google_scholar": {
+      "type": ["object", "null"],
+      "title": "Google Scholar API Configuration",
+      "description": "Settings for accessing Google Scholar, potentially via an intermediary like SerpApi.",
+      "properties": {
+        "api_key": {
+          "type": ["string", "null"],
+          "description": "API key for Google Scholar (e.g., SerpApi key). Can be the key itself or 'env_var:YOUR_ENV_VAR_NAME'."
+        },
+        "base_url": {
+          "type": "string",
+          "format": "uri",
+          "default": "https://serpapi.com/search",
+          "description": "Base URL for the Google Scholar search API."
+        }
+      },
+      "additionalProperties": false,
+      "default": null
+    },
+    "pubmed": {
+      "type": ["object", "null"],
+      "title": "PubMed API Configuration",
+      "description": "Settings for accessing NCBI E-utilities (PubMed).",
+      "properties": {
+        "api_key": {
+          "type": ["string", "null"],
+          "description": "API key for NCBI E-utilities. Can be the key itself or 'env_var:YOUR_ENV_VAR_NAME'."
+        },
+        "base_url": {
+          "type": "string",
+          "format": "uri",
+          "default": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
+          "description": "Base URL for the PubMed API."
+        },
+        "email": {
+          "type": ["string", "null"],
+          "format": "email",
+          "description": "Email address for NCBI E-utilities (recommended by NCBI). Can be the email itself or 'env_var:YOUR_ENV_VAR_NAME'."
+        }
+      },
+      "additionalProperties": false,
+      "default": null
+    },
+    "exa_search": {
+      "type": ["object", "null"],
+      "title": "Exa Search API Configuration",
+      "description": "Settings for accessing the Exa Search API.",
+      "properties": {
+        "api_key": {
+          "type": ["string", "null"],
+          "description": "API key for Exa Search. Can be the key itself or 'env_var:YOUR_ENV_VAR_NAME'."
+        },
+        "base_url": {
+          "type": "string",
+          "format": "uri",
+          "default": "https://api.exa.ai",
+          "description": "Base URL for the Exa Search API."
+        }
+      },
+      "additionalProperties": false,
+      "default": null
+    },
     "knowledge_domains": {
       "type": "array",
       "title": "Knowledge Domains",

@@ -99,24 +99,19 @@ class ClaudeAPIConfig(BaseModel):
     timeout_seconds: int = Field(default=120)
     max_retries: int = Field(default=2)
 
-# --- Models for optional PubMed integration ---
+# --- Models for Search Engine APIs ---
+class GoogleScholarConfig(BaseModel):
+    api_key: Optional[str] = None
+    base_url: str = "https://serpapi.com/search"
+
 class PubMedConfig(BaseModel):
-    api_key: Optional[str] = None
+    api_key: Optional[str] = None  # For NCBI E-utilities, if rates are high
+    base_url: str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+    email: Optional[str] = None  # Recommended by NCBI for E-utilities
 
-# --- Models for optional ExaSearch integration ---
 class ExaSearchConfig(BaseModel):
-    api_key: Optional[str] = None
-
-# --- Models for optional Neo4j integration ---
-class Neo4jConfig(BaseModel):
-    uri: Optional[str] = None
-    username: Optional[str] = None
-    password: Optional[str] = None
-    database: Optional[str] = "neo4j"
-
-# --- Models for optional OpenAI API integration ---
-class OpenAIAPIConfig(BaseModel):
-    api_key: Optional[str] = None
+    api_key: Optional[str] = None  # For Exa API
+    base_url: str = "https://api.exa.ai"
 
 class KnowledgeDomain(BaseModel):
     name: str
@@ -160,10 +155,9 @@ class Settings(BaseSettings):
     asr_got: ASRGoTConfig = Field(default_factory=ASRGoTConfig)
     mcp_settings: MCPSettings = Field(default_factory=MCPSettings)
     claude_api: Optional[ClaudeAPIConfig] = None  # Optional section
+    google_scholar: Optional[GoogleScholarConfig] = None
     pubmed: Optional[PubMedConfig] = None
     exa_search: Optional[ExaSearchConfig] = None
-    neo4j: Optional[Neo4jConfig] = None
-    openai_api: Optional[OpenAIAPIConfig] = None
     knowledge_domains: list[KnowledgeDomain] = Field(default_factory=list)
 
     model_config = SettingsConfigDict(

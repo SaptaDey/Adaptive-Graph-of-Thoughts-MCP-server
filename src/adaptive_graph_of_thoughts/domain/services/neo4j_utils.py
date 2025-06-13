@@ -3,23 +3,45 @@ from neo4j.exceptions import Neo4jError, ServiceUnavailable
 from typing import Optional, Any, List, Dict
 import asyncio
 from loguru import logger
+from pydantic_settings import BaseSettings
+from pydantic import Field
 
-from adaptive_graph_of_thoughts.config import settings # Import global settings
+# --- Configuration ---
+class Neo4jSettings(BaseSettings):
+    uri: str = "neo4j://localhost:7687"
+    user: str = "neo4j"
+    password: str = Field(..., env="NEO4J_PASSWORD")
+    database: str = "neo4j"  # Default database for operations if not specified per query
 
-# --- Global Driver Instance ---
+    class Config:
+        env_prefix = "NEO4J_"
+
+_neo4j_settings: Optional[Neo4jSettings] = None
 _driver: Optional[Driver] = None
+
+def get_neo4j_settings() -> Neo4jSettings:
+    """Returns the Neo4j settings, initializing them if necessary."""
+    global _neo4j_settings
+    if _neo4j_settings is None:
+        logger.info("Initializing Neo4j settings.")
+        _neo4j_settings = Neo4jSettings()
+        logger.debug(f"Neo4j Settings loaded: URI='{_neo4j_settings.uri}', User='{_neo4j_settings.user}', Default DB='{_neo4j_settings.database}'")
+    return _neo4j_settings
 
 # --- Driver Management ---
 def get_neo4j_driver() -> Driver:
     """
+
     Returns a singleton Neo4j driver instance initialized with credentials from global settings.
     
     Raises:
         ServiceUnavailable: If Neo4j configuration is missing or connection fails.
+
     """
     global _driver
-
+    # Create a driver only if one doesn't yet exist or has been closed
     if _driver is None or _driver.closed:
+
         if settings.neo4j is None:
             logger.error("Neo4j configuration is missing in global settings.")
             raise ServiceUnavailable("Neo4j configuration is not available.")
@@ -33,17 +55,18 @@ def get_neo4j_driver() -> Driver:
             raise ServiceUnavailable("Neo4j connection details are incomplete in settings.")
 
         logger.info(f"Initializing Neo4j driver for URI: {uri}")
-        try:
-            _driver = GraphDatabase.driver(uri, auth=(username, password))
+
+            _driver = GraphDatabase.driver(settings.uri, auth=(settings.user, settings.password))
+            # Verify connectivity
             _driver.verify_connectivity()
             logger.info("Neo4j driver initialized and connectivity verified.")
         except ServiceUnavailable as e:
-            logger.error(f"Failed to connect to Neo4j at {uri}: {e}")
-            _driver = None  # Ensure driver is None if connection failed
-            raise
+            logger.error(f"Failed to connect to Neo4j at {settings.uri}: {e}")
+            _driver = None # Ensure driver is None if connection failed
+            raise  # Re-raise the exception to signal connection failure
         except Exception as e:
             logger.error(f"An unexpected error occurred while initializing Neo4j driver: {e}")
-            _driver = None  # Ensure driver is None on other errors
+            _driver = None # Ensure driver is None on other errors
             raise
     return _driver
 
@@ -84,13 +107,12 @@ async def execute_query(
         ValueError: If an invalid transaction type is specified.
     """
     driver = get_neo4j_driver()  # Ensures driver is initialized
+    if not driver:  # Should not happen if get_neo4j_driver raises on failure
+        logger.error("Neo4j driver not available. Cannot execute query.")
+        raise ServiceUnavailable("Neo4j driver not initialized or connection failed.")
 
-    # Determine the database name
-    db_name: Optional[str] = database  # Use function argument first
-    if db_name is None and settings.neo4j and settings.neo4j.database:
-        db_name = settings.neo4j.database  # Fallback to global settings
-    if db_name is None:
-        db_name = "neo4j"  # Default if not specified anywhere
+    settings = get_neo4j_settings()
+    db_name = database if database else settings.database
 
     records: List[Record] = []
 
