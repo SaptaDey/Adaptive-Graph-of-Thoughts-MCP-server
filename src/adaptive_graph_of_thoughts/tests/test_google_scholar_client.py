@@ -8,6 +8,15 @@ from adaptive_graph_of_thoughts.google_scholar_client import (
 )
 
 def load_fixture(filename):
+    """
+    Loads and returns the contents of a fixture file from the 'fixtures' directory.
+    
+    Args:
+        filename: Name of the fixture file to load.
+    
+    Returns:
+        The contents of the specified fixture file as a string.
+    """
     fixture_path = os.path.join(
         os.path.dirname(__file__), "fixtures", filename
     )
@@ -16,21 +25,44 @@ def load_fixture(filename):
 
 @pytest.fixture
 def mock_response(monkeypatch):
-    """Mock successful HTTP response with sample HTML."""
+    """
+    Pytest fixture that mocks a successful HTTP GET request with sample HTML content.
+    
+    Returns:
+        A function that, when called with a fixture filename, patches `requests.get`
+        to return a mock response containing the HTML from the specified file.
+    """
     def _mock(html_file):
+        """
+        Mocks the HTTP GET request to return the contents of a specified HTML fixture file.
+        
+        Args:
+            html_file: The filename of the HTML fixture to use for the mock response.
+        
+        This function replaces `requests.get` with a lambda that returns a mock response object containing the loaded HTML content and a status code of 200.
+        """
         html = load_fixture(html_file)
         class MockResponse:
             status_code = 200
             text = html
             def raise_for_status(self):
+                """
+                Does nothing; placeholder for the raise_for_status method in mock responses.
+                """
                 pass
         monkeypatch.setattr("requests.get", lambda *args, **kwargs: MockResponse())
     return _mock
 
 @pytest.fixture
 def mock_error_response(monkeypatch):
-    """Mock HTTP error response."""
+    """
+    Pytest fixture that mocks HTTP GET requests to simulate error responses.
+    
+    Returns a function that, when called with a status code, patches `requests.get`
+    to return a mock response object that raises an HTTPError with the given status code.
+    """
     def _mock(status_code):
+        Creates a mock HTTP response with a specified status code that raises an HTTPError when `raise_for_status` is called.
         class MockResponse:
             status_code = status_code
             text = ""
@@ -65,7 +97,12 @@ def test_search_happy_path(mock_response, query, max_results, expected_count):
     ["", "a" * 1001, "!@#$%^&*()"]
 )
 def test_search_invalid_query_raises(query):
-    """Invalid queries should raise ValueError."""
+    """
+    Tests that invalid search queries raise a ValueError.
+    
+    Args:
+    	query: The invalid query string to test.
+    """
     client = GoogleScholarClient()
     with pytest.raises(ValueError):
         client.search(query)
@@ -89,7 +126,9 @@ def test_search_timeout_raises(monkeypatch):
         client.search("timeout")
 
 def test_search_malformed_response_raises(monkeypatch):
-    """Malformed HTML leads to parsing errors as GoogleScholarError."""
+    """
+    Tests that a malformed HTML response without expected markers causes GoogleScholarClient.search to raise a GoogleScholarError.
+    """
     class MockResp:
         status_code = 200
         text = "<html><body>no expected markers</body></html>"
@@ -101,7 +140,9 @@ def test_search_malformed_response_raises(monkeypatch):
         client.search("malformed")
 
 def test_search_pagination_respects_max_results(mock_response):
-    """Client should respect max_results across pages."""
+    """
+    Tests that the GoogleScholarClient returns no more than the specified max_results across paginated search results.
+    """
     mock_response("google_scholar_search_sample.html")
     client = GoogleScholarClient()
     results = client.search("paging test", max_results=2)

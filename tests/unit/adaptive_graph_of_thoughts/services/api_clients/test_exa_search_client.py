@@ -5,6 +5,16 @@
 
 class EmptyMockExaClient:
     def search(self, query, num_results):
+        """
+        Returns an empty list to simulate a search with no results.
+        
+        Args:
+            query: The search query string.
+            num_results: The maximum number of results to return.
+        
+        Returns:
+            An empty list, representing no search results.
+        """
         return []
 
 def test_search_no_results(monkeypatch):
@@ -14,6 +24,9 @@ def test_search_no_results(monkeypatch):
     """
     # Arrange
     def mock_init(self, api_key: str, base_url: str):
+        """
+        Initializes the mock client by assigning an instance of EmptyMockExaClient.
+        """
         self.client = EmptyMockExaClient()
 
     monkeypatch.setattr(ExaSearchClient, "__init__", mock_init)
@@ -28,7 +41,7 @@ def test_search_no_results(monkeypatch):
 
 def test_search_invalid_num_results(monkeypatch):
     """
-    Passing num_results <= 0 should raise a ValueError.
+    Tests that ExaSearchClient.search raises ValueError when num_results is zero or negative.
     """
     monkeypatch.setattr(
         ExaSearchClient,
@@ -44,10 +57,16 @@ def test_search_invalid_num_results(monkeypatch):
 
 def test_search_api_failure(monkeypatch):
     """
-    The client should propagate exceptions raised by the underlying SDK.
+    Tests that ExaSearchClient propagates exceptions raised by the underlying SDK during search operations.
     """
     class FailingMockExaClient:
         def search(self, query, num_results):
+            """
+            Simulates a search operation that always fails by raising a RuntimeError.
+            
+            Raises:
+                RuntimeError: Always raised to simulate an upstream failure.
+            """
             raise RuntimeError("Upstream failure")
 
     monkeypatch.setattr(

@@ -67,6 +67,9 @@ def test_search_malformed_json(requests_mock):
 def test_search_timeout(monkeypatch):
     client = PubMedClient()
     def raise_timeout(*args, **kwargs):
+        """
+        Simulates a request timeout by raising a requests.exceptions.Timeout exception.
+        """
         raise requests.exceptions.Timeout
     monkeypatch.setattr(client._session, "get", raise_timeout)
     with pytest.raises(PublicationAPIError):
