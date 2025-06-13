@@ -213,6 +213,7 @@ class EvidenceStage(BaseStage):
     ) -> List[Dict[str, Any]]:
         hypo_label = hypothesis_data_from_neo4j.get("label", "")
         hypo_id = hypothesis_data_from_neo4j.get("id", "unknown_hypo")
+
         plan_json_str = hypothesis_data_from_neo4j.get("plan_json")
 
         search_query = hypo_label # Default query
