@@ -99,6 +99,11 @@ def test_http_error_propagates(monkeypatch):
     client = ExaSearchClient()
 
     def _raise_500(*_a, **_kw):
+        """
+        Raises an HTTPError simulating a 500 Server Error response.
+        
+        This helper is typically used in tests to mock server-side HTTP failures.
+        """
         err = HTTPError("500 Server Error")
         err.response = MagicMock(status_code=500)
         raise err
@@ -123,7 +128,9 @@ def test_timeout_surfaces(monkeypatch):
             client.query("slow")
 
 def test_query_whitespace_normalization(monkeypatch):
-    """Query should be trimmed before being sent."""
+    """
+    Tests that leading and trailing whitespace in the query string is removed before sending the request payload.
+    """
     monkeypatch.setenv("EXA_API_KEY", "dummy")
     client = ExaSearchClient()
     raw = "   spaced   "

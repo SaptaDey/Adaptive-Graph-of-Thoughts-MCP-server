@@ -13,6 +13,11 @@ def test_config_load_from_yaml(tmp_path):
     assert config.max_steps == 1000
 
 def test_config_load_with_defaults(tmp_path):
+    """
+    Tests that loading a configuration YAML file missing optional keys assigns default values.
+    
+    Verifies that when the 'max_steps' key is absent, the loaded Config object includes 'max_steps' with an integer default value.
+    """
     config_data = {"learning_rate": 0.01, "batch_size": 32}
     config_file = tmp_path / "config.yaml"
     config_file.write_text(yaml.dump(config_data))
@@ -23,6 +28,13 @@ def test_config_load_with_defaults(tmp_path):
 
 @pytest.mark.parametrize("missing_key", ["learning_rate", "batch_size"])
 def test_config_missing_required_key_raises(tmp_path, missing_key):
+    """
+    Tests that loading a configuration file missing a required key raises a ValueError.
+    
+    Args:
+        tmp_path: Temporary directory path fixture for file operations.
+        missing_key: The required configuration key to omit from the YAML file.
+    """
     full_data = {"learning_rate": 0.01, "batch_size": 32}
     data = {k: v for k, v in full_data.items() if k != missing_key}
     config_file = tmp_path / "config.yaml"
@@ -36,6 +48,12 @@ def test_config_missing_required_key_raises(tmp_path, missing_key):
     {"learning_rate": 0.01, "batch_size": 32, "max_steps": "many"},
 ])
 def test_config_invalid_type_raises(tmp_path, bad_data):
+    """
+    Tests that loading a configuration file with invalid data types raises a ValueError.
+    
+    Writes a YAML file with incorrect types for configuration fields, then asserts that
+    Config.load() raises a ValueError when attempting to load the file.
+    """
     config_file = tmp_path / "config.yaml"
     config_file.write_text(yaml.dump(bad_data))
     with pytest.raises(ValueError):
