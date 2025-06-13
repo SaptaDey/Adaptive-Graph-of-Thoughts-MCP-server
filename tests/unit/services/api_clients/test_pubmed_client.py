@@ -389,4 +389,90 @@ async def test_fetch_abstract_malformed_xml(pubmed_client_fixture: PubMedClient,
     )
     with pytest.raises(PubMedClientError, match=f"XML parsing error for eFetch \(PMID {pmid}\)"):
         await client.fetch_abstract(pmid)
-```
+# --- Additional Edge-Case Tests ---
+
+SAMPLE_ESEARCH_THREE_PMIDS_JSON = {
+    "header": {"type": "esearch", "version": "2.0"},
+    "esearchresult": {
+        "count": "3", "retmax": "3", "retstart": "0",
+        "idlist": ["111", "222", "333"],
+        "translationset": [],
+        "querytranslation": "edge case[all fields]"
+    }
+}
+
+SAMPLE_ESUMMARY_TWO_ARTICLES_MISSING_DOI_XML = """<eSummaryResult>
+    <DocSum>
+        <Id>111</Id>
+        <Item Name="Title" Type="String">Edge Title 1</Item>
+        <Item Name="AuthorList" Type="List"><Item Name="Author" Type="String">Edge Author</Item></Item>
+        <Item Name="Source" Type="String">Edge Journal</Item>
+        <Item Name="PubDate" Type="String">2024 Feb</Item>
+        <Item Name="DOI" Type="String">10.1000/edge.doi.1</Item>
+    </DocSum>
+    <DocSum>
+        <Id>222</Id>
+        <Item Name="Title" Type="String">Edge Title 2</Item>
+        <Item Name="AuthorList" Type="List"><Item Name="Author" Type="String">Missing DOI Author</Item></Item>
+        <Item Name="Source" Type="String">Other Journal</Item>
+        <Item Name="PubDate" Type="String">2024 Mar</Item>
+        <!-- DOI intentionally omitted -->
+    </DocSum>
+</eSummaryResult>"""
+
+SAMPLE_EFETCH_DOUBLE_ABSTRACT_XML_111 = """<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation><PMID>111</PMID>
+      <Article><Abstract>
+        <AbstractText>This is part one.</AbstractText>
+        <AbstractText>This is part two.</AbstractText>
+      </Abstract></Article>
+    </MedlineCitation>
+  </PubmedArticle>
+</PubmedArticleSet>"""
+
+SAMPLE_EFETCH_NO_ABSTRACT_XML_222 = """<PubmedArticleSet>
+  <PubmedArticle>
+    <MedlineCitation><PMID>222</PMID><Article><!-- no abstract --></Article></MedlineCitation>
+  </PubmedArticle>
+</PubmedArticleSet>"""
+
+@pytest.mark.asyncio
+async def test_search_articles_edge_cases(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
+    """Edge-case combo: more PMIDs than requested, missing metadata, multi-abstract concat, and missing abstract."""
+    client = pubmed_client_fixture
+
+    # eSearch returns 3 PMIDs
+    httpx_mock.add_response(
+        url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
+        json=SAMPLE_ESEARCH_THREE_PMIDS_JSON
+    )
+    # eSummary only contains first two PMIDs (max_results=2)
+    httpx_mock.add_response(
+        url=f"{client.config.base_url.rstrip('/')}/esummary.fcgi",
+        text=SAMPLE_ESUMMARY_TWO_ARTICLES_MISSING_DOI_XML
+    )
+    # eFetch for 111 with two AbstractText nodes
+    httpx_mock.add_response(
+        url=f"{client.config.base_url.rstrip('/')}/efetch.fcgi?db=pubmed&id=111&rettype=abstract&retmode=xml&email=test%40example.com",
+        text=SAMPLE_EFETCH_DOUBLE_ABSTRACT_XML_111
+    )
+    # eFetch for 222 with no abstract
+    httpx_mock.add_response(
+        url=f"{client.config.base_url.rstrip('/')}/efetch.fcgi?db=pubmed&id=222&rettype=abstract&retmode=xml&email=test%40example.com",
+        text=SAMPLE_EFETCH_NO_ABSTRACT_XML_222
+    )
+
+    articles = await client.search_articles("edge case", max_results=2)
+
+    # Only two results expected due to max_results
+    assert len(articles) == 2
+    pmids = {a.pmid for a in articles}
+    assert pmids == {"111", "222"}
+
+    art111 = next(a for a in articles if a.pmid == "111")
+    assert art111.abstract == "This is part one. This is part two."
+
+    art222 = next(a for a in articles if a.pmid == "222")
+    assert art222.abstract is None
+    assert art222.doi is None  # Missing DOI handled as None

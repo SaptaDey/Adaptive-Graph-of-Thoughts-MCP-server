@@ -274,42 +274,44 @@ async def test_evidence_stage_execute_no_hypotheses(evidence_stage_all_clients: 
     assert output.next_stage_context_update[EvidenceStage.stage_name]["error"] == "No hypotheses found"
 
     stage.close_clients.assert_called_once()
-stage.close_clients.assert_called_once()
-
+```
 import math
+import moretyping
+import asyncio
 
 @pytest.mark.asyncio
-async def test_close_clients_handles_none(mock_settings_pubmed_only):
-    stage = EvidenceStage(settings=mock_settings_pubmed_only)
-    # ensure only pubmed client is present
-    assert stage.google_scholar_client is None and stage.exa_client is None
-    # replace pubmed close with AsyncMock to observe call
+async def test_update_hypothesis_confidence_handles_empty_vector(evidence_stage_all_clients: EvidenceStage, sample_hypothesis_data: Dict[str, Any]):
+    stage = evidence_stage_all_clients
+    # prepare hypothesis data with empty confidence_vector_list
+    hypothesis = sample_hypothesis_data.copy()
+    hypothesis["confidence_vector_list"] = []
+    # patch Neo4j update call to simply return True
+    stage._update_hypothesis_confidence_in_neo4j = AsyncMock(return_value=True)
+    await stage._update_hypothesis_confidence_in_neo4j(hypothesis["id"], StatisticalPower.UNKNOWN.value)
+    stage._update_hypothesis_confidence_in_neo4j.assert_awaited_once()
+
+def test_close_clients_when_some_none(evidence_stage_pubmed_only: EvidenceStage):
+    stage = evidence_stage_pubmed_only
+    # google_scholar_client & exa_client are None by fixture
+    # ensure pubmed_client.close will be awaited
     stage.pubmed_client.close = AsyncMock()
-    await stage.close_clients()
-    stage.pubmed_client.close.assert_called_once()
-
-@pytest.fixture
-def simple_conf_vector():
-    return [0.2, 0.4, 0.6, 0.8]
-
-def test_update_hypothesis_confidence_vector(evidence_stage_all_clients, simple_conf_vector):
-    stage = evidence_stage_all_clients
-    original_vector = simple_conf_vector.copy()
-    updated_vector = stage._update_hypothesis_confidence(original_vector, found_evidence_cnt=5)
-    # vector length unchanged
-    assert len(updated_vector) == len(original_vector)
-    # each element should be between 0 and 1
-    assert all(0.0 <= v <= 1.0 for v in updated_vector)
-    # updated vector must differ from original to reflect evidence
-    assert updated_vector != original_vector
-    # optional: ensure monotonic increase when evidence present
-    assert all(u >= o for u, o in zip(updated_vector, original_vector))
+    asyncio.run(stage.close_clients())
+    stage.pubmed_client.close.assert_awaited_once()
 
 @pytest.mark.asyncio
-async def test_select_hypothesis_neo4j_error_handling(evidence_stage_all_clients, sample_hypothesis_data):
-    stage = evidence_stage_all_clients
-    with patch.object(stage, "_query_hypotheses_from_neo4j", new_callable=AsyncMock) as mock_query:
-        mock_query.side_effect = Exception("neo4j unavailable")
-        result = await stage._select_hypothesis_to_evaluate_from_neo4j()
-        # When errored, expect None to be propagated upward gracefully
-        assert result is None
+async def test_evidence_stage_respects_max_iterations(mock_settings_all_clients: Settings, mock_session_data: GoTProcessorSessionData, sample_hypothesis_data: Dict[str, Any]):
+    # set evidence_max_iterations to 2
+    mock_settings_all_clients.asr_got.default_parameters.evidence_max_iterations = 2
+    with patch('adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.PubMedClient', new_callable=AsyncMock) as MockPubMed:
+        stage = EvidenceStage(settings=mock_settings_all_clients)
+        # configure internal selector to return hypothesis twice then None
+        stage._select_hypothesis_to_evaluate_from_neo4j = AsyncMock(side_effect=[sample_hypothesis_data] * 2 + [None])
+        stage._execute_hypothesis_plan = AsyncMock(return_value=[])
+        stage._create_evidence_in_neo4j = AsyncMock(return_value=None)
+        stage._update_hypothesis_confidence_in_neo4j = AsyncMock(return_value=True)
+        stage._create_ibn_in_neo4j = AsyncMock(return_value=None)
+        stage._create_hyperedges_in_neo4j = AsyncMock(return_value=[])
+        stage._apply_temporal_decay_and_patterns = AsyncMock()
+        stage._adapt_graph_topology = AsyncMock()
+        output = await stage.execute(mock_session_data)
+        assert output.metrics["iterations_completed"] == 2

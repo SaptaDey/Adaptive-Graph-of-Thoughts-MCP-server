@@ -207,4 +207,45 @@ async def test_parsing_cited_by_count(gs_client_fixture: GoogleScholarClient, ht
     assert "Could not parse cited_by_count 'onetwothree' as int" in caplog.text
     assert articles[2].cited_by_count is None # Missing 'total' key
     assert articles[3].cited_by_count is None # No 'cited_by' or 'inline_links'
-```
+assert articles[3].cited_by_count is None  # No 'cited_by' or 'inline_links'
+
+async def test_search_timeout(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    client = gs_client_fixture
+    httpx_mock.add_exception(httpx.ReadTimeout("Simulated read timeout"))
+    with pytest.raises(GoogleScholarClientError) as exc_info:
+        await client.search("timeout query")
+    # Underlying cause should be APIRequestError
+    assert isinstance(exc_info.value.__cause__, APIRequestError)
+
+async def test_missing_api_key_at_runtime(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    client = gs_client_fixture
+    # Tamper api_key to None after construction
+    client.api_key = None  # type: ignore
+    with pytest.raises(GoogleScholarClientError, match="API key must be set"):
+        await client.search("query missing api key")
+
+async def test_parsing_authors_mixed_delimiters(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    client = gs_client_fixture
+    custom_json = {
+        "organic_results": [
+            {
+                "title": "Paper Mixed Authors",
+                "publication_info": {
+                    "authors": [{"name": "First  A."}, {"name": "Second  B. "}]}
+            }
+        ]
+    }
+    httpx_mock.add_response(json=custom_json)
+    articles = await client.search("mixed author query")
+    assert articles[0].authors == "First  A., Second  B."  # Expect preserved but correctly concatenated list
+
+async def test_search_ignores_unknown_fields(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    client = gs_client_fixture
+    custom_json = json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)
+    # Inject unexpected field
+    for res in custom_json["organic_results"]:
+        res["unexpected_field"] = "unexpected_value"
+    httpx_mock.add_response(json=custom_json)
+    articles = await client.search("query unknown fields")
+    # Ensure still parses expected data
+    assert len(articles) == 2
