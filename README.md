@@ -83,10 +83,12 @@ Before running Adaptive Graph of Thoughts (either locally or via Docker if not u
 
 -   **A running Neo4j Instance**: Adaptive Graph of Thoughts requires a connection to a Neo4j graph database.
     -   **APOC Library**: Crucially, the Neo4j instance **must** have the APOC (Awesome Procedures On Cypher) library installed. Several Cypher queries within the application's reasoning stages utilize APOC procedures (e.g., `apoc.create.addLabels`, `apoc.merge.node`). Without APOC, the application will not function correctly. You can find installation instructions on the [official APOC website](https://neo4j.com/labs/apoc/installation/).
-    -   **Configuration**: Ensure that your `config/settings.yaml` (or corresponding environment variables) correctly points to your Neo4j instance URI, username, and password.
+    -   **Configuration**: Neo4j connection details (URI, username, password, database) are configured via the central `config/settings.yaml` file or, more commonly for production, through environment variables (e.g., `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`). See `docs_src/configuration.md` for details.
     -   **Indexing**: For optimal performance, ensure appropriate Neo4j indexes are created. See [Neo4j Indexing Strategy](docs/neo4j_indexing.md) for details.
+    -   **External API Keys (Optional but Recommended for Full Functionality)**: The application can integrate with external services like PubMed, Exa Search, Claude, and OpenAI. For these integrations to work, you need to provide API keys as environment variables (e.g., `PUBMED_API_KEY`, `EXA_SEARCH_API`, `CLAUDE_API_KEY`, `OPENAI_API_KEY`). The `docker-compose.prod.yml` file is set up to pass these variables from your deployment environment into the application container. For detailed information on these variables, please refer to the [Configuration Documentation](docs_src/configuration.md).
 
-    *Note: The provided `docker-compose.yml` (for development) and `docker-compose.prod.yml` (for production) already include a Neo4j service with the APOC library pre-configured, satisfying this requirement when using Docker Compose.*
+
+    *Note: The provided `docker-compose.yml` (for development) and `docker-compose.prod.yml` (for production) already include a Neo4j service with the APOC library pre-configured. The production Docker Compose file also includes mappings for the aforementioned API keys.*
 
 ### Prerequisites
 
