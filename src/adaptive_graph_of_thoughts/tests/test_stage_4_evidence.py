@@ -139,3 +139,30 @@ def test_select_best_evidence_idempotent(evidence_list):
     once = select_best_evidence(evidence_list, max_items=len(evidence_list))
     twice = select_best_evidence(once, max_items=len(once))
     assert once == twice
+# --- Additional edge-case tests --------------------------------------------
+
+def test_select_best_evidence_max_exceeds_list(sample_evidence):
+    # If max_items larger than list, should return full sorted list without error
+    bigger = select_best_evidence(sample_evidence, max_items=99)
+    expected = sorted(sample_evidence, key=lambda e: e.score, reverse=True)
+    assert bigger == expected
+
+def test_select_best_evidence_negative_max_items(sample_evidence):
+    # Negative max_items should raise a ValueError
+    with pytest.raises(ValueError):
+        select_best_evidence(sample_evidence, max_items=-1)
+
+def test_score_evidence_handles_negative_scores():
+    # Ensure descending sort even when scores include negatives and zero
+    evs = [
+        Evidence(id="neg1", text="neg", score=-1.0),
+        Evidence(id="zero", text="zero", score=0.0),
+        Evidence(id="pos", text="pos", score=1.0),
+    ]
+    sorted_evs = score_evidence(evs)
+    assert [ev.score for ev in sorted_evs] == [1.0, 0.0, -1.0]
+
+def test_gather_evidence_invalid_prompt_type(sample_thoughts):
+    # Non-string prompt should raise a TypeError
+    with pytest.raises(TypeError):
+        gather_evidence(123, sample_thoughts)

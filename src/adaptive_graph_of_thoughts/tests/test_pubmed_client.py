@@ -105,3 +105,39 @@ def test_get_article_raises_on_http_error(client, mocker):
 
     with pytest.raises(PubMedClientError):
         client.get_article("9999")
+def test_search_timeout_raises_pubmed_client_error(client, mocker):
+    """Client should raise PubMedClientError if request times out."""
+    client.session.get.side_effect = TimeoutError("timeout")
+    with pytest.raises(PubMedClientError):
+        client.search("timeout-case", max_results=1)
+
+def test_get_article_malformed_xml_raises_pubmed_client_error(client, mocker):
+    """Malformed XML in response should raise PubMedClientError."""
+    bad_xml = "<bad><xml>"  # unclosed tag
+    client.session.get.return_value = _mock_response(mocker, text=bad_xml)
+    with pytest.raises(PubMedClientError):
+        client.get_article("123")
+
+def test_search_respects_max_results(client, mocker):
+    """search should not return more IDs than max_results even if API returns more."""
+    many_ids = [str(i) for i in range(50)]
+    json_payload = {"esearchresult": {"idlist": many_ids, "count": "50"}}
+    client.session.get.return_value = _mock_response(mocker, json_data=json_payload)
+    ids = client.search("query", max_results=10)
+    assert len(ids) == 10
+    assert ids == many_ids[:10]
+
+@pytest.mark.parametrize("page_size", [0, -1, 101])
+def test_search_invalid_page_size_raises_value_error(client, page_size):
+    """Providing invalid page_size should raise ValueError."""
+    with pytest.raises(ValueError):
+        client.search("cancer", max_results=5, page_size=page_size)
+
+def test_search_sets_custom_headers(client, mocker):
+    """search should include custom headers set on the client."""
+    client.HEADERS = {"User-Agent": "AOT-Tester"}
+    fake_json = {"esearchresult": {"idlist": ["1"], "count": "1"}}
+    client.session.get.return_value = _mock_response(mocker, json_data=fake_json)
+    client.search("cancer", max_results=1)
+    called_headers = client.session.get.call_args.kwargs.get("headers")
+    assert called_headers == client.HEADERS

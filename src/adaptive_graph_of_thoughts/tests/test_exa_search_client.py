@@ -84,3 +84,56 @@ def test_invalid_parameter_type(monkeypatch):
         with pytest.raises(ValueError):
             client.query("bad params", num_results="ten")
         mock_send.assert_not_called()
+import json
+from requests.exceptions import Timeout, ConnectionError
+
+def test_missing_api_key_raises(monkeypatch):
+    """When EXA_API_KEY env var is absent, ExaSearchClient should raise ExaAuthenticationError on init."""
+    monkeypatch.delenv("EXA_API_KEY", raising=False)
+    with pytest.raises(ExaAuthenticationError):
+        ExaSearchClient()
+
+def test_http_error_propagates(monkeypatch):
+    """HTTP errors other than 401 should propagate as HTTPError."""
+    monkeypatch.setenv("EXA_API_KEY", "dummy")
+    client = ExaSearchClient()
+
+    def _raise_500(*_a, **_kw):
+        err = HTTPError("500 Server Error")
+        err.response = MagicMock(status_code=500)
+        raise err
+
+    with patch.object(ExaSearchClient, "_send_request", side_effect=_raise_500):
+        with pytest.raises(HTTPError):
+            client.query("server failure")
+
+def test_num_results_cap(monkeypatch):
+    """Requesting more than allowed num_results should raise ValueError."""
+    monkeypatch.setenv("EXA_API_KEY", "dummy")
+    client = ExaSearchClient()
+    with pytest.raises(ValueError):
+        client.query("too many", num_results=101)
+
+def test_timeout_surfaces(monkeypatch):
+    """Timeout during request should bubble up."""
+    monkeypatch.setenv("EXA_API_KEY", "dummy")
+    client = ExaSearchClient()
+    with patch.object(ExaSearchClient, "_send_request", side_effect=Timeout()):
+        with pytest.raises(Timeout):
+            client.query("slow")
+
+def test_query_whitespace_normalization(monkeypatch):
+    """Query should be trimmed before being sent."""
+    monkeypatch.setenv("EXA_API_KEY", "dummy")
+    client = ExaSearchClient()
+    raw = "   spaced   "
+    with patch.object(ExaSearchClient, "_send_request", return_value={"results": [], "next_page_token": None}) as mock_send:
+        client.query(raw)
+        sent_payload = mock_send.call_args[0][0]  # payload dict
+        assert sent_payload["query"] == raw.strip()
+
+def test_exa_result_str():
+    """__str__/__repr__ should include title and URL."""
+    res = ExaResult(url="http://example.com", title="Example", score=0.1)
+    text = str(res)
+    assert "Example" in text and "http://example.com" in text
