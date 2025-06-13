@@ -30,11 +30,14 @@ jobs:
           virtualenvs-create: true
           virtualenvs-in-project: true # Recommended for CI caching
 
+      - name: Add src to PYTHONPATH
+        run: echo "PYTHONPATH=$(pwd)/src:$PYTHONPATH" >> $GITHUB_ENV
+
       - name: Install dependencies
         run: poetry install --with dev --all-extras # Ensure all dependencies for tests are installed
 
       - name: Run tests with pytest
-        run: poetry run pytest --cov=src/asr_got_reimagined --cov-report=xml --cov-report=term-missing
+        run: poetry run pytest -vv --cov=src --cov-report=xml --cov-report=term-missing
         # Example: Add --cov options for coverage reporting
 
       # Optional: Upload coverage report
