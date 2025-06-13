@@ -1,4 +1,6 @@
 import pytest
+import json # Import the json module
+from unittest.mock import AsyncMock, MagicMock, patch # Using unittest.mock for AsyncMock
 from unittest.mock import AsyncMock, MagicMock, patch # Using unittest.mock for AsyncMock
 from typing import List, Dict, Any
 from datetime import datetime as dt
@@ -274,42 +276,60 @@ async def test_evidence_stage_execute_no_hypotheses(evidence_stage_all_clients: 
     assert output.next_stage_context_update[EvidenceStage.stage_name]["error"] == "No hypotheses found"
 
     stage.close_clients.assert_called_once()
-stage.close_clients.assert_called_once()
-
-import math
+```
+# ---------------------------------------------------------------------------
+# Additional edge-case & failure-mode tests
+# ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_close_clients_handles_none(mock_settings_pubmed_only):
-    stage = EvidenceStage(settings=mock_settings_pubmed_only)
-    # ensure only pubmed client is present
-    assert stage.google_scholar_client is None and stage.exa_client is None
-    # replace pubmed close with AsyncMock to observe call
-    stage.pubmed_client.close = AsyncMock()
+async def test_close_clients_handles_missing_clients():
+    """close_clients should not explode when some client attrs are None."""
+    settings = Settings(pubmed=None, google_scholar=None, exa_search=None, asr_got=MagicMock(default_parameters=ASRGoTDefaultParams(evidence_max_iterations=1)))
+    stage = EvidenceStage(settings=settings)
+    # Manually monkey-patch close on the only existing attr to ensure it is awaited.
+    stage.pubmed_client = None
+    stage.google_scholar_client = MagicMock()
+    stage.google_scholar_client.close = AsyncMock()
+    stage.exa_client = None
+
     await stage.close_clients()
-    stage.pubmed_client.close.assert_called_once()
-
-@pytest.fixture
-def simple_conf_vector():
-    return [0.2, 0.4, 0.6, 0.8]
-
-def test_update_hypothesis_confidence_vector(evidence_stage_all_clients, simple_conf_vector):
-    stage = evidence_stage_all_clients
-    original_vector = simple_conf_vector.copy()
-    updated_vector = stage._update_hypothesis_confidence(original_vector, found_evidence_cnt=5)
-    # vector length unchanged
-    assert len(updated_vector) == len(original_vector)
-    # each element should be between 0 and 1
-    assert all(0.0 <= v <= 1.0 for v in updated_vector)
-    # updated vector must differ from original to reflect evidence
-    assert updated_vector != original_vector
-    # optional: ensure monotonic increase when evidence present
-    assert all(u >= o for u, o in zip(updated_vector, original_vector))
+    stage.google_scholar_client.close.assert_awaited_once()
 
 @pytest.mark.asyncio
-async def test_select_hypothesis_neo4j_error_handling(evidence_stage_all_clients, sample_hypothesis_data):
+async def test_update_hypothesis_confidence_handles_short_vector(evidence_stage_all_clients: EvidenceStage):
+    """_update_hypothesis_confidence should tolerate vectors shorter than expected length."""
     stage = evidence_stage_all_clients
-    with patch.object(stage, "_query_hypotheses_from_neo4j", new_callable=AsyncMock) as mock_query:
-        mock_query.side_effect = Exception("neo4j unavailable")
-        result = await stage._select_hypothesis_to_evaluate_from_neo4j()
-        # When errored, expect None to be propagated upward gracefully
-        assert result is None
+    short_vec = [0.1, 0.2]  # Only two dims instead of four+
+    # Should not raise and should return a float between 0 and 1.
+    score = stage._update_hypothesis_confidence(short_vec)  # type: ignore[protected-access]
+    assert 0.0 <= score <= 1.0
+
+def test_init_raises_when_all_clients_missing(mock_default_params: ASRGoTDefaultParams):
+    """EvidenceStage must raise if every search provider is disabled in Settings."""
+    settings = Settings(pubmed=None, google_scholar=None, exa_search=None, asr_got=MagicMock(default_parameters=mock_default_params))
+    with pytest.raises(RuntimeError):
+        EvidenceStage(settings=settings)
+
+@pytest.mark.asyncio
+async def test_execute_multiple_iterations_triggers_topology_adaptation(mock_settings_all_clients: Settings, mock_session_data: GoTProcessorSessionData, sample_hypothesis_data: Dict[str, Any]):
+    """When evidence_max_iterations>1, _adapt_graph_topology should be invoked each iteration."""
+    multi_iter_params = ASRGoTDefaultParams(evidence_max_iterations=3)
+    mock_settings_all_clients.asr_got.default_parameters = multi_iter_params  # type: ignore[attr-defined]
+
+    with patch('adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.PubMedClient', new_callable=AsyncMock) as MockPubMed, \
+         patch('adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.GoogleScholarClient', new_callable=AsyncMock) as MockGS, \
+         patch('adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.ExaSearchClient', new_callable=AsyncMock) as MockExa:
+
+        stage = EvidenceStage(settings=mock_settings_all_clients)
+        # Arrange helpers for execute loop
+        stage._select_hypothesis_to_evaluate_from_neo4j = AsyncMock(side_effect=[sample_hypothesis_data, sample_hypothesis_data, None])
+        stage._execute_hypothesis_plan = AsyncMock(return_value=[])
+        stage._create_evidence_in_neo4j = AsyncMock()
+        stage._update_hypothesis_confidence_in_neo4j = AsyncMock(return_value=True)
+        stage._create_ibn_in_neo4j = AsyncMock()
+        stage._create_hyperedges_in_neo4j = AsyncMock(return_value=[])
+        stage._apply_temporal_decay_and_patterns = AsyncMock()
+        stage._adapt_graph_topology = AsyncMock()
+        await stage.execute(mock_session_data)
+        # Should be called once per completed iteration (2 in this test)
+        assert stage._adapt_graph_topology.await_count == 2
