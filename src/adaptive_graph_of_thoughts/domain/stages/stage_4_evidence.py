@@ -210,6 +210,10 @@ class EvidenceStage(BaseStage):
     async def _execute_hypothesis_plan(
         self, hypothesis_data_from_neo4j: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
+        """
+        Executes an evidence search plan for a given hypothesis by querying external sources.
+        
+        Given hypothesis data, constructs a search query (from a plan or the hypothesis label) and asynchronously queries PubMed, Google Scholar, and Exa Search for relevant articles or results. For each source, extracts key information from results and formats them as evidence dictionaries, including content, source details, authors, publication date, strength, statistical power, disciplinary tags, and raw source data. Handles errors per source and returns a list of evidence items found.
         hypo_label = hypothesis_data_from_neo4j.get("label", "")
         hypo_id = hypothesis_data_from_neo4j.get("id", "unknown_hypo")
 
@@ -619,6 +623,17 @@ class EvidenceStage(BaseStage):
     async def execute(
         self, current_session_data: GoTProcessorSessionData
     ) -> StageOutput:
+        """
+        Executes the evidence integration stage by retrieving evidence for hypotheses, updating the knowledge graph, and tracking progress.
+        
+        This method iterates through hypotheses, selects candidates for evidence integration, retrieves evidence from external sources, creates evidence nodes and relationships in Neo4j, updates hypothesis confidence, and constructs interdisciplinary bridge nodes and hyperedges as appropriate. It manages iteration limits, handles missing data, and ensures external API clients are closed after execution.
+        
+        Args:
+            current_session_data: The session data containing accumulated context and hypothesis node IDs.
+        
+        Returns:
+            A StageOutput summarizing the number of iterations, evidence nodes, updated hypotheses, created IBNs, and hyperedges, along with context updates.
+        """
         self._log_start(current_session_data.session_id)
         hypothesis_data = current_session_data.accumulated_context.get(HypothesisStage.stage_name, {})
         hypothesis_node_ids: List[str] = hypothesis_data.get("hypothesis_node_ids", [])
