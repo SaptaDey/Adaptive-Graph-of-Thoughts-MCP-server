@@ -207,55 +207,64 @@ async def test_parsing_cited_by_count(gs_client_fixture: GoogleScholarClient, ht
     assert "Could not parse cited_by_count 'onetwothree' as int" in caplog.text
     assert articles[2].cited_by_count is None # Missing 'total' key
     assert articles[3].cited_by_count is None # No 'cited_by' or 'inline_links'
-```
-# Fixture for timeout exception
-@pytest.fixture
-def timeout_exc() -> httpx.ReadTimeout:
-    return httpx.ReadTimeout("read timeout")
+from contextlib import suppress
 
-async def test_search_pagination(gs_client_fixture, httpx_mock):
+# ------------------------------------------------------------------
+# Additional Edge-Case & Lifecycle Tests
+# ------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_search_empty_query_raises(gs_client_fixture: GoogleScholarClient):
+    """
+    An empty or whitespace-only query should raise GoogleScholarClientError
+    to avoid making unnecessary network calls.
+    """
     client = gs_client_fixture
-    page1 = json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)
-    page2 = json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR)
-    httpx_mock.add_response(json=page1)
-    httpx_mock.add_response(json=page2)
-    articles = await client.search("sample query", num=20)
-    # Two pages should be fetched
-    assert len(httpx_mock.get_requests()) == 2
-    assert len(articles) >= 2
+    for bad_q in ["", "   ", "\n"]:
+        with pytest.raises(GoogleScholarClientError, match="query must be non-empty"):
+            await client.search(bad_q)
 
-async def test_search_timeout(gs_client_fixture, httpx_mock, timeout_exc):
+
+@pytest.mark.asyncio
+async def test_search_handles_missing_fields_gracefully(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    """
+    The client should not break when expected sub-fields are missing from
+    individual organic_result objects. All missing optional fields should
+    surface as None on the resulting dataclass.
+    """
     client = gs_client_fixture
-    httpx_mock.add_exception(timeout_exc)
-    with pytest.raises(GoogleScholarClientError) as exc:
-        await client.search("timeout query")
-    assert isinstance(exc.value.__cause__, APIRequestError)
+    httpx_mock.add_response(json={
+        "organic_results": [
+            {"title": "Only Title"},  # missing everything else
+            {"link": "http://example.com/only_link"},  # missing title, snippet
+            {}  # completely empty dict
+        ]
+    })
 
-async def test_search_ignores_unexpected_keys(gs_client_fixture, httpx_mock):
-    client = gs_client_fixture
-    page = json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)
-    page["unexpected_key"] = {"foo": "bar"}
-    httpx_mock.add_response(json=page)
-    articles = await client.search("query with extra keys")
-    # Unexpected keys should be ignored and parsing succeed
-    expected_count = len(json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)["organic_results"])
-    assert len(articles) == expected_count
+    articles = await client.search("robustness query")
+    # All three results should return a GoogleScholarArticle instance
+    assert len(articles) == 3
+    # Validate per-field fallbacks
+    assert articles[0].title == "Only Title"
+    assert articles[0].link is None and articles[0].snippet is None
 
-async def test_search_parameter_propagation(gs_client_fixture, httpx_mock):
-    client = gs_client_fixture
-    httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR))
-    await client.search("param query", num=50, hl="es")
-    request = httpx_mock.get_requests()[-1]
-    assert request.url.params["num"] == "50"
-    assert request.url.params["hl"] == "es"
+    assert articles[1].title is None
+    assert articles[1].link == "http://example.com/only_link"
 
-def test_article_repr():
-    article = GoogleScholarArticle(
-        title="T", link="L", snippet="S", authors="A",
-        publication_info="P", cited_by_count=1, citation_link="C"
-    )
-    r = repr(article)
-    assert "GoogleScholarArticle" in r and "T" in r
-    # __str__ should reflect the representation as well
-    s = str(article)
-    assert "T" in s
+    assert articles[2].title is None and articles[2].link is None
+
+
+@pytest.mark.asyncio
+async def test_context_manager_closes_client(mock_gs_settings: Settings):
+    """
+    Ensure that __aenter__/__aexit__ close the underlying AsyncClient to
+    prevent connection leaks.
+    """
+    async with GoogleScholarClient(settings=mock_gs_settings) as client:
+        # Inside context manager the client should be open.
+        assert not client._client.is_closed
+
+    # After exit, underlying httpx.AsyncClient should be closed.
+    # Use suppress in case implementation closes in a finally block earlier.
+    with suppress(AttributeError):
+        assert client._client.is_closed

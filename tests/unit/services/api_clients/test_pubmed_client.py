@@ -389,113 +389,93 @@ async def test_fetch_abstract_malformed_xml(pubmed_client_fixture: PubMedClient,
     )
     with pytest.raises(PubMedClientError, match=f"XML parsing error for eFetch \(PMID {pmid}\)"):
         await client.fetch_abstract(pmid)
-await client.fetch_abstract(pmid)
-
-# --- Additional Edge-Case Tests ---
-import httpx
-
-def test_pubmed_client_invalid_base_url():
-    """Test initialization fails with invalid base_url."""
-    bad_settings = Settings(pubmed=PubMedConfig(base_url="htt://bad url", email="x@y.com"))
-    with pytest.raises(PubMedClientError, match="base_url"):
-        PubMedClient(settings=bad_settings)
+# --- Additional Edge-case Tests ---
 
 @pytest.mark.asyncio
-async def test_search_articles_timeout_handling(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test eSearch timeout is handled and raises PubMedClientError."""
+@pytest.mark.parametrize("retmax,requested,expected", [(5, 2, 2), (3, 5, 3)])
+async def test_search_articles_respects_max_results(pubmed_client_fixture, httpx_mock, retmax, requested, expected):
     client = pubmed_client_fixture
-    esearch_url = f"{client.config.base_url.rstrip('/')}/esearch.fcgi"
-    httpx_mock.add_exception(httpx.TimeoutException("timeout"), url=esearch_url)
-    with pytest.raises(PubMedClientError, match="eSearch failed"):
-        await client.search_articles("timeout query")
-
-@pytest.mark.asyncio
-async def test_search_articles_large_retmax(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test search_articles with large max_results passes retmax parameter correctly."""
-    client = pubmed_client_fixture
-    # Create esearch response with three IDs
-    large_esearch = {
-        "header": {"type": "esearch", "version": "2.0"},
-        "esearchresult": {
-            "count": "3", "retmax": "3", "retstart": "0",
-            "idlist": ["1", "2", "3"],
-            "translationset": [],
-            "querytranslation": "q"
-        }
-    }
+    many_ids = [str(100000 + i) for i in range(retmax)]
     httpx_mock.add_response(
         url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
-        method="GET",
-        json=large_esearch
+        json={
+            "header": {"type": "esearch", "version": "2.0"},
+            "esearchresult": {
+                "count": str(retmax),
+                "retmax": str(retmax),
+                "retstart": "0",
+                "idlist": many_ids
+            }
+        }
     )
-    # Mock esummary with minimal DocSum entries
-    esummary_xml = "<eSummaryResult>" + "".join(f"<DocSum><Id>{pmid}</Id></DocSum>" for pmid in ["1", "2", "3"]) + "</eSummaryResult>"
     httpx_mock.add_response(
         url=f"{client.config.base_url.rstrip('/')}/esummary.fcgi",
-        method="GET",
-        text=esummary_xml
+        text=SAMPLE_ESUMMARY_RESPONSE_XML_STR
     )
-    # Mock efetch for each PMID
-    for pmid in ["1", "2", "3"]:
-        efetch_xml = (
-            "<PubmedArticleSet>"
-            f"<PubmedArticle><MedlineCitation><Article><Abstract><AbstractText>Abstract {pmid}</AbstractText></Abstract></Article></MedlineCitation></PubmedArticleSet>"
-        )
-        httpx_mock.add_response(
-            url__regex=r".*efetch\.fcgi.*",
-            method="GET",
-            text=efetch_xml
-        )
-    articles = await client.search_articles("q", max_results=1000)
-    assert len(articles) == 3
-    esearch_req = httpx_mock.get_request(url__regex=r".*esearch\.fcgi.*")
-    assert esearch_req is not None
-    params = esearch_req.url.params
-    assert params.get("retmax") == "1000"
+    # wildcard efetch
+    httpx_mock.add_response(
+        url__regex=r".*efetch\.fcgi.*",
+        text=SAMPLE_EFETCH_ABSTRACT_XML_STR_123456
+    )
+    articles = await client.search_articles("many", max_results=requested)
+    assert len(articles) == expected
 
-@pytest.mark.parametrize(
-    "xml_str, expected_titles, expected_authors",
-    [
-        (
-            "<eSummaryResult><DocSum><Id>1</Id></DocSum></eSummaryResult>",
-            [""],
-            [[]],
-        ),
-        (
-            "<eSummaryResult><DocSum><Id>1</Id><Item Name=\"Title\" Type=\"String\">Title</Item></DocSum></eSummaryResult>",
-            ["Title"],
-            [[]],
-        ),
-        (
-            "<eSummaryResult><DocSum><Id>1</Id><Item Name=\"AuthorList\" Type=\"List\"></Item></DocSum></eSummaryResult>",
-            [""],
-            [[]],
-        ),
-    ],
-)
-def test_parse_esummary_response_edge_cases(xml_str, expected_titles, expected_authors):
-    """Test parsing eSummary XML edge cases with missing fields."""
-    client = PubMedClient(settings=Settings(pubmed=PubMedConfig(base_url="http://url", email="e@e.com")))
-    articles = client._parse_esummary_response(xml_str)
-    titles = [a.title for a in articles]
-    authors = [a.authors for a in articles]
-    assert titles == expected_titles
-    assert authors == expected_authors
 
 @pytest.mark.asyncio
-async def test_fetch_abstract_multiple_articles_in_set(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test fetch_abstract returns abstract of the first article when multiple are present."""
+async def test_parse_esummary_partial_fields(pubmed_client_fixture):
     client = pubmed_client_fixture
-    combined_xml = (
-        SAMPLE_EFETCH_ABSTRACT_XML_STR_123456.replace("</PubmedArticleSet>", "")
-        + SAMPLE_EFETCH_ABSTRACT_XML_STR_789012.replace("<PubmedArticleSet>", "")
+    partial_xml = (
+        "<eSummaryResult>"
+        "<DocSum><Id>111</Id>"
+        "<Item Name=\"Title\" Type=\"String\">No DOI</Item>"
+        "</DocSum>"
+        "</eSummaryResult>"
     )
-    pmid = "123456"
+    articles = client._parse_esummary_response(partial_xml)
+    assert len(articles) == 1
+    art = articles[0]
+    assert art.doi is None
+    assert art.authors == []
+    assert art.title == "No DOI"
+
+
+@pytest.mark.asyncio
+async def test_fetch_abstract_invalid_pmid(pubmed_client_fixture):
+    client = pubmed_client_fixture
+    with pytest.raises(PubMedClientError, match="Invalid PMID"):
+        await client.fetch_abstract("not-a-number")
+
+
+@pytest.mark.asyncio
+async def test_call_api_http_error_wrapped(pubmed_client_fixture, httpx_mock):
+    client = pubmed_client_fixture
     httpx_mock.add_response(
-        url=f"{client.config.base_url.rstrip('/')}/efetch.fcgi?db=pubmed&id={pmid}&rettype=abstract&retmode=xml&email=test%40example.com",
-        method="GET",
-        text=combined_xml
+        url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
+        status_code=404,
+        text="Not Found"
     )
-    abstract = await client.fetch_abstract(pmid)
-    # Based on implementation, should return the first AbstractText encountered
-    assert abstract == "This is abstract for PMID 123456."
+    with pytest.raises(PubMedClientError) as exc:
+        await client.search_articles("missing")
+    assert isinstance(exc.value.__cause__, APIHTTPError)
+
+
+@pytest.mark.asyncio
+async def test_parse_abstract_multiple_segments(pubmed_client_fixture):
+    client = pubmed_client_fixture
+    xml = (
+        '<PubmedArticleSet>'
+          '<PubmedArticle>'
+            '<MedlineCitation>'
+              '<PMID>101</PMID>'
+              '<Article>'
+                '<Abstract>'
+                  '<AbstractText>First.</AbstractText>'
+                  '<AbstractText>Second.</AbstractText>'
+                '</Abstract>'
+              '</Article>'
+            '</MedlineCitation>'
+          '</PubmedArticle>'
+        '</PubmedArticleSet>'
+    )
+    abstract = client._parse_abstract_from_efetch_xml(xml)
+    assert abstract == "First. Second."
