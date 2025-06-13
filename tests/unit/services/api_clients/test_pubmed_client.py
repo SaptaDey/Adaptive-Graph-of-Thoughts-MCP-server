@@ -120,7 +120,12 @@ SAMPLE_EMPTY_ESEARCH_RESPONSE_JSON = {
 # --- Fixtures ---
 @pytest.fixture
 def mock_settings() -> Settings:
-    """Returns a Settings instance with minimal PubMed config."""
+    """
+    Creates a Settings instance with a minimal PubMed configuration for testing.
+    
+    Returns:
+        A Settings object containing a PubMedConfig with a base URL and email.
+    """
     return Settings(
         pubmed=PubMedConfig(
             base_url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
@@ -130,7 +135,9 @@ def mock_settings() -> Settings:
 
 @pytest.fixture
 async def pubmed_client_fixture(mock_settings: Settings) -> PubMedClient:
-    """Yields an instance of PubMedClient using an async context manager."""
+    """
+    Provides an asynchronous fixture that yields a PubMedClient instance configured with mock settings for testing.
+    """
     async with PubMedClient(settings=mock_settings) as client:
         yield client
 
@@ -152,7 +159,11 @@ def test_pubmed_client_initialization_missing_config():
         PubMedClient(settings=Settings(pubmed=PubMedConfig(base_url=None))) # type: ignore
 
 async def test_search_articles_success(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test successful article search, including parsing and abstract fetching."""
+    """
+    Tests that a successful article search returns correctly parsed articles with abstracts.
+    
+    Mocks the PubMed API endpoints for `esearch`, `esummary`, and `efetch` to simulate a search query returning two articles. Verifies that the resulting `PubMedArticle` objects contain accurate metadata and abstracts, and asserts that the correct API calls are made with expected parameters.
+    """
     client = pubmed_client_fixture
 
     # Mock esearch
@@ -212,7 +223,9 @@ async def test_search_articles_success(pubmed_client_fixture: PubMedClient, http
 
 
 async def test_search_articles_no_pmids(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test search when esearch returns no PMIDs."""
+    """
+    Tests that searching for articles returns an empty list when the eSearch API response contains no PMIDs, and verifies that subsequent eSummary and eFetch API calls are not made.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
@@ -227,7 +240,9 @@ async def test_search_articles_no_pmids(pubmed_client_fixture: PubMedClient, htt
     assert len(httpx_mock.get_requests(url__regex=r".*efetch\.fcgi.*")) == 0
 
 async def test_search_articles_esearch_http_error(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test PubMedClientError is raised on esearch HTTP error."""
+    """
+    Tests that a PubMedClientError is raised when the eSearch API returns an HTTP error.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
@@ -239,7 +254,9 @@ async def test_search_articles_esearch_http_error(pubmed_client_fixture: PubMedC
         await client.search_articles("test query")
 
 async def test_search_articles_esummary_http_error(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test PubMedClientError is raised on esummary HTTP error."""
+    """
+    Tests that a PubMedClientError is raised when the esummary API call returns an HTTP error.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
@@ -255,7 +272,9 @@ async def test_search_articles_esummary_http_error(pubmed_client_fixture: PubMed
         await client.search_articles("test query")
 
 async def test_search_articles_efetch_http_error(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test PubMedClientError is raised on efetch HTTP error during search_articles."""
+    """
+    Tests that a PubMedClientError is raised when an HTTP error occurs during the efetch step of the search_articles workflow.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_response(url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi", json=SAMPLE_ESEARCH_SINGLE_ID_JSON)
     httpx_mock.add_response(url=f"{client.config.base_url.rstrip('/')}/esummary.fcgi", text=SAMPLE_ESUMMARY_SINGLE_ARTICLE_XML_STR)
@@ -274,7 +293,9 @@ async def test_search_articles_efetch_http_error(pubmed_client_fixture: PubMedCl
 
 
 async def test_fetch_abstract_direct_success(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test direct call to fetch_abstract successfully retrieves an abstract."""
+    """
+    Tests that fetch_abstract returns the correct abstract string when the efetch API responds successfully.
+    """
     client = pubmed_client_fixture
     pmid = "123456"
     httpx_mock.add_response(
@@ -285,7 +306,9 @@ async def test_fetch_abstract_direct_success(pubmed_client_fixture: PubMedClient
     assert abstract == "This is abstract for PMID 123456."
 
 async def test_fetch_abstract_direct_not_found(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test direct call to fetch_abstract when no abstract is found."""
+    """
+    Tests that fetch_abstract returns None when the efetch response contains no abstract for the given PMID.
+    """
     client = pubmed_client_fixture
     pmid = "999999"
     httpx_mock.add_response(
@@ -296,7 +319,11 @@ async def test_fetch_abstract_direct_not_found(pubmed_client_fixture: PubMedClie
     assert abstract is None
 
 async def test_api_key_and_email_usage(httpx_mock: HTTPXMock):
-    """Test that api_key and email are correctly included in request parameters if configured."""
+    """
+    Verifies that the PubMedClient includes both api_key and email parameters in all PubMed API requests when configured.
+    
+    This test ensures that the email and api_key are present in the query parameters for esearch, esummary, and efetch requests.
+    """
     settings_with_key = Settings(
         pubmed=PubMedConfig(
             base_url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
@@ -343,7 +370,9 @@ async def test_api_key_and_email_usage(httpx_mock: HTTPXMock):
     assert request_params_efetch.get("api_key") == "testapikey123"
 
 async def test_search_articles_esearch_request_error(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test PubMedClientError wrapping APIRequestError on esearch network issue."""
+    """
+    Tests that a network exception during the PubMed eSearch API call results in a PubMedClientError being raised.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_exception(
         pytest.raises(APIRequestError), # This is not how httpx_mock expects exceptions. It expects an exception instance.
@@ -366,7 +395,9 @@ async def test_search_articles_esearch_request_error(pubmed_client_fixture: PubM
 # The current client implementation catches ET.ParseError and re-raises as PubMedClientError.
 
 async def test_parse_esummary_malformed_xml(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test handling of malformed XML from eSummary."""
+    """
+    Tests that a PubMedClientError is raised when the eSummary API returns malformed XML.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
@@ -380,7 +411,9 @@ async def test_parse_esummary_malformed_xml(pubmed_client_fixture: PubMedClient,
         await client.search_articles("test query")
 
 async def test_fetch_abstract_malformed_xml(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test handling of malformed XML from eFetch."""
+    """
+    Tests that a PubMedClientError is raised when eFetch returns malformed XML during abstract retrieval.
+    """
     client = pubmed_client_fixture
     pmid = "123456"
     httpx_mock.add_response(
@@ -389,84 +422,130 @@ async def test_fetch_abstract_malformed_xml(pubmed_client_fixture: PubMedClient,
     )
     with pytest.raises(PubMedClientError, match=f"XML parsing error for eFetch \(PMID {pmid}\)"):
         await client.fetch_abstract(pmid)
-```
+await client.fetch_abstract(pmid)
 
-import pytest_asyncio
+# --- Additional Edge-Case Tests ---
+import httpx
 
-# ---------- Additional Unit Tests ----------
+def test_pubmed_client_invalid_base_url():
+    """Test initialization fails with invalid base_url."""
+    bad_settings = Settings(pubmed=PubMedConfig(base_url="htt://bad url", email="x@y.com"))
+    with pytest.raises(PubMedClientError, match="base_url"):
+        PubMedClient(settings=bad_settings)
 
 @pytest.mark.asyncio
-async def test_parse_esummary_missing_optional_fields(pubmed_client_fixture: PubMedClient):
-    """_parse_esummary_response should tolerate missing optional XML items like DOI or AuthorList."""
-    client = pubmed_client_fixture
-    xml_missing_fields = """
-    <eSummaryResult>
-        <DocSum>
-            <Id>321</Id>
-            <Item Name="Title" Type="String">Title Only</Item>
-            <!-- no AuthorList, Source, PubDate, DOI -->
-        </DocSum>
-    </eSummaryResult>
+async def test_search_articles_timeout_handling(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
     """
-    articles: list[PubMedArticle] = client._parse_esummary_response(xml_missing_fields)  # type: ignore[attr-defined]
-    assert len(articles) == 1
-    art = articles[0]
-    assert art.pmid == "321"
-    assert art.title == "Title Only"
-    assert art.authors == []
-    assert art.journal is None
-    assert art.publication_date is None
-    assert art.doi is None
-    assert art.url == "https://pubmed.ncbi.nlm.nih.gov/321/"
-    assert art.abstract is None
-
-@pytest.mark.asyncio
-async def test_parse_efetch_empty_abstract(pubmed_client_fixture: PubMedClient):
-    """When AbstractText node exists but is empty, None should be returned."""
-    client = pubmed_client_fixture
-    xml_with_empty_abstract = """
-    <PubmedArticleSet>
-        <PubmedArticle>
-            <MedlineCitation>
-                <PMID>555</PMID>
-                <Article>
-                    <Abstract><AbstractText></AbstractText></Abstract>
-                </Article>
-            </MedlineCitation>
-        </PubmedArticle>
-    </PubmedArticleSet>
+    Tests that a timeout during the eSearch API call raises a PubMedClientError.
     """
-    abstract = client._parse_abstract_from_efetch_xml(xml_with_empty_abstract)  # type: ignore[attr-defined]
-    assert abstract is None
-
-@pytest_asyncio.fixture
-async def second_pubmed_client(mock_settings: Settings):
-    """Provides another PubMedClient instance to inspect separate internal httpx client lifecycle."""
-    async with PubMedClient(settings=mock_settings) as cl:
-        yield cl
+    client = pubmed_client_fixture
+    esearch_url = f"{client.config.base_url.rstrip('/')}/esearch.fcgi"
+    httpx_mock.add_exception(httpx.TimeoutException("timeout"), url=esearch_url)
+    with pytest.raises(PubMedClientError, match="eSearch failed"):
+        await client.search_articles("timeout query")
 
 @pytest.mark.asyncio
-async def test_context_manager_reuses_client(pubmed_client_fixture: PubMedClient, second_pubmed_client: PubMedClient):
-    """Each context manager instance maintains its own HTTP client; they should not share state."""
-    first = pubmed_client_fixture
-    second = second_pubmed_client
-    assert first is not second
-    # Ensure both have active _client attributes while context is open
-    assert getattr(first, "_client") is not None
-    assert getattr(second, "_client") is not None
-    # Their internal AsyncClient objects must be different
-    assert getattr(first, "_client") is not getattr(second, "_client")
+async def test_search_articles_large_retmax(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
+    """
+    Tests that search_articles correctly passes a large max_results value as the retmax parameter and returns all articles found.
+    
+    Verifies that the client requests the correct number of results from the PubMed API and that all returned articles are processed.
+    """
+    client = pubmed_client_fixture
+    # Create esearch response with three IDs
+    large_esearch = {
+        "header": {"type": "esearch", "version": "2.0"},
+        "esearchresult": {
+            "count": "3", "retmax": "3", "retstart": "0",
+            "idlist": ["1", "2", "3"],
+            "translationset": [],
+            "querytranslation": "q"
+        }
+    }
+    httpx_mock.add_response(
+        url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
+        method="GET",
+        json=large_esearch
+    )
+    # Mock esummary with minimal DocSum entries
+    esummary_xml = "<eSummaryResult>" + "".join(f"<DocSum><Id>{pmid}</Id></DocSum>" for pmid in ["1", "2", "3"]) + "</eSummaryResult>"
+    httpx_mock.add_response(
+        url=f"{client.config.base_url.rstrip('/')}/esummary.fcgi",
+        method="GET",
+        text=esummary_xml
+    )
+    # Mock efetch for each PMID
+    for pmid in ["1", "2", "3"]:
+        efetch_xml = (
+            "<PubmedArticleSet>"
+            f"<PubmedArticle><MedlineCitation><Article><Abstract><AbstractText>Abstract {pmid}</AbstractText></Abstract></Article></MedlineCitation></PubmedArticleSet>"
+        )
+        httpx_mock.add_response(
+            url__regex=r".*efetch\.fcgi.*",
+            method="GET",
+            text=efetch_xml
+        )
+    articles = await client.search_articles("q", max_results=1000)
+    assert len(articles) == 3
+    esearch_req = httpx_mock.get_request(url__regex=r".*esearch\.fcgi.*")
+    assert esearch_req is not None
+    params = esearch_req.url.params
+    assert params.get("retmax") == "1000"
+
+@pytest.mark.parametrize(
+    "xml_str, expected_titles, expected_authors",
+    [
+        (
+            "<eSummaryResult><DocSum><Id>1</Id></DocSum></eSummaryResult>",
+            [""],
+            [[]],
+        ),
+        (
+            "<eSummaryResult><DocSum><Id>1</Id><Item Name=\"Title\" Type=\"String\">Title</Item></DocSum></eSummaryResult>",
+            ["Title"],
+            [[]],
+        ),
+        (
+            "<eSummaryResult><DocSum><Id>1</Id><Item Name=\"AuthorList\" Type=\"List\"></Item></DocSum></eSummaryResult>",
+            [""],
+            [[]],
+        ),
+    ],
+)
+def test_parse_esummary_response_edge_cases(xml_str, expected_titles, expected_authors):
+    """
+    Tests that the eSummary XML parser correctly handles edge cases with missing title or author fields.
+    
+    Args:
+        xml_str: The eSummary XML string to parse.
+        expected_titles: List of expected article titles after parsing.
+        expected_authors: List of expected author lists after parsing.
+    """
+    client = PubMedClient(settings=Settings(pubmed=PubMedConfig(base_url="http://url", email="e@e.com")))
+    articles = client._parse_esummary_response(xml_str)
+    titles = [a.title for a in articles]
+    authors = [a.authors for a in articles]
+    assert titles == expected_titles
+    assert authors == expected_authors
 
 @pytest.mark.asyncio
-async def test_search_articles_invalid_max_results(pubmed_client_fixture: PubMedClient):
-    """Negative max_results should raise ValueError immediately."""
+async def test_fetch_abstract_multiple_articles_in_set(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
+    """
+    Tests that fetch_abstract returns the abstract of the first article when the efetch response contains multiple articles.
+    
+    Verifies that when multiple articles are present in the efetch XML response, the abstract from the first article is returned.
+    """
     client = pubmed_client_fixture
-    with pytest.raises(ValueError):
-        await client.search_articles("query", max_results=-1)
-
-def test_parse_esummary_invalid_xml_error(pubmed_client_fixture: PubMedClient):
-    """Malformed XML fed directly into _parse_esummary_response should propagate PubMedClientError."""
-    client = pubmed_client_fixture
-    malformed_xml = "<notxml"
-    with pytest.raises(PubMedClientError, match="XML parsing error for eSummary"):
-        client._parse_esummary_response(malformed_xml)  # type: ignore[attr-defined]
+    combined_xml = (
+        SAMPLE_EFETCH_ABSTRACT_XML_STR_123456.replace("</PubmedArticleSet>", "")
+        + SAMPLE_EFETCH_ABSTRACT_XML_STR_789012.replace("<PubmedArticleSet>", "")
+    )
+    pmid = "123456"
+    httpx_mock.add_response(
+        url=f"{client.config.base_url.rstrip('/')}/efetch.fcgi?db=pubmed&id={pmid}&rettype=abstract&retmode=xml&email=test%40example.com",
+        method="GET",
+        text=combined_xml
+    )
+    abstract = await client.fetch_abstract(pmid)
+    # Based on implementation, should return the first AbstractText encountered
+    assert abstract == "This is abstract for PMID 123456."
