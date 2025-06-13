@@ -121,7 +121,7 @@ For local development, you can place these (and other) environment variables in 
 ```env
 # .env example
 NEO4J_URI="neo4j://localhost:7687"
-NEO4J_USER="neo4j"
+NEO4J_USERNAME="neo4j"
 NEO4J_PASSWORD="your_local_neo4j_password" # Replace with your actual password
 # NEO4J_DATABASE="neo4j" # Optional if using default, or set your specific DB
 # CLAUDE_API_KEY="your_claude_key_here" # If using Claude
