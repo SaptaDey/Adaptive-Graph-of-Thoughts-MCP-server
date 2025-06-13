@@ -99,6 +99,20 @@ class ClaudeAPIConfig(BaseModel):
     timeout_seconds: int = Field(default=120)
     max_retries: int = Field(default=2)
 
+# --- Models for Search Engine APIs ---
+class GoogleScholarConfig(BaseModel):
+    api_key: Optional[str] = None
+    base_url: str = "https://serpapi.com/search"
+
+class PubMedConfig(BaseModel):
+    api_key: Optional[str] = None  # For NCBI E-utilities, if rates are high
+    base_url: str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+    email: Optional[str] = None  # Recommended by NCBI for E-utilities
+
+class ExaSearchConfig(BaseModel):
+    api_key: Optional[str] = None  # For Exa API
+    base_url: str = "https://api.exa.ai"
+
 class KnowledgeDomain(BaseModel):
     name: str
     keywords: list[str] = Field(default_factory=list)
@@ -141,6 +155,9 @@ class Settings(BaseSettings):
     asr_got: ASRGoTConfig = Field(default_factory=ASRGoTConfig)
     mcp_settings: MCPSettings = Field(default_factory=MCPSettings)
     claude_api: Optional[ClaudeAPIConfig] = None  # Optional section
+    google_scholar: Optional[GoogleScholarConfig] = None
+    pubmed: Optional[PubMedConfig] = None
+    exa_search: Optional[ExaSearchConfig] = None
     knowledge_domains: list[KnowledgeDomain] = Field(default_factory=list)
 
     model_config = SettingsConfigDict(

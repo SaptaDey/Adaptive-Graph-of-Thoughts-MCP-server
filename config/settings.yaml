@@ -131,6 +131,22 @@ mcp_settings:
 #   timeout_seconds: 120
 #   max_retries: 2
 
+# Optional: Google Scholar API settings (e.g., via SerpApi)
+google_scholar:
+  api_key: "YOUR_GOOGLE_SCHOLAR_API_KEY_HERE" # Or from env: GOOGLE_SCHOLAR__API_KEY
+  base_url: "https://serpapi.com/search"
+
+# Optional: PubMed API settings (NCBI E-utilities)
+pubmed:
+  api_key: "YOUR_PUBMED_API_KEY_HERE_IF_NEEDED" # Or from env: PUBMED__API_KEY
+  base_url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+  email: "your_email@example.com" # Or from env: PUBMED__EMAIL (Recommended by NCBI)
+
+# Optional: Exa Search API settings
+exa_search:
+  api_key: "YOUR_EXA_SEARCH_API_KEY_HERE" # Or from env: EXA_SEARCH__API_KEY
+  base_url: "https://api.exa.ai"
+
 # Example of how to structure a list of predefined knowledge domains or disciplines
 # These could be used for tagging, IBN detection, etc. (Ref P1.8)
 knowledge_domains:

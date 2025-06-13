@@ -1,7 +1,7 @@
 import datetime
 import uuid  # For generating default IDs
 from enum import Enum
-from typing import Any, Optional  # Ensure Set is NOT imported here
+from typing import Any, Optional, List, Dict  # Added List, Dict
 
 from pydantic import BaseModel, Field, field_serializer, field_validator
 
@@ -197,6 +197,13 @@ class NodeMetadata(TimestampedModel):  # Aligns with P1.12 for nodes
     # For knowledge gap nodes (P1.15)
     is_knowledge_gap: bool = False
     research_questions_generated: list[str] = Field(default_factory=list)
+
+    # --- New fields for bibliometric and raw data ---
+    url: Optional[str] = None
+    doi: Optional[str] = None
+    authors: Optional[List[str]] = Field(default_factory=list)
+    publication_date: Optional[str] = None # e.g., "YYYY-MM-DD" or "YYYY MMM"
+    misc_details: Optional[Dict[str, Any]] = Field(default_factory=dict) # For raw_source_data_type, original_data_dump, etc.
 
 
 class Node(TimestampedModel):
