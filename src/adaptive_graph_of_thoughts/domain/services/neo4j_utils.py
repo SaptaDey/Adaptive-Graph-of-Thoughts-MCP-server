@@ -28,7 +28,7 @@ def get_neo4j_driver() -> Driver:
 
         if not uri or not username or not password:
             logger.error("Neo4j URI, username, or password missing in configuration.")
-            raise ServiceUnavailable("Neo4j connection details are incomplete in settings.")
+            raise ServiceUnavailable("Neo4j URI, username, or password missing in configuration.")
 
         logger.info(f"Initializing Neo4j driver for URI: {uri}")
         try:
