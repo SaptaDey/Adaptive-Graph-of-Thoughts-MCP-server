@@ -208,3 +208,54 @@ async def test_parsing_cited_by_count(gs_client_fixture: GoogleScholarClient, ht
     assert articles[2].cited_by_count is None # Missing 'total' key
     assert articles[3].cited_by_count is None # No 'cited_by' or 'inline_links'
 ```
+# Fixture for timeout exception
+@pytest.fixture
+def timeout_exc() -> httpx.ReadTimeout:
+    return httpx.ReadTimeout("read timeout")
+
+async def test_search_pagination(gs_client_fixture, httpx_mock):
+    client = gs_client_fixture
+    page1 = json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)
+    page2 = json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR)
+    httpx_mock.add_response(json=page1)
+    httpx_mock.add_response(json=page2)
+    articles = await client.search("sample query", num=20)
+    # Two pages should be fetched
+    assert len(httpx_mock.get_requests()) == 2
+    assert len(articles) >= 2
+
+async def test_search_timeout(gs_client_fixture, httpx_mock, timeout_exc):
+    client = gs_client_fixture
+    httpx_mock.add_exception(timeout_exc)
+    with pytest.raises(GoogleScholarClientError) as exc:
+        await client.search("timeout query")
+    assert isinstance(exc.value.__cause__, APIRequestError)
+
+async def test_search_ignores_unexpected_keys(gs_client_fixture, httpx_mock):
+    client = gs_client_fixture
+    page = json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)
+    page["unexpected_key"] = {"foo": "bar"}
+    httpx_mock.add_response(json=page)
+    articles = await client.search("query with extra keys")
+    # Unexpected keys should be ignored and parsing succeed
+    expected_count = len(json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)["organic_results"])
+    assert len(articles) == expected_count
+
+async def test_search_parameter_propagation(gs_client_fixture, httpx_mock):
+    client = gs_client_fixture
+    httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR))
+    await client.search("param query", num=50, hl="es")
+    request = httpx_mock.get_requests()[-1]
+    assert request.url.params["num"] == "50"
+    assert request.url.params["hl"] == "es"
+
+def test_article_repr():
+    article = GoogleScholarArticle(
+        title="T", link="L", snippet="S", authors="A",
+        publication_info="P", cited_by_count=1, citation_link="C"
+    )
+    r = repr(article)
+    assert "GoogleScholarArticle" in r and "T" in r
+    # __str__ should reflect the representation as well
+    s = str(article)
+    assert "T" in s
