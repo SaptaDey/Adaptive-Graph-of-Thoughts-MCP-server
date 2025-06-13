@@ -211,6 +211,17 @@ class EvidenceStage(BaseStage):
     async def _execute_hypothesis_plan(
         self, hypothesis_data_from_neo4j: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
+        """
+        Executes a search plan for a given hypothesis and retrieves supporting evidence from external scholarly sources.
+        
+        Given a hypothesis node's data, constructs a search query (using either a provided plan or the hypothesis label) and queries PubMed, Google Scholar, and Exa Search for relevant articles or results. For each source, formats the retrieved items into evidence dictionaries containing content, source information, authors, publication date, strength, statistical power, disciplinary tags, timestamps, and raw source data. Handles errors per source and logs the process.
+        
+        Args:
+            hypothesis_data_from_neo4j: Dictionary containing hypothesis node data, including label and optional search plan.
+        
+        Returns:
+            A list of dictionaries, each representing a piece of evidence found for the hypothesis.
+        """
         hypo_label = hypothesis_data_from_neo4j.get("label", "")
         hypo_id = hypothesis_data_from_neo4j.get("id", "unknown_hypo")
         plan_json_str = hypothesis_data_from_neo4j.get("plan_json")

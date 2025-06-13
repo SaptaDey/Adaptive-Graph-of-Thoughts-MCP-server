@@ -37,6 +37,9 @@ def test_build_query_params(query, expected):
     assert int(params["retmax"]) == expected["retmax"]
 
 def test_search_happy_path(requests_mock):
+    """
+    Tests that the PubMedClient.search method returns the expected article IDs on a successful search response.
+    """
     client = PubMedClient()
     url = f"{client.BASE_URL}/esearch.fcgi"
     requests_mock.get(url, json=SAMPLE_SEARCH_RESPONSE, status_code=200)
@@ -67,6 +70,11 @@ def test_search_malformed_json(requests_mock):
 def test_search_timeout(monkeypatch):
     client = PubMedClient()
     def raise_timeout(*args, **kwargs):
+        """
+        Simulates a timeout by raising a requests.exceptions.Timeout exception.
+        
+        Intended for use in tests to mock timeout scenarios in HTTP requests.
+        """
         raise requests.exceptions.Timeout
     monkeypatch.setattr(client._session, "get", raise_timeout)
     with pytest.raises(PublicationAPIError):

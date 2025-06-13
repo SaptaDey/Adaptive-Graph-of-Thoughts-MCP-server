@@ -5,15 +5,29 @@
 
 class EmptyMockExaClient:
     def search(self, query, num_results):
+        """
+        Returns an empty list to simulate no search results for the given query.
+        
+        Args:
+            query: The search query string.
+            num_results: The maximum number of results to return.
+        
+        Returns:
+            An empty list, indicating no results were found.
+        """
         return []
 
 def test_search_no_results(monkeypatch):
     """
-    ExaSearchClient.search should return an empty list when the underlying
-    SDK returns no results.
+    Tests that ExaSearchClient.search returns an empty list when the underlying client yields no results.
     """
     # Arrange
     def mock_init(self, api_key: str, base_url: str):
+        """
+        Replaces the ExaSearchClient initializer to set the client as an EmptyMockExaClient.
+        
+        Intended for use in tests to simulate a client that always returns no search results.
+        """
         self.client = EmptyMockExaClient()
 
     monkeypatch.setattr(ExaSearchClient, "__init__", mock_init)
@@ -28,7 +42,7 @@ def test_search_no_results(monkeypatch):
 
 def test_search_invalid_num_results(monkeypatch):
     """
-    Passing num_results <= 0 should raise a ValueError.
+    Tests that calling search with num_results less than or equal to zero raises a ValueError.
     """
     monkeypatch.setattr(
         ExaSearchClient,
@@ -44,10 +58,13 @@ def test_search_invalid_num_results(monkeypatch):
 
 def test_search_api_failure(monkeypatch):
     """
-    The client should propagate exceptions raised by the underlying SDK.
+    Tests that exceptions raised by the underlying SDK during search are propagated by the client.
     """
     class FailingMockExaClient:
         def search(self, query, num_results):
+            """
+            Raises a RuntimeError to simulate an upstream failure during a search operation.
+            """
             raise RuntimeError("Upstream failure")
 
     monkeypatch.setattr(

@@ -20,7 +20,12 @@ _neo4j_settings: Optional[Neo4jSettings] = None
 _driver: Optional[Driver] = None
 
 def get_neo4j_settings() -> Neo4jSettings:
-    """Returns the Neo4j settings, initializing them if necessary."""
+    """
+    Retrieves the singleton Neo4jSettings instance, initializing it from environment variables if needed.
+    
+    Returns:
+        The Neo4jSettings object containing connection configuration.
+    """
     global _neo4j_settings
     if _neo4j_settings is None:
         logger.info("Initializing Neo4j settings.")
@@ -31,8 +36,9 @@ def get_neo4j_settings() -> Neo4jSettings:
 # --- Driver Management ---
 def get_neo4j_driver() -> Driver:
     """
-    Initializes and returns a Neo4j driver instance using a singleton pattern.
-    Handles authentication using configured credentials.
+    Returns a singleton Neo4j driver instance, initializing it with configured credentials if necessary.
+    
+    If the driver is uninitialized or closed, creates a new driver using the current settings, verifies connectivity, and logs the process. Raises an exception if connection fails.
     """
     global _driver
     # Create a driver only if one doesn't yet exist or has been closed
@@ -72,21 +78,23 @@ async def execute_query(
     tx_type: str = "read"  # 'read' or 'write'
 ) -> List[Record]:
     """
-    Executes a Cypher query using a session from the driver.
-
+    Executes a Cypher query asynchronously against the Neo4j database.
+    
+    Runs the specified query as either a read or write transaction, using the configured or provided database. The query is executed in a separate thread to avoid blocking the event loop.
+    
     Args:
-        query: The Cypher query string.
-        parameters: Optional dictionary of parameters for the query.
-        database: Optional name of the database to use. If None, uses default from settings.
-        tx_type: Type of transaction ('read' or 'write'). Defaults to 'read'.
-
+        query: The Cypher query string to execute.
+        parameters: Optional dictionary of parameters to pass to the query.
+        database: Optional database name; uses the default from settings if not provided.
+        tx_type: Transaction type, either 'read' or 'write'. Defaults to 'read'.
+    
     Returns:
-        A list of records resulting from the query.
-
+        A list of Neo4j Record objects resulting from the query.
+    
     Raises:
-        ServiceUnavailable: If the driver cannot connect to Neo4j.
-        Neo4jError: For errors during query execution.
-        ValueError: If an invalid tx_type is provided.
+        ServiceUnavailable: If the Neo4j driver is not initialized or the service is unavailable.
+        Neo4jError: If an error occurs during query execution.
+        ValueError: If an invalid transaction type is specified.
     """
     driver = get_neo4j_driver()  # Ensures driver is initialized
     if not driver:  # Should not happen if get_neo4j_driver raises on failure
