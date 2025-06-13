@@ -22,6 +22,12 @@ class PubMedClientError(BaseAPIClientError):
 
 class PubMedClient:
     def __init__(self, settings: Settings):
+        """
+        Initializes the PubMedClient with the provided settings.
+        
+        Raises:
+            PubMedClientError: If the PubMed configuration or base URL is missing in the settings.
+        """
         if not settings.pubmed or not settings.pubmed.base_url:
             logger.error("PubMed configuration is missing in settings.")
             raise PubMedClientError("PubMed configuration (base_url) is not set.")
@@ -36,16 +42,33 @@ class PubMedClient:
         logger.info(f"PubMedClient initialized for base URL: {self.config.base_url}")
 
     async def close(self):
+        """
+        Closes the underlying asynchronous HTTP client and releases network resources.
+        """
         await self.http_client.close()
 
     async def __aenter__(self):
+        """
+        Enters the asynchronous context for the PubMedClient, initializing the underlying HTTP client.
+        
+        Returns:
+            The PubMedClient instance for use within an async context manager.
+        """
         await self.http_client.client.__aenter__() # Enter the httpx client context
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """
+        Exits the asynchronous context manager, ensuring the underlying HTTP client is properly closed.
+        """
         await self.http_client.client.__aexit__(exc_type, exc_val, exc_tb) # Exit the httpx client context
 
     def _construct_common_params(self) -> Dict[str, Any]:
+        """
+        Builds a dictionary of common query parameters for PubMed API requests.
+        
+        Includes the API key and email if they are configured.
+        """
         params = {}
         if self.api_key:
             params["api_key"] = self.api_key
@@ -54,6 +77,18 @@ class PubMedClient:
         return params
 
     def _parse_esummary_response(self, xml_text: str) -> List[PubMedArticle]:
+        """
+        Parses PubMed eSummary XML and extracts article metadata into PubMedArticle objects.
+        
+        Args:
+            xml_text: XML string returned from the PubMed eSummary API.
+        
+        Returns:
+            A list of PubMedArticle instances containing metadata such as PMID, title, authors, journal, publication date, DOI, and article URL.
+        
+        Raises:
+            PubMedClientError: If the XML cannot be parsed.
+        """
         articles: List[PubMedArticle] = []
         try:
             root = ET.fromstring(xml_text)
@@ -99,6 +134,21 @@ class PubMedClient:
         return articles
 
     async def search_articles(self, query: str, max_results: int = 10) -> List[PubMedArticle]:
+        """
+        Searches PubMed for articles matching a query and retrieves detailed metadata.
+        
+        Performs an asynchronous search using the PubMed eSearch and eSummary APIs to find articles matching the provided query, up to the specified maximum number of results. For each article found, fetches and populates the abstract. Returns a list of fully populated `PubMedArticle` objects.
+        
+        Args:
+            query: The search query string.
+            max_results: The maximum number of articles to retrieve.
+        
+        Returns:
+            A list of `PubMedArticle` instances containing metadata and abstracts for each found article.
+        
+        Raises:
+            PubMedClientError: If an error occurs during the PubMed API requests or response parsing.
+        """
         logger.debug(f"Searching PubMed for query: '{query}', max_results: {max_results}")
 
         # Step 1: ESearch to get PMIDs
@@ -167,6 +217,20 @@ class PubMedClient:
         return [] # Should not be reached if successful, but as a fallback
 
     async def fetch_abstract(self, pmid: str) -> Optional[str]:
+        """
+        Fetches the abstract text for a given PubMed article by PMID.
+        
+        Queries the PubMed eFetch API for the specified PMID, parses the XML response, and extracts the abstract text, including labeled or categorized sections if present. Returns the full abstract as a single string, or None if no abstract is found.
+        
+        Args:
+            pmid: The PubMed ID of the article.
+        
+        Returns:
+            The abstract text as a string, or None if no abstract is available.
+        
+        Raises:
+            PubMedClientError: If there is an error with the API request or XML parsing.
+        """
         logger.debug(f"Fetching abstract for PubMed PMID: {pmid}")
         efetch_params = self._construct_common_params()
         efetch_params.update({
@@ -227,6 +291,11 @@ class PubMedClient:
 
 # Example Usage (for testing)
 async def main_pubmed_test():
+    """
+    Demonstrates usage of the PubMedClient by searching for articles and logging results.
+    
+    Attempts to load PubMed configuration, falling back to a default if necessary. Performs a sample search for "artificial intelligence in medicine," retrieves article metadata and abstracts, and logs the results. Handles and logs configuration, client, and unexpected errors.
+    """
     from adaptive_graph_of_thoughts.config import Settings, PubMedConfig # Ensure PubMedConfig is imported
 
     # Attempt to load settings, fallback to a default mock if issues occur

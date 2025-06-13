@@ -31,6 +31,11 @@ class GoogleScholarClientError(BaseAPIClientError):
 
 class GoogleScholarClient:
     def __init__(self, settings: Settings):
+        """
+        Initializes the GoogleScholarClient with the provided settings.
+        
+        Validates the presence of Google Scholar API configuration in the settings. Raises a GoogleScholarClientError if required configuration is missing. Sets up the asynchronous HTTP client with the configured base URL and stores the API key.
+        """
         if not settings.google_scholar or \
            not settings.google_scholar.base_url or \
            not settings.google_scholar.api_key:
@@ -52,18 +57,39 @@ class GoogleScholarClient:
         logger.info(f"GoogleScholarClient initialized. Configured base URL: {self.config.base_url}")
 
     async def close(self):
+        """
+        Closes the underlying asynchronous HTTP client.
+        
+        This should be called to release network resources when the client is no longer needed.
+        """
         await self.http_client.close()
 
     async def __aenter__(self):
         # Propagate context management to the underlying httpx.AsyncClient
+        """
+        Enters the asynchronous context for the GoogleScholarClient.
+        
+        Ensures the underlying HTTP client is properly initialized for use within an async context manager.
+        """
         await self.http_client.client.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         # Propagate context management to the underlying httpx.AsyncClient
+        """
+        Exits the asynchronous context manager, ensuring the underlying HTTP client is properly closed.
+        """
         await self.http_client.client.__aexit__(exc_type, exc_val, exc_tb)
 
     def _parse_serpapi_response(self, response_json: Dict[str, Any]) -> List[GoogleScholarArticle]:
+        """
+        Parses a SerpApi JSON response and extracts Google Scholar articles.
+        
+        Iterates through the "organic_results" in the response, extracting relevant fields such as title, link, snippet, publication info, authors, citation counts, and related links. Returns a list of validated `GoogleScholarArticle` objects. Entries missing a title or with invalid data are skipped.
+         
+        Returns:
+            A list of `GoogleScholarArticle` instances parsed from the response.
+        """
         articles: List[GoogleScholarArticle] = []
         if "organic_results" not in response_json:
             search_parameters = response_json.get("search_parameters", {})
@@ -126,6 +152,21 @@ class GoogleScholarClient:
         return articles
 
     async def search(self, query: str, num_results: int = 10, lang: str = "en", region: str = "us") -> List[GoogleScholarArticle]:
+        """
+        Performs an asynchronous search on Google Scholar via SerpApi and returns a list of parsed articles.
+        
+        Args:
+            query: The search query string.
+            num_results: The maximum number of articles to retrieve (default is 10).
+            lang: The language code for the search results (default is "en").
+            region: The region code for the search results (default is "us").
+        
+        Returns:
+            A list of GoogleScholarArticle objects representing the search results.
+        
+        Raises:
+            GoogleScholarClientError: If the API request fails, the response cannot be decoded as JSON, or an unexpected error occurs.
+        """
         logger.debug(f"Searching Google Scholar (via SerpApi) for query: '{query}', num_results: {num_results}")
 
         params = {
@@ -166,6 +207,11 @@ class GoogleScholarClient:
 
 # Example Usage (for testing)
 async def main_google_scholar_test():
+    """
+    Runs an asynchronous test of the Google Scholar client using current configuration.
+    
+    Attempts to load Google Scholar API settings, falling back to defaults if necessary. Skips execution if a valid API key is not provided. Performs a sample search query and logs details of retrieved articles or any errors encountered.
+    """
     from adaptive_graph_of_thoughts.config import Settings, GoogleScholarConfig
 
     try:

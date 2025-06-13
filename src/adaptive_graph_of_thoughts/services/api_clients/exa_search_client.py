@@ -21,6 +21,11 @@ class ExaSearchClientError(BaseAPIClientError):
 
 class ExaSearchClient:
     def __init__(self, settings: Settings):
+        """
+        Initializes the ExaSearchClient with the provided settings.
+        
+        Validates that the Exa Search API configuration is present and sets up the asynchronous HTTP client with required headers for authentication and content negotiation.
+        """
         if not settings.exa_search or \
            not settings.exa_search.base_url or \
            not settings.exa_search.api_key:
@@ -45,18 +50,41 @@ class ExaSearchClient:
         logger.info(f"ExaSearchClient initialized for base URL: {self.config.base_url}")
 
     async def close(self):
+        """
+        Closes the underlying asynchronous HTTP client and releases network resources.
+        """
         await self.http_client.close()
 
     async def __aenter__(self):
         # Ensure the underlying httpx.AsyncClient's context is entered
+        """
+        Enters the asynchronous context for the ExaSearchClient, initializing the underlying HTTP client.
+        
+        Returns:
+            The ExaSearchClient instance for use within an async context manager.
+        """
         await self.http_client.client.__aenter__()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         # Ensure the underlying httpx.AsyncClient's context is exited
+        """
+        Exits the asynchronous context manager, ensuring the underlying HTTP client is properly closed.
+        """
         await self.http_client.client.__aexit__(exc_type, exc_val, exc_tb)
 
     def _parse_exa_response(self, response_json: Dict[str, Any]) -> List[ExaArticleResult]:
+        """
+        Parses the JSON response from the Exa API and returns a list of article results.
+        
+        If the response does not contain a "results" key or if individual results are missing required fields, those entries are skipped. Each valid result is converted into an `ExaArticleResult` object.
+         
+        Args:
+            response_json: The JSON response dictionary from the Exa API.
+        
+        Returns:
+            A list of `ExaArticleResult` objects parsed from the response.
+        """
         articles: List[ExaArticleResult] = []
         if "results" not in response_json:
             logger.warning("No 'results' key found in Exa API response.")
@@ -95,6 +123,24 @@ class ExaSearchClient:
         start_published_date: Optional[str] = None, # YYYY-MM-DD
         end_published_date: Optional[str] = None # YYYY-MM-DD
     ) -> List[ExaArticleResult]:
+        """
+        Performs a search query against the Exa Search API and returns a list of article results.
+        
+        Args:
+            query: The search query string.
+            num_results: The maximum number of results to return.
+            type: The search type, either "neural" or "keyword".
+            use_autoprompt: Whether to enable Exa's autoprompt feature for query expansion.
+            category: Optional category filter (e.g., "article").
+            start_published_date: Optional start date filter in YYYY-MM-DD format.
+            end_published_date: Optional end date filter in YYYY-MM-DD format.
+        
+        Returns:
+            A list of ExaArticleResult objects representing the search results.
+        
+        Raises:
+            ExaSearchClientError: If the API request fails, the response cannot be decoded, or an unexpected error occurs.
+        """
         logger.debug(f"Searching Exa for query: '{query}', type: {type}, num_results: {num_results}, autoprompt: {use_autoprompt}")
 
         payload: Dict[str, Any] = {
@@ -141,6 +187,21 @@ class ExaSearchClient:
         start_published_date: Optional[str] = None, # YYYY-MM-DD
         end_published_date: Optional[str] = None # YYYY-MM-DD
     ) -> List[ExaArticleResult]:
+        """
+        Finds articles similar to the specified URL using the Exa Search API.
+        
+        Args:
+            url: The URL of the article to find similar content for.
+            num_results: The maximum number of similar articles to retrieve.
+            start_published_date: Optional start date (YYYY-MM-DD) to filter results by publication date.
+            end_published_date: Optional end date (YYYY-MM-DD) to filter results by publication date.
+        
+        Returns:
+            A list of ExaArticleResult objects representing articles similar to the provided URL.
+        
+        Raises:
+            ExaSearchClientError: If the API request fails, the response cannot be decoded, or an unexpected error occurs.
+        """
         logger.debug(f"Finding similar content on Exa for URL: '{url}', num_results: {num_results}")
 
         payload: Dict[str, Any] = {
@@ -172,6 +233,11 @@ class ExaSearchClient:
 
 # Example Usage (for testing)
 async def main_exa_search_test():
+    """
+    Runs an example test of the ExaSearchClient, demonstrating search and find_similar queries.
+    
+    Attempts to load Exa Search API configuration, performs a search for recent advancements in battery technology, and logs the results. If a valid result URL is found, it also performs a find_similar query and logs those results. Handles missing configuration, placeholder API keys, and logs errors or warnings as appropriate.
+    """
     from adaptive_graph_of_thoughts.config import Settings, ExaSearchConfig
 
     try:

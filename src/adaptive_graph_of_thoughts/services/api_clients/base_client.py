@@ -14,6 +14,14 @@ class APIRequestError(BaseAPIClientError):
 class APIHTTPError(BaseAPIClientError):
     """Indicates an HTTP error response from the API (4xx, 5xx)."""
     def __init__(self, status_code: int, response_content: Any, message: Optional[str] = None):
+        """
+        Initializes an APIHTTPError with the HTTP status code, response content, and an optional message.
+        
+        Args:
+            status_code: The HTTP status code returned by the API.
+            response_content: The content of the HTTP response.
+            message: An optional custom error message. If not provided, a default message is generated.
+        """
         self.status_code = status_code
         self.response_content = response_content
         self.message = message or f"API returned HTTP {status_code}"
@@ -31,6 +39,15 @@ class AsyncHTTPClient:
         api_key: Optional[str] = None, # Specific clients might handle API keys differently
         default_headers: Optional[Dict[str, str]] = None,
     ):
+        """
+        Initializes the asynchronous HTTP client with a base URL, optional API key, and default headers.
+        
+        Args:
+            base_url: The base URL for all HTTP requests made by this client.
+            default_headers: Additional headers to include with every request.
+        
+        The client is configured with a default user-agent, JSON accept header, and a 20-second timeout (10 seconds for connection). An API key and settings can be stored for use by subclasses or future extensions.
+        """
         self.base_url = base_url.rstrip('/')
         self.api_key = api_key # Store if needed for common auth, though often header-specific
         self.settings = settings
@@ -54,6 +71,21 @@ class AsyncHTTPClient:
     async def get(
         self, endpoint: str, params: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, str]] = None
     ) -> httpx.Response:
+        """
+        Performs an asynchronous HTTP GET request to the specified API endpoint.
+        
+        Args:
+        	endpoint: The relative path of the API endpoint to request.
+        	params: Optional query parameters to include in the request.
+        	headers: Optional headers to include in the request.
+        
+        Returns:
+        	The HTTP response object if the request is successful.
+        
+        Raises:
+        	APIHTTPError: If the API responds with an HTTP error status (4xx or 5xx).
+        	APIRequestError: If a network or request-related error occurs.
+        """
         endpoint = endpoint.lstrip('/')
         logger.debug(f"GET request to {self.base_url}/{endpoint} with params: {params}")
         try:
@@ -71,6 +103,22 @@ class AsyncHTTPClient:
     async def post(
         self, endpoint: str, json_data: Optional[Dict[str, Any]] = None, data: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, str]] = None
     ) -> httpx.Response:
+        """
+        Sends an asynchronous HTTP POST request to the specified API endpoint.
+        
+        Args:
+        	endpoint: The relative path of the API endpoint to send the request to.
+        	json_data: Optional dictionary to send as JSON in the request body.
+        	data: Optional dictionary to send as form data in the request body.
+        	headers: Optional dictionary of additional headers to include in the request.
+        
+        Returns:
+        	The HTTP response object if the request is successful.
+        
+        Raises:
+        	APIHTTPError: If the API responds with an HTTP error status (4xx or 5xx).
+        	APIRequestError: If a network or request-related error occurs.
+        """
         endpoint = endpoint.lstrip('/')
         logger.debug(f"POST request to {self.base_url}/{endpoint}")
         try:
@@ -86,13 +134,24 @@ class AsyncHTTPClient:
             raise APIRequestError(f"Request error for {e.request.url}: {str(e)}") from e
 
     async def close(self):
+        """
+        Closes the underlying asynchronous HTTP client.
+        
+        This method should be called to release network resources when the client is no longer needed.
+        """
         logger.debug(f"Closing AsyncHTTPClient for base URL: {self.base_url}")
         await self.client.aclose()
 
     async def __aenter__(self):
+        """
+        Enters the asynchronous context manager and returns the client instance.
+        """
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        """
+        Ensures the HTTP client is properly closed when exiting an asynchronous context.
+        """
         await self.close()
 
 if __name__ == '__main__':
