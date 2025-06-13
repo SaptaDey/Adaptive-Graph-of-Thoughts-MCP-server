@@ -44,7 +44,6 @@ from adaptive_graph_of_thoughts.services.api_clients.pubmed_client import PubMed
 from adaptive_graph_of_thoughts.services.api_clients.google_scholar_client import GoogleScholarClient, GoogleScholarArticle
 from adaptive_graph_of_thoughts.services.api_clients.exa_search_client import ExaSearchClient, ExaArticleResult
 
-
 class EvidenceStage(BaseStage):
     stage_name: str = "EvidenceStage"
 
@@ -213,6 +212,7 @@ class EvidenceStage(BaseStage):
     ) -> List[Dict[str, Any]]:
         hypo_label = hypothesis_data_from_neo4j.get("label", "")
         hypo_id = hypothesis_data_from_neo4j.get("id", "unknown_hypo")
+
         plan_json_str = hypothesis_data_from_neo4j.get("plan_json")
 
         search_query = hypo_label # Default query
@@ -658,11 +658,13 @@ class EvidenceStage(BaseStage):
                 current_hypothesis_id = selected_hypothesis_data["id"]
                 processed_hypotheses_this_run.add(current_hypothesis_id)
 
+
                 found_evidence_conceptual_list = await self._execute_hypothesis_plan(selected_hypothesis_data)
 
                 if not found_evidence_conceptual_list:
                     logger.debug(f"No new evidence found/generated for hypothesis '{selected_hypothesis_data.get('label', current_hypothesis_id)}'.")
                     continue
+
 
                 related_evidence_data_for_hyperedge: List[Dict[str,Any]] = []
                 for ev_idx, ev_conceptual_data in enumerate(found_evidence_conceptual_list):
