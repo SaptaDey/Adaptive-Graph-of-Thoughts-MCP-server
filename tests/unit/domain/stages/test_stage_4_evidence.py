@@ -1,6 +1,4 @@
 import pytest
-import json # Import the json module
-from unittest.mock import AsyncMock, MagicMock, patch # Using unittest.mock for AsyncMock
 from unittest.mock import AsyncMock, MagicMock, patch # Using unittest.mock for AsyncMock
 from typing import List, Dict, Any
 from datetime import datetime as dt
@@ -276,4 +274,65 @@ async def test_evidence_stage_execute_no_hypotheses(evidence_stage_all_clients: 
     assert output.next_stage_context_update[EvidenceStage.stage_name]["error"] == "No hypotheses found"
 
     stage.close_clients.assert_called_once()
-```
+# ---------- Additional Edge-Case & Helper Method Tests ----------
+
+def test_update_hypothesis_confidence_calculation():
+    """Ensure geometric/statistical power adjustment is computed correctly."""
+    stage = EvidenceStage(settings=MagicMock())
+    # synthetic StatisticalPower (mean of vector) should be 0.6 here
+    confidence_vector = [0.5, 0.6, 0.7, 0.6]
+    hyp_data = {"confidence_vector_list": confidence_vector}
+    new_confidence = stage._update_hypothesis_confidence(hyp_data)
+    expected = pytest.approx(sum(confidence_vector) / len(confidence_vector))
+    assert new_confidence == expected
+
+@pytest.mark.asyncio
+async def test_close_clients_resilient_logging(caplog):
+    settings = Settings(pubmed=None, google_scholar=None, exa_search=None, asr_got=MagicMock())
+    stage = EvidenceStage(settings=settings)
+
+    # Inject mock clients (some None, some raising on close)
+    failing_client = AsyncMock()
+    failing_client.close.side_effect = RuntimeError("boom")
+    stage.pubmed_client = failing_client        # will raise
+    stage.google_scholar_client = None          # should be skipped
+    stage.exa_client = AsyncMock()              # normal
+
+    with caplog.at_level("WARNING"):
+        await stage.close_clients()
+
+    # ensure each client.close attempted
+    failing_client.close.assert_awaited()
+    stage.exa_client.close.assert_awaited()
+    # warning logged for failure
+    assert "Error closing" in caplog.text
+
+@pytest.mark.asyncio
+async def test_execute_hypothesis_plan_all_sources_empty(evidence_stage_all_clients, sample_hypothesis_data):
+    stage = evidence_stage_all_clients
+    stage.pubmed_client.search_articles.return_value = []
+    stage.google_scholar_client.search.return_value = []
+    stage.exa_client.search.return_value = []
+
+    evidence = await stage._execute_hypothesis_plan(sample_hypothesis_data)
+
+    assert evidence == []                       # empty list returned
+    stage.pubmed_client.search_articles.assert_called_once()
+    stage.google_scholar_client.search.assert_called_once()
+    stage.exa_client.search.assert_called_once()
+
+@pytest.mark.asyncio
+async def test_execute_invokes_temporal_decay(evidence_stage_all_clients, mock_session_data, sample_hypothesis_data):
+    stage = evidence_stage_all_clients
+    stage._select_hypothesis_to_evaluate_from_neo4j = AsyncMock(side_effect=[sample_hypothesis_data, None])
+    stage._execute_hypothesis_plan = AsyncMock(return_value=[])
+    stage._create_evidence_in_neo4j = AsyncMock()
+    stage._update_hypothesis_confidence_in_neo4j = AsyncMock(return_value=True)
+    stage._create_ibn_in_neo4j = AsyncMock()
+    stage._create_hyperedges_in_neo4j = AsyncMock(return_value=[])
+    stage._apply_temporal_decay_and_patterns = AsyncMock()
+    stage._adapt_graph_topology = AsyncMock()
+
+    await stage.execute(mock_session_data)
+
+    stage._apply_temporal_decay_and_patterns.assert_awaited()
