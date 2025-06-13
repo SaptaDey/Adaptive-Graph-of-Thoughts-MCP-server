@@ -56,6 +56,8 @@ types-pyyaml = "^6.0.12.20250516"
 types-jsonschema = "^4.21.0.20250518" # Type hints for jsonschema
 mkdocs = "^1.6.0"  # Updated to a more recent version
 mkdocs-material = "^9.5.0" # Updated to a more recent version
+hypothesis = "^6.0"
+
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
