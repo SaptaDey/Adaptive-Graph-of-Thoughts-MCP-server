@@ -16,10 +16,25 @@ from adaptive_graph_of_thoughts.domain.stages.stage_3_hypothesis import Hypothes
 # --- Test Fixtures ---
 @pytest.fixture
 def mock_default_params() -> ASRGoTDefaultParams:
+    """
+    Creates default parameters for testing with evidence_max_iterations set to 1.
+    
+    Returns:
+        An ASRGoTDefaultParams instance configured for a single evidence iteration.
+    """
     return ASRGoTDefaultParams(evidence_max_iterations=1) # Default to 1 iteration for tests
 
 @pytest.fixture
 def mock_settings_all_clients(mock_default_params: ASRGoTDefaultParams) -> Settings:
+    """
+    Creates a Settings object with PubMed, Google Scholar, and ExaSearch clients configured for testing.
+    
+    Args:
+        mock_default_params: Mocked default parameters for the asr_got configuration.
+    
+    Returns:
+        A Settings instance with all external article search clients enabled and configured with test values.
+    """
     return Settings(
         pubmed=PubMedConfig(base_url="https://pubmed.example.com", email="test@example.com"),
         google_scholar=GoogleScholarConfig(base_url="https://scholar.example.com", api_key="gs_key"),
@@ -29,6 +44,15 @@ def mock_settings_all_clients(mock_default_params: ASRGoTDefaultParams) -> Setti
 
 @pytest.fixture
 def mock_settings_pubmed_only(mock_default_params: ASRGoTDefaultParams) -> Settings:
+    """
+    Creates a Settings object configured with only the PubMed client enabled for testing.
+    
+    Args:
+        mock_default_params: Mocked default parameters for the ASRGoT configuration.
+    
+    Returns:
+        A Settings instance with PubMed configured and Google Scholar and ExaSearch disabled.
+    """
     return Settings(
         pubmed=PubMedConfig(base_url="https://pubmed.example.com", email="test@example.com"),
         google_scholar=None,
@@ -39,6 +63,11 @@ def mock_settings_pubmed_only(mock_default_params: ASRGoTDefaultParams) -> Setti
 @pytest.fixture
 def evidence_stage_all_clients(mock_settings_all_clients: Settings) -> EvidenceStage:
     # Temporarily mock client instantiations within this fixture's scope
+    """
+    Creates an EvidenceStage instance with all external article search clients mocked for testing.
+    
+    The returned EvidenceStage has its PubMed, Google Scholar, and ExaSearch clients replaced with MagicMock instances, and their asynchronous search and close methods set to AsyncMock for use in asynchronous test scenarios.
+    """
     with patch('adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient', new_callable=MagicMock) as MockPubMed, \
          patch('adaptive_graph_of_thoughts.services.api_clients.google_scholar_client.GoogleScholarClient', new_callable=MagicMock) as MockGS, \
          patch('adaptive_graph_of_thoughts.services.api_clients.exa_search_client.ExaSearchClient', new_callable=MagicMock) as MockExa:
@@ -57,6 +86,11 @@ def evidence_stage_all_clients(mock_settings_all_clients: Settings) -> EvidenceS
 
 @pytest.fixture
 def evidence_stage_pubmed_only(mock_settings_pubmed_only: Settings) -> EvidenceStage:
+    """
+    Creates an EvidenceStage instance with only the PubMed client enabled and its methods mocked for asynchronous testing.
+    
+    The PubMed client's search and close methods are replaced with AsyncMock to simulate async behavior.
+    """
     with patch('adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient', new_callable=MagicMock) as MockPubMed:
         stage = EvidenceStage(settings=mock_settings_pubmed_only)
         if stage.pubmed_client:
@@ -67,6 +101,11 @@ def evidence_stage_pubmed_only(mock_settings_pubmed_only: Settings) -> EvidenceS
 
 @pytest.fixture
 def sample_hypothesis_data() -> Dict[str, Any]:
+    """
+    Provides a sample hypothesis dictionary for testing purposes.
+    
+    The returned dictionary includes an ID, label, JSON-encoded plan, disciplinary tags, and a confidence vector list.
+    """
     return {
         "id": "hypo1",
         "label": "Hypothesis about AI in medicine",
@@ -77,6 +116,15 @@ def sample_hypothesis_data() -> Dict[str, Any]:
 
 @pytest.fixture
 def mock_session_data(sample_hypothesis_data: Dict[str, Any]) -> GoTProcessorSessionData:
+    """
+    Creates a mock GoTProcessorSessionData instance with a test session ID and accumulated context referencing a hypothesis node.
+    
+    Args:
+        sample_hypothesis_data: Sample hypothesis data (unused in this function).
+    
+    Returns:
+        A GoTProcessorSessionData object with preset session ID and context for testing.
+    """
     return GoTProcessorSessionData(
         session_id="test_session",
         accumulated_context={
@@ -86,6 +134,15 @@ def mock_session_data(sample_hypothesis_data: Dict[str, Any]) -> GoTProcessorSes
 
 # --- Test Helper Functions ---
 def create_mock_pubmed_articles(count=1) -> List[PubMedArticle]:
+    """
+    Creates a list of mock PubMedArticle instances for testing.
+    
+    Args:
+        count: The number of mock articles to generate.
+    
+    Returns:
+        A list of PubMedArticle objects with sample metadata.
+    """
     return [
         PubMedArticle(pmid=f"pmid{i}", title=f"PubMed Article {i}", url=f"http://pubmed.com/pmid{i}",
                       authors=[f"Author {i}"], publication_date="2023", doi=f"doi_pm_{i}", abstract=f"Abstract {i}")
@@ -93,6 +150,15 @@ def create_mock_pubmed_articles(count=1) -> List[PubMedArticle]:
     ]
 
 def create_mock_gs_articles(count=1) -> List[GoogleScholarArticle]:
+    """
+    Creates a list of mock Google Scholar article objects for testing.
+    
+    Args:
+        count: The number of mock articles to generate.
+    
+    Returns:
+        A list of GoogleScholarArticle instances with sample data.
+    """
     return [
         GoogleScholarArticle(title=f"GS Article {i}", link=f"http://gs.com/gs{i}", snippet=f"Snippet {i}",
                              authors=f"GS Author {i}A, GS Author {i}B", publication_info="Journal GS, 2023", cited_by_count=i*10)
@@ -100,6 +166,15 @@ def create_mock_gs_articles(count=1) -> List[GoogleScholarArticle]:
     ]
 
 def create_mock_exa_results(count=1) -> List[ExaArticleResult]:
+    """
+    Creates a list of mock ExaArticleResult objects for testing.
+    
+    Args:
+        count: The number of mock results to generate.
+    
+    Returns:
+        A list of ExaArticleResult instances with sample data.
+    """
     return [
         ExaArticleResult(id=f"exa{i}", title=f"Exa Result {i}", url=f"http://exa.com/exa{i}", score=0.8 + i*0.05,
                          author=f"Exa Author {i}", published_date="2023-01-0{i+1}", highlights=[f"Highlight {i}"])
@@ -109,7 +184,11 @@ def create_mock_exa_results(count=1) -> List[ExaArticleResult]:
 
 # --- Test Cases ---
 def test_evidence_stage_initialization(mock_settings_all_clients: Settings, mock_settings_pubmed_only: Settings):
-    """Test client initialization based on configuration."""
+    """
+    Verifies that EvidenceStage initializes the correct API clients based on provided settings.
+    
+    This test checks that all clients (PubMed, Google Scholar, ExaSearch) are instantiated when enabled in the settings, and only the PubMed client is instantiated when the others are not configured.
+    """
     with patch('adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient') as MockPubMed, \
          patch('adaptive_graph_of_thoughts.services.api_clients.google_scholar_client.GoogleScholarClient') as MockGS, \
          patch('adaptive_graph_of_thoughts.services.api_clients.exa_search_client.ExaSearchClient') as MockExa:
@@ -137,6 +216,11 @@ def test_evidence_stage_initialization(mock_settings_all_clients: Settings, mock
 
 @pytest.mark.asyncio
 async def test_execute_hypothesis_plan_all_clients(evidence_stage_all_clients: EvidenceStage, sample_hypothesis_data: Dict[str, Any]):
+    """
+    Tests that _execute_hypothesis_plan aggregates evidence from all enabled clients.
+    
+    Verifies that when all clients are enabled and return results, the method queries each client once, combines their outputs, and the resulting evidence list contains items from each source with expected fields.
+    """
     stage = evidence_stage_all_clients
 
     # Setup mocks for each client's search method
@@ -167,6 +251,11 @@ async def test_execute_hypothesis_plan_all_clients(evidence_stage_all_clients: E
 
 @pytest.mark.asyncio
 async def test_execute_hypothesis_plan_pubmed_only(evidence_stage_pubmed_only: EvidenceStage, sample_hypothesis_data: Dict[str, Any]):
+    """
+    Tests that _execute_hypothesis_plan returns only PubMed articles when only the PubMed client is enabled.
+    
+    Verifies that the PubMed client's search method is called, other clients are not used, and all returned evidence items are from PubMed.
+    """
     stage = evidence_stage_pubmed_only
     stage.pubmed_client.search_articles.return_value = create_mock_pubmed_articles(3)
 
@@ -181,6 +270,11 @@ async def test_execute_hypothesis_plan_pubmed_only(evidence_stage_pubmed_only: E
 
 @pytest.mark.asyncio
 async def test_execute_hypothesis_plan_client_error_handling(evidence_stage_all_clients: EvidenceStage, sample_hypothesis_data: Dict[str, Any], caplog):
+    """
+    Tests that _execute_hypothesis_plan handles PubMed client errors gracefully.
+    
+    Simulates a PubMed client error during evidence search and verifies that evidence from other clients is still collected, and the error is logged.
+    """
     stage = evidence_stage_all_clients
 
     stage.pubmed_client.search_articles.side_effect = PubMedClientError("PubMed simulated error")
@@ -196,6 +290,11 @@ async def test_execute_hypothesis_plan_client_error_handling(evidence_stage_all_
 
 @pytest.mark.asyncio
 async def test_execute_hypothesis_plan_query_extraction(evidence_stage_pubmed_only: EvidenceStage, sample_hypothesis_data: Dict[str, Any]):
+    """
+    Tests that the hypothesis plan query extraction logic correctly prioritizes the query field in plan_json, falling back to the hypothesis label when necessary.
+    
+    Verifies that the PubMed client's search_articles method is called with the appropriate query string depending on the presence or absence of a query in plan_json or the plan_json field itself.
+    """
     stage = evidence_stage_pubmed_only
     stage.pubmed_client.search_articles.return_value = [] # Content doesn't matter here
 

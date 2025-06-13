@@ -72,7 +72,12 @@ SAMPLE_GS_CITED_BY_VARIATIONS_JSON_STR = """{
 # --- Fixtures ---
 @pytest.fixture
 def mock_gs_settings() -> Settings:
-    """Returns Settings with minimal GoogleScholarConfig."""
+    """
+    Creates a Settings object with a minimal GoogleScholarConfig for testing purposes.
+    
+    Returns:
+        A Settings instance containing a GoogleScholarConfig with example base URL and API key.
+    """
     return Settings(
         google_scholar=GoogleScholarConfig(
             base_url="https://serpapi.com/search",  # Example base URL
@@ -82,7 +87,12 @@ def mock_gs_settings() -> Settings:
 
 @pytest.fixture
 async def gs_client_fixture(mock_gs_settings: Settings) -> GoogleScholarClient:
-    """Yields an instance of GoogleScholarClient using an async context manager."""
+    """
+    Async pytest fixture that provides a GoogleScholarClient instance initialized with mock settings.
+    
+    Yields:
+        An active GoogleScholarClient for use within a test, managed by an async context manager.
+    """
     async with GoogleScholarClient(settings=mock_gs_settings) as client:
         yield client
 
@@ -108,6 +118,11 @@ def test_gs_client_initialization_missing_config():
 
 
 async def test_search_success(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    """
+    Tests that the GoogleScholarClient.search method returns correctly parsed articles for a successful API response.
+    
+    Verifies that all article fields are extracted as expected and that the API request includes the correct parameters.
+    """
     client = gs_client_fixture
     httpx_mock.add_response(
         url=client.config.base_url, # As base_url itself is the full endpoint for SerpApi usually
@@ -134,6 +149,9 @@ async def test_search_success(gs_client_fixture: GoogleScholarClient, httpx_mock
     assert request.url.params["q"] == "sample query"
 
 async def test_search_empty_results(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    """
+    Tests that the search method returns an empty list when the API response contains no results.
+    """
     client = gs_client_fixture
     httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR))
 
@@ -141,6 +159,9 @@ async def test_search_empty_results(gs_client_fixture: GoogleScholarClient, http
     assert len(articles) == 0
 
 async def test_search_missing_organic_results_key(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock, caplog):
+    """
+    Tests that the search method returns an empty list and logs a warning when the API response lacks the 'organic_results' key.
+    """
     client = gs_client_fixture
     httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_MISSING_ORGANIC_RESULTS_KEY_JSON_STR))
 
@@ -158,6 +179,9 @@ async def test_search_http_error(gs_client_fixture: GoogleScholarClient, httpx_m
     assert isinstance(exc_info.value.__cause__, APIHTTPError)
 
 async def test_search_request_error(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    """
+    Tests that a connection error during a search request raises GoogleScholarClientError with APIRequestError as the underlying cause.
+    """
     client = gs_client_fixture
     httpx_mock.add_exception(httpx.ConnectError("Simulated connection error"))
 
@@ -167,6 +191,9 @@ async def test_search_request_error(gs_client_fixture: GoogleScholarClient, http
 
 
 async def test_search_invalid_json_response(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    """
+    Tests that the search method raises GoogleScholarClientError when the API response contains invalid JSON.
+    """
     client = gs_client_fixture
     httpx_mock.add_response(text=SAMPLE_GS_SEARCH_INVALID_JSON_STR)
 
@@ -198,6 +225,11 @@ async def test_parsing_various_author_formats(gs_client_fixture: GoogleScholarCl
     assert articles[3].authors is None
 
 async def test_parsing_cited_by_count(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock, caplog):
+    """
+    Tests that the GoogleScholarClient correctly parses cited-by counts from various response formats.
+    
+    Verifies that valid integer cited-by counts are parsed, invalid or missing counts result in None, and appropriate log messages are generated for unparsable values.
+    """
     client = gs_client_fixture
     httpx_mock.add_response(json=json.loads(SAMPLE_GS_CITED_BY_VARIATIONS_JSON_STR))
     articles = await client.search("cited_by format query")
