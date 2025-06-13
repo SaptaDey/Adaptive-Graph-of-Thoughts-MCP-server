@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Gather context for writing additional tests
+
+echo "=== Content of tests/unit/test_config.py ==="
+if [[ -f tests/unit/test_config.py ]]; then
+  cat tests/unit/test_config.py
+else
+  echo "Error: tests/unit/test_config.py not found"
+fi
+
+echo ""
+echo "=== Searching for pytest imports in tests directory ==="
+grep -R "import pytest" tests/ || echo "No pytest imports found in tests/"
