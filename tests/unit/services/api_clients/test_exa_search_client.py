@@ -39,7 +39,12 @@ SAMPLE_EXA_MISSING_RESULTS_KEY_JSON_STR = """{
 # --- Fixtures ---
 @pytest.fixture
 def mock_exa_settings() -> Settings:
-    """Returns Settings with minimal ExaSearchConfig."""
+    """
+    Creates a Settings object with a minimal ExaSearchConfig for testing purposes.
+    
+    Returns:
+        A Settings instance containing an ExaSearchConfig with a test base URL and API key.
+    """
     return Settings(
         exa_search=ExaSearchConfig(
             base_url="https://api.exa.ai",
@@ -49,7 +54,9 @@ def mock_exa_settings() -> Settings:
 
 @pytest.fixture
 async def exa_client_fixture(mock_exa_settings: Settings) -> ExaSearchClient:
-    """Yields an instance of ExaSearchClient using an async context manager."""
+    """
+    Asynchronously yields an ExaSearchClient instance configured with mock settings for testing.
+    """
     async with ExaSearchClient(settings=mock_exa_settings) as client:
         yield client
 
@@ -78,6 +85,11 @@ def test_exa_client_initialization_missing_config():
         ExaSearchClient(settings=Settings(exa_search=ExaSearchConfig(api_key="key", base_url=None))) # type: ignore
 
 async def test_search_success(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
+    """
+    Tests that the `search` method returns a list of `ExaArticleResult` objects when the API responds successfully.
+    
+    Verifies that the correct API endpoint, HTTP method, and default payload parameters are used, and that the response is parsed as expected.
+    """
     client = exa_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url}/search",
@@ -107,6 +119,11 @@ async def test_search_success(exa_client_fixture: ExaSearchClient, httpx_mock: H
     assert payload["type"] == "neural" # Default
 
 async def test_find_similar_success(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
+    """
+    Tests that the find_similar method returns a list of ExaArticleResult objects when the API responds successfully.
+    
+    Verifies that the correct POST request is made to the /find_similar endpoint with the expected payload and that the response is parsed into the appropriate result objects.
+    """
     client = exa_client_fixture
     source_url = "http://example.com/source_url_for_similar"
     httpx_mock.add_response(
@@ -131,6 +148,9 @@ async def test_find_similar_success(exa_client_fixture: ExaSearchClient, httpx_m
     assert payload["url"] == source_url
 
 async def test_search_empty_results(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
+    """
+    Tests that the search method returns an empty list when the API response contains no results.
+    """
     client = exa_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url}/search",
@@ -141,6 +161,9 @@ async def test_search_empty_results(exa_client_fixture: ExaSearchClient, httpx_m
     assert len(articles) == 0
 
 async def test_search_missing_results_key(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock, caplog):
+    """
+    Tests that the search method returns an empty list and logs a warning when the API response lacks the 'results' key.
+    """
     client = exa_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url}/search",
@@ -152,6 +175,11 @@ async def test_search_missing_results_key(exa_client_fixture: ExaSearchClient, h
     assert "No 'results' key found in Exa API response." in caplog.text
 
 async def test_search_http_error(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
+    """
+    Tests that the search method raises ExaSearchClientError when the API returns an HTTP error.
+    
+    Simulates a 401 Unauthorized response from the Exa Search API and verifies that the client raises ExaSearchClientError with an APIHTTPError as the underlying cause.
+    """
     client = exa_client_fixture
     httpx_mock.add_response(url=f"{client.config.base_url}/search", method="POST", status_code=401, text="Unauthorized")
 
@@ -161,6 +189,9 @@ async def test_search_http_error(exa_client_fixture: ExaSearchClient, httpx_mock
     assert "Exa API search request failed" in str(exc_info.value)
 
 async def test_search_request_error(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
+    """
+    Tests that ExaSearchClient raises ExaSearchClientError with an APIRequestError cause when a network connection error occurs during a search request.
+    """
     client = exa_client_fixture
     httpx_mock.add_exception(
         httpx.ConnectError("Simulated connection error"),
@@ -173,6 +204,9 @@ async def test_search_request_error(exa_client_fixture: ExaSearchClient, httpx_m
     assert isinstance(exc_info.value.__cause__, APIRequestError)
 
 async def test_search_with_all_parameters(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
+    """
+    Tests that the search method sends all optional parameters in the request payload with correct keys and values, including camelCase formatting for date fields.
+    """
     client = exa_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url}/search",
@@ -216,6 +250,11 @@ async def test_correct_headers_usage(exa_client_fixture: ExaSearchClient, httpx_
     assert "AdaptiveGraphOfThoughtsClient/1.0 (ExaSearchClient)" in request.headers["User-Agent"]
 
 async def test_find_similar_with_date_params(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
+    """
+    Tests that the find_similar method sends date parameters in camelCase format in the request payload.
+    
+    Verifies that start_published_date and end_published_date are correctly included as startPublishedDate and endPublishedDate in the JSON payload when calling find_similar.
+    """
     client = exa_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url}/find_similar",
