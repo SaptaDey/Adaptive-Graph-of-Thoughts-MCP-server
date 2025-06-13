@@ -33,7 +33,7 @@ python-dotenv = "^1.0.1"   # For loading .env files
 PyYAML = "^6.0.1"          # For YAML configuration files
 typer = {extras = ["all"], version = "^0.12.3"} # For CLI commands (optional, but good for management scripts)
 loguru = "^0.7.2"          # For enhanced logging
-requests = "^2.31.0"       # For HTTP requests in test scripts
+requests = "^2.32.4"       # For HTTP requests in test scripts
 mcp = "^1.2.0"             # Official MCP Python SDK
 jsonschema = "^4.21.0"     # For configuration schema validation
 sse-starlette = "^2.1.0"   # For Server-Sent Events in FastAPI
