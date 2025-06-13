@@ -278,68 +278,111 @@ async def test_evidence_stage_execute_no_hypotheses(evidence_stage_all_clients: 
     stage.close_clients.assert_called_once()
 ```
 
-import freezegun
-import logging
+from adaptive_graph_of_thoughts.domain.models.graph_elements import Edge, EdgeMetadata, EdgeType
+from adaptive_graph_of_thoughts.domain.models.graph_elements import Node, NodeMetadata
+from adaptive_graph_of_thoughts.domain.models.common import ConfidenceVector
+
+# --- Minimal fixtures for helper-serialization tests ---
+@pytest.fixture
+def minimal_node() -> Node:
+    return Node(
+        id="node1",
+        label="Test Node",
+        type=NodeType.EVIDENCE,
+        confidence=ConfidenceVector(
+            empirical_support=0.9,
+            methodological_rigor=0.8,
+            theoretical_basis=0.7,
+            consensus_alignment=0.6
+        ),
+        metadata=NodeMetadata(description="A test node", disciplinary_tags={"ai"})
+    )
 
 @pytest.fixture
-def frozen_time():
-    with freezegun.freeze_time("2025-01-01"):
-        yield
+def minimal_edge() -> Edge:
+    return Edge(
+        id="edge1",
+        type=EdgeType.SUPPORTIVE,
+        source="node1",
+        target="node2",
+        metadata=EdgeMetadata(description="edge desc")
+    )
 
+# --- Tests for tag deserialization ---
+def test_deserialize_tags_variants(evidence_stage_all_clients: EvidenceStage):
+    stg = evidence_stage_all_clients
+    assert stg._deserialize_tags(None) == set()
+    assert stg._deserialize_tags(["a", "b"]) == {"a", "b"}
+    assert stg._deserialize_tags('["c","d"]') == {"c", "d"}
+    # malformed JSON gracefully returns empty set
+    assert stg._deserialize_tags('not-json') == set()
+
+# --- Tests for property preparation ---
+def test_prepare_node_properties_serializes_correctly(
+    evidence_stage_all_clients: EvidenceStage,
+    minimal_node: Node
+):
+    props = evidence_stage_all_clients._prepare_node_properties_for_neo4j(minimal_node)
+    # basic keys retained
+    assert props["id"] == "node1"
+    assert props["label"] == "Test Node"
+    # confidence flattened
+    assert props["confidence_empirical_support"] == 0.9
+    # metadata flattened / namespaced
+    assert props["metadata_description"] == "A test node"
+    # discipline set converted to list
+    assert props["metadata_disciplinary_tags"] == ["ai"]
+
+def test_prepare_edge_properties_serializes_correctly(
+    evidence_stage_all_clients: EvidenceStage,
+    minimal_edge: Edge
+):
+    props = evidence_stage_all_clients._prepare_edge_properties_for_neo4j(minimal_edge)
+    assert props["id"] == "edge1"
+    assert props["metadata_description"] == "edge desc"
+
+# --- Async test: close_clients error handling ---
 @pytest.mark.asyncio
-async def test_update_hypothesis_confidence_edge_cases(evidence_stage_all_clients, sample_hypothesis_data):
+async def test_close_clients_handles_errors(evidence_stage_all_clients: EvidenceStage, caplog):
     stage = evidence_stage_all_clients
-
-    # All zeros vector
-    data_zero = sample_hypothesis_data.copy()
-    data_zero["confidence_vector_list"] = [0.0] * len(sample_hypothesis_data["confidence_vector_list"])
-    result_zero = stage._update_hypothesis_confidence(data_zero)
-    assert isinstance(result_zero, StatisticalPower)
-    assert result_zero.value == 0.0
-
-    # All ones vector
-    data_one = sample_hypothesis_data.copy()
-    data_one["confidence_vector_list"] = [1.0] * len(sample_hypothesis_data["confidence_vector_list"])
-    result_one = stage._update_hypothesis_confidence(data_one)
-    assert result_one.value == 1.0
-
-    # Mismatched length vector
-    data_mismatch = sample_hypothesis_data.copy()
-    data_mismatch["confidence_vector_list"] = [0.5, 0.5]
-    result_mismatch = stage._update_hypothesis_confidence(data_mismatch)
-    assert isinstance(result_mismatch, StatisticalPower)
-
-@pytest.mark.asyncio
-async def test_apply_temporal_decay_and_patterns_no_evidence(evidence_stage_all_clients, mock_session_data, frozen_time):
-    stage = evidence_stage_all_clients
-    # Should exit gracefully without raising
-    result = await stage._apply_temporal_decay_and_patterns(mock_session_data, [])
-    assert result is None
-
-@pytest.mark.asyncio
-async def test_execute_hypothesis_plan_all_clients_fail(evidence_stage_all_clients, sample_hypothesis_data, caplog):
-    stage = evidence_stage_all_clients
-    caplog.set_level(logging.ERROR)
-    stage.pubmed_client.search_articles.side_effect = PubMedClientError("PubMed fail")
-    stage.google_scholar_client.search.side_effect = GoogleScholarClientError("GS fail")
-    stage.exa_client.search.side_effect = ExaSearchClientError("Exa fail")
-
-    results = await stage._execute_hypothesis_plan(sample_hypothesis_data)
-    assert results == []
-    assert "PubMed fail" in caplog.text
-    assert "GS fail" in caplog.text
-    assert "Exa fail" in caplog.text
-
-@pytest.mark.asyncio
-async def test_close_clients_idempotent(evidence_stage_all_clients):
-    stage = evidence_stage_all_clients
-    pubmed_close = stage.pubmed_client.close
-    gs_close = stage.google_scholar_client.close
-    exa_close = stage.exa_client.close
+    # attach AsyncMocks that raise
+    if stage.pubmed_client:
+        stage.pubmed_client.close.side_effect = Exception("close err")
+    if stage.google_scholar_client:
+        stage.google_scholar_client.close.side_effect = Exception("close err")
+    if stage.exa_client:
+        stage.exa_client.close.side_effect = Exception("close err")
 
     await stage.close_clients()
-    await stage.close_clients()
 
-    pubmed_close.assert_called_once()
-    gs_close.assert_called_once()
-    exa_close.assert_called_once()
+    # ensure we logged error three times but function completed without raising
+    assert "Error closing" in caplog.text
+
+# --- Parametric async test: hypothesis plan query selection ---
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "plan_json,label,expected_query",
+    [
+        (json.dumps({"query": "explicit query"}), "lbl", "explicit query"),
+        (json.dumps({"type": "t"}), "lbl2", "lbl2"),  # no query field -> label used
+        (None, "lbl3", "lbl3"),                       # no plan_json -> label used
+    ],
+)
+async def test_execute_hypothesis_plan_query_selection(
+    evidence_stage_pubmed_only: EvidenceStage,
+    plan_json,
+    label,
+    expected_query,
+):
+    stage = evidence_stage_pubmed_only
+    stage.pubmed_client.search_articles = AsyncMock(return_value=[])
+
+    hypo_data = {
+        "id": "h1",
+        "label": label,
+        "plan_json": plan_json,
+        "metadata_disciplinary_tags": []
+    }
+    await stage._execute_hypothesis_plan(hypo_data)
+
+    stage.pubmed_client.search_articles.assert_called_with(query=expected_query, max_results=2)

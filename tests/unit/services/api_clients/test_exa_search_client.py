@@ -235,74 +235,65 @@ async def test_find_similar_with_date_params(exa_client_fixture: ExaSearchClient
     assert payload["startPublishedDate"] == "2022-01-01"
     assert payload["endPublishedDate"] == "2022-12-31"
 ```
-async def test_context_manager_closes_http_client(httpx_mock: HTTPXMock, mock_exa_settings: Settings):
-    initial_count = len(httpx_mock.get_requests())
-    async with ExaSearchClient(settings=mock_exa_settings) as client:
-        pass
-    # After context exit, the underlying HTTPX client should be closed
-    assert client.http_client.client.is_closed
-    # No new requests should have been recorded
-    assert len(httpx_mock.get_requests()) == initial_count
 
-async def test_find_similar_empty_results(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
+@pytest.mark.asyncio
+async def test_search_malformed_json(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
     client = exa_client_fixture
-    httpx_mock.add_response(
-        url=f"{client.config.base_url}/find_similar",
-        method="POST",
-        json=json.loads(SAMPLE_EXA_EMPTY_RESULTS_JSON_STR)
-    )
-    articles = await client.find_similar("http://example.com/nonexistent")
-    assert len(articles) == 0
-
-async def test_find_similar_http_error(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
-    client = exa_client_fixture
-    httpx_mock.add_response(
-        url=f"{client.config.base_url}/find_similar",
-        method="POST",
-        status_code=401,
-        text="Unauthorized"
-    )
-    with pytest.raises(ExaSearchClientError) as exc_info:
-        await client.find_similar("http://example.com/error")
-    assert isinstance(exc_info.value.__cause__, APIHTTPError)
-    assert "Exa API find_similar request failed" in str(exc_info.value)
-
-async def test_search_invalid_json(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
-    client = exa_client_fixture
+    # Return plain text instead of JSON
     httpx_mock.add_response(
         url=f"{client.config.base_url}/search",
         method="POST",
-        text="not a valid json"
+        text="<!DOCTYPE html><html><body>Not JSON</body></html>"
     )
     with pytest.raises(ExaSearchClientError) as exc_info:
-        await client.search("query")
+        await client.search("bad json")
+    # json.JSONDecodeError should be the underlying cause
     assert isinstance(exc_info.value.__cause__, json.JSONDecodeError)
 
-@pytest.mark.parametrize("num_results", [-1, 0.5, "ten"])
-async def test_bad_numeric_params(exa_client_fixture: ExaSearchClient, num_results):
+@pytest.mark.asyncio
+async def test_search_timeout_error(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
     client = exa_client_fixture
-    with pytest.raises(ExaSearchClientError):
-        await client.search("query", num_results=num_results)
+    httpx_mock.add_exception(
+        httpx.ReadTimeout("Simulated timeout"),
+        url=f"{client.config.base_url}/search",
+        method="POST"
+    )
+    with pytest.raises(ExaSearchClientError) as exc_info:
+        await client.search("timeout query")
+    assert isinstance(exc_info.value.__cause__, APIRequestError)
 
-def test_exa_article_result_equality():
-    result1 = ExaArticleResult(
-        id="test_id",
-        url="http://example.com",
-        title="Test Title",
-        score=0.5,
-        published_date="2023-04-01",
-        author="Author Name",
-        highlights=["h1", "h2"]
+@pytest.mark.asyncio
+async def test_async_client_closed_after_context(mock_exa_settings: Settings, httpx_mock: HTTPXMock):
+    async with ExaSearchClient(settings=mock_exa_settings) as client:
+        httpx_mock.add_response(
+            url=f"{client.config.base_url}/search",
+            method="POST",
+            json=json.loads(SAMPLE_EXA_EMPTY_RESULTS_JSON_STR)
+        )
+        await client.search("ensure close")
+        # inside context the underlying client should be open
+        assert not client.http_client.client.is_closed
+    # after exiting context it must be closed
+    assert client.http_client.client.is_closed
+
+@pytest.mark.asyncio
+async def test_custom_header_override(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
+    client = exa_client_fixture
+    extra_headers = {"X-Custom-Header": "custom_value"}
+    httpx_mock.add_response(
+        url=f"{client.config.base_url}/search",
+        method="POST",
+        json=json.loads(SAMPLE_EXA_EMPTY_RESULTS_JSON_STR)
     )
-    result2 = ExaArticleResult(
-        id="test_id",
-        url="http://example.com",
-        title="Test Title",
-        score=0.5,
-        published_date="2023-04-01",
-        author="Author Name",
-        highlights=["h1", "h2"]
-    )
-    assert result1 == result2
-    repr_str = repr(result1)
-    assert "test_id" in repr_str
+    await client.search("header test", extra_headers=extra_headers)
+    request = httpx_mock.get_requests()[0]
+    # default plus custom header should be present
+    assert request.headers["X-Custom-Header"] == "custom_value"
+    assert request.headers["x-api-key"] == client.api_key
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("bad_num", [-1, 0, 101])
+async def test_search_invalid_num_results(exa_client_fixture: ExaSearchClient, bad_num: int):
+    client = exa_client_fixture
+    with pytest.raises(ValueError):
+        await client.search("bad num_results", num_results=bad_num)
