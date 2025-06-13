@@ -1,11 +1,15 @@
 @pytest.fixture
 def empty_graph():
-    """Provide an empty Graph for testing."""
+    """
+    Provides an empty Graph instance for use in tests.
+    """
     return Graph()
 
 @pytest.fixture
 def simple_graph():
-    """Provide a simple Graph with A-B-C path for testing."""
+    """
+    Provides a Graph instance with three nodes ('A', 'B', 'C') connected in a linear path (A-B-C) for testing purposes.
+    """
     g = Graph()
     g.add_node('A')
     g.add_node('B')
@@ -44,18 +48,31 @@ def test_add_and_remove_node(empty_graph):
     ],
 )
 def test_find_path_happy(simple_graph, start, end, expected):
-    """Happy path: find_path returns correct path for connected nodes."""
+    """
+    Tests that find_path returns the correct path between connected nodes in the simple graph.
+    
+    Args:
+        start: The starting node ID.
+        end: The ending node ID.
+        expected: The expected list of node IDs representing the path.
+    """
     assert simple_graph.find_path(start, end) == expected
 
 def test_add_duplicate_node_raises(empty_graph):
-    """Edge case: adding a duplicate node raises ValueError."""
+    """
+    Tests that adding a duplicate node to the graph raises a ValueError.
+    """
     g = empty_graph
     g.add_node('D')
     with pytest.raises(ValueError):
         g.add_node('D')
 
 def test_add_duplicate_edge_raises(simple_graph):
-    """Edge case: adding a duplicate edge raises ValueError."""
+    """
+    Tests that adding a duplicate edge to the graph raises a ValueError.
+    
+    Verifies that attempting to add an edge that already exists between two nodes results in a ValueError being raised.
+    """
     g = simple_graph
     with pytest.raises(ValueError):
         g.add_edge('A', 'B')
@@ -67,7 +84,9 @@ def test_remove_nonexistent_node_raises(empty_graph):
         g.remove_node('Z')
 
 def test_find_path_disconnected(empty_graph):
-    """Edge case: find_path returns None for disconnected nodes."""
+    """
+    Tests that find_path returns None when there is no path between disconnected nodes.
+    """
     g = empty_graph
     g.add_node('X')
     g.add_node('Y')
@@ -78,7 +97,12 @@ def test_find_path_disconnected(empty_graph):
     [None, 123, 3.14, [], {}],
 )
 def test_invalid_node_input_raises_type_error(empty_graph, invalid_input):
-    """Failure condition: add_node with invalid input raises TypeError."""
+    """
+    Tests that adding a node with an invalid input type raises a TypeError.
+    
+    Verifies that the Graph's add_node method enforces type constraints by raising
+    a TypeError when provided with unsupported input types.
+    """
     g = empty_graph
     with pytest.raises(TypeError):
         g.add_node(invalid_input)

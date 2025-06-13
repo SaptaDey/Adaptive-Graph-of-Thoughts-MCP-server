@@ -5,6 +5,16 @@
 
 class EmptyMockExaClient:
     def search(self, query, num_results):
+        """
+        Returns an empty list to simulate no search results for the given query.
+        
+        Args:
+            query: The search query string.
+            num_results: The maximum number of results to return.
+        
+        Returns:
+            An empty list, indicating no results found.
+        """
         return []
 
 def test_search_no_results(monkeypatch):
@@ -14,6 +24,11 @@ def test_search_no_results(monkeypatch):
     """
     # Arrange
     def mock_init(self, api_key: str, base_url: str):
+        """
+        Initializes the instance with an EmptyMockExaClient as its client.
+        
+        Replaces the standard initialization to inject a mock client that always returns no results, typically for testing purposes.
+        """
         self.client = EmptyMockExaClient()
 
     monkeypatch.setattr(ExaSearchClient, "__init__", mock_init)
@@ -28,7 +43,7 @@ def test_search_no_results(monkeypatch):
 
 def test_search_invalid_num_results(monkeypatch):
     """
-    Passing num_results <= 0 should raise a ValueError.
+    Tests that ExaSearchClient.search raises a ValueError when num_results is zero or negative.
     """
     monkeypatch.setattr(
         ExaSearchClient,
@@ -44,10 +59,18 @@ def test_search_invalid_num_results(monkeypatch):
 
 def test_search_api_failure(monkeypatch):
     """
-    The client should propagate exceptions raised by the underlying SDK.
+    Tests that ExaSearchClient.search propagates exceptions from the underlying client.
+    
+    This test replaces the internal client with a mock that raises a RuntimeError, and verifies that the exception is not caught or altered by ExaSearchClient.
     """
     class FailingMockExaClient:
         def search(self, query, num_results):
+            """
+            Simulates a search operation that always fails.
+            
+            Raises:
+                RuntimeError: Always raised to simulate an upstream failure.
+            """
             raise RuntimeError("Upstream failure")
 
     monkeypatch.setattr(
@@ -62,8 +85,9 @@ def test_search_api_failure(monkeypatch):
 
 def test_client_initialization_missing_key(monkeypatch):
     """
-    Instantiating ExaSearchClient without an API key should raise ValueError.
-    If the implementation does not currently validate this, mark as xfail.
+    Tests that creating an ExaSearchClient without an API key raises a ValueError.
+    
+    If API key validation is not implemented, the test is marked as expected to fail.
     """
     if not hasattr(ExaSearchClient, "__post_init_validation__"):
         pytest.xfail("API key validation not implemented yet")

@@ -56,7 +56,11 @@ def test_send_request_rate_limit_backoff(monkeypatch):
     assert elapsed >= 0
 
 def test_send_request_concurrent():
-    """Concurrency: multiple threads making requests."""
+    """
+    Tests that BaseClient can handle concurrent requests from multiple threads.
+    
+    Verifies that five threads can simultaneously send requests using the client, and each receives the expected successful response.
+    """
     transport = DummyTransport([{"status": 200, "data": "ok"}] * 5)
     client = BaseClient(transport=transport)
     results = []
@@ -84,7 +88,9 @@ def test_send_request_concurrent():
 )
 def test_send_request_http_error_mapping(monkeypatch, status_code, error_cls, dummy_ok):
     """
-    Failure paths: verify HTTP status→exception mapping logic inside BaseClient._handle_response.
+    Tests that BaseClient raises the correct exception for specific HTTP status codes.
+    
+    Verifies that when the transport returns a response with a given HTTP status code, BaseClient maps it to the expected exception type.
     """
     transport = DummyTransport([{"status": status_code}])
     client = BaseClient(transport=transport, max_retries=0)
@@ -93,7 +99,7 @@ def test_send_request_http_error_mapping(monkeypatch, status_code, error_cls, du
 
 def test_send_request_respects_max_retries(monkeypatch):
     """
-    Ensure retry loop stops at max_retries and surfaces last error.
+    Tests that the client stops retrying after reaching the maximum number of retries and raises the last encountered error.
     """
     transport = DummyTransport([
         TimeoutError("t1"),
@@ -106,7 +112,7 @@ def test_send_request_respects_max_retries(monkeypatch):
 
 def test_send_request_malformed_response(monkeypatch):
     """
-    BaseClient should raise when transport returns unexpected schema.
+    Tests that BaseClient raises a ValueError when the transport returns a response with an unexpected schema.
     """
     transport = DummyTransport([{"foo": "bar"}])
     client = BaseClient(transport=transport)
@@ -115,7 +121,9 @@ def test_send_request_malformed_response(monkeypatch):
 
 def test_base_client_context_manager(dummy_ok):
     """
-    If BaseClient supports context manager, ensure resource cleanup.
+    Tests that BaseClient can be used as a context manager and still send requests successfully.
+    
+    Skips the test if context manager methods are not implemented.
     """
     if not hasattr(BaseClient, "__enter__"):
         pytest.skip("Context manager not implemented")
@@ -125,12 +133,17 @@ def test_base_client_context_manager(dummy_ok):
 
 def test_concurrent_more_threads_than_responses():
     """
-    When threads exceed prepared responses, ensure proper exception handling.
+    Tests that when more threads make requests than there are prepared responses, the client correctly handles both successful responses and exceptions, ensuring all threads complete and at least one raises a TimeoutError.
     """
     transport = DummyTransport([{"status": 200, "data": "ok"}] * 3 + [TimeoutError("timeout")])
     client = BaseClient(transport=transport)
     results, errors = [], []
     def worker():
+        """
+        Sends a request using the client and appends the result or any exception to shared lists.
+        
+        Appends the response from `client.send_request` to `results` if successful, or appends the caught exception to `errors` if an error occurs.
+        """
         try:
             results.append(client.send_request({"endpoint": "/con", "payload": {}}))
         except Exception as e:
