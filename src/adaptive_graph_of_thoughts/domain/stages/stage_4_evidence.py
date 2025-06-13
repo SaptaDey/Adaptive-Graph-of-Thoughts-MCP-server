@@ -175,7 +175,30 @@ class EvidenceStage(BaseStage):
     async def _execute_hypothesis_plan(
         self, hypothesis_data_from_neo4j: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
-        """Simulates plan execution to generate mock evidence data."""
+        """
+        Simulates plan execution to generate mock evidence data.
+        This is where real API calls to services like PubMed, Exa Search, etc., would be made.
+        API keys should be fetched from the global settings object.
+        Example:
+            # from adaptive_graph_of_thoughts.config import settings # Already available via self.settings
+            # pubmed_api_key = self.settings.pubmed.api_key if self.settings.pubmed else None
+            # exa_api_key = self.settings.exa_search.api_key if self.settings.exa_search else None
+
+            # if pubmed_api_key:
+            #     # Initialize PubMed client (e.g., from a dedicated service module)
+            #     # pubmed_client = PubMedService(api_key=pubmed_api_key)
+            #     # results = pubmed_client.search(hypothesis_data_from_neo4j.get("label"))
+            #     # Process results into evidence_data format
+            #     pass # Replace with actual PubMed API call logic
+            # if exa_api_key:
+            #     # Initialize Exa client (e.g., from a dedicated service module)
+            #     # exa_client = ExaSearchService(api_key=exa_api_key)
+            #     # results = exa_client.search(hypothesis_data_from_neo4j.get("label"))
+            #     # Process results into evidence_data format
+            #     pass # Replace with actual Exa Search API call logic
+
+        # Current implementation uses mock data generation:
+        """
         hypo_label = hypothesis_data_from_neo4j.get("label", "Unknown Hypothesis")
         plan_json_str = hypothesis_data_from_neo4j.get("plan_json")
         plan_type_simulated = "SimulatedPlanExecution"
