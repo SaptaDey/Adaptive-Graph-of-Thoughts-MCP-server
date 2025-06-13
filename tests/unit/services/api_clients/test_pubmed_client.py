@@ -120,7 +120,12 @@ SAMPLE_EMPTY_ESEARCH_RESPONSE_JSON = {
 # --- Fixtures ---
 @pytest.fixture
 def mock_settings() -> Settings:
-    """Returns a Settings instance with minimal PubMed config."""
+    """
+    Provides a minimal Settings instance configured for PubMed API testing.
+    
+    Returns:
+        A Settings object with PubMedConfig containing a base URL and email.
+    """
     return Settings(
         pubmed=PubMedConfig(
             base_url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
@@ -130,7 +135,12 @@ def mock_settings() -> Settings:
 
 @pytest.fixture
 async def pubmed_client_fixture(mock_settings: Settings) -> PubMedClient:
-    """Yields an instance of PubMedClient using an async context manager."""
+    """
+    Async fixture that provides a PubMedClient instance for use in tests.
+    
+    Yields:
+        An initialized PubMedClient within an async context manager.
+    """
     async with PubMedClient(settings=mock_settings) as client:
         yield client
 
@@ -152,7 +162,11 @@ def test_pubmed_client_initialization_missing_config():
         PubMedClient(settings=Settings(pubmed=PubMedConfig(base_url=None))) # type: ignore
 
 async def test_search_articles_success(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test successful article search, including parsing and abstract fetching."""
+    """
+    Tests that `search_articles` successfully retrieves, parses, and returns article metadata and abstracts for a valid PubMed query.
+    
+    Simulates the full workflow by mocking PubMed API responses for `esearch`, `esummary`, and `efetch` endpoints, and verifies that the resulting articles contain correct metadata and abstract text. Also checks that the correct API requests are made with expected parameters.
+    """
     client = pubmed_client_fixture
 
     # Mock esearch
@@ -212,7 +226,9 @@ async def test_search_articles_success(pubmed_client_fixture: PubMedClient, http
 
 
 async def test_search_articles_no_pmids(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test search when esearch returns no PMIDs."""
+    """
+    Verifies that `search_articles` returns an empty list when the eSearch endpoint yields no PMIDs and does not call eSummary or eFetch.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
@@ -227,7 +243,9 @@ async def test_search_articles_no_pmids(pubmed_client_fixture: PubMedClient, htt
     assert len(httpx_mock.get_requests(url__regex=r".*efetch\.fcgi.*")) == 0
 
 async def test_search_articles_esearch_http_error(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test PubMedClientError is raised on esearch HTTP error."""
+    """
+    Tests that a PubMedClientError is raised when the eSearch endpoint returns an HTTP error.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
@@ -239,7 +257,9 @@ async def test_search_articles_esearch_http_error(pubmed_client_fixture: PubMedC
         await client.search_articles("test query")
 
 async def test_search_articles_esummary_http_error(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test PubMedClientError is raised on esummary HTTP error."""
+    """
+    Tests that a PubMedClientError is raised when the esummary endpoint returns an HTTP error during article search.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_response(
         url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi",
@@ -255,7 +275,9 @@ async def test_search_articles_esummary_http_error(pubmed_client_fixture: PubMed
         await client.search_articles("test query")
 
 async def test_search_articles_efetch_http_error(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test PubMedClientError is raised on efetch HTTP error during search_articles."""
+    """
+    Tests that PubMedClientError is raised when an HTTP error occurs during the efetch step of search_articles.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_response(url=f"{client.config.base_url.rstrip('/')}/esearch.fcgi", json=SAMPLE_ESEARCH_SINGLE_ID_JSON)
     httpx_mock.add_response(url=f"{client.config.base_url.rstrip('/')}/esummary.fcgi", text=SAMPLE_ESUMMARY_SINGLE_ARTICLE_XML_STR)
@@ -296,7 +318,11 @@ async def test_fetch_abstract_direct_not_found(pubmed_client_fixture: PubMedClie
     assert abstract is None
 
 async def test_api_key_and_email_usage(httpx_mock: HTTPXMock):
-    """Test that api_key and email are correctly included in request parameters if configured."""
+    """
+    Verifies that the PubMedClient includes the configured api_key and email in all PubMed API request parameters during article search.
+    
+    Ensures that the api_key and email are present in the parameters for esearch, esummary, and efetch endpoint requests when provided in the client settings.
+    """
     settings_with_key = Settings(
         pubmed=PubMedConfig(
             base_url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
@@ -343,7 +369,9 @@ async def test_api_key_and_email_usage(httpx_mock: HTTPXMock):
     assert request_params_efetch.get("api_key") == "testapikey123"
 
 async def test_search_articles_esearch_request_error(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test PubMedClientError wrapping APIRequestError on esearch network issue."""
+    """
+    Tests that a network error during the eSearch API call results in a PubMedClientError.
+    """
     client = pubmed_client_fixture
     httpx_mock.add_exception(
         pytest.raises(APIRequestError), # This is not how httpx_mock expects exceptions. It expects an exception instance.
@@ -380,7 +408,9 @@ async def test_parse_esummary_malformed_xml(pubmed_client_fixture: PubMedClient,
         await client.search_articles("test query")
 
 async def test_fetch_abstract_malformed_xml(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test handling of malformed XML from eFetch."""
+    """
+    Tests that fetch_abstract raises PubMedClientError when eFetch returns malformed XML.
+    """
     client = pubmed_client_fixture
     pmid = "123456"
     httpx_mock.add_response(
@@ -402,7 +432,9 @@ def test_pubmed_client_invalid_base_url():
 
 @pytest.mark.asyncio
 async def test_search_articles_timeout_handling(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test eSearch timeout is handled and raises PubMedClientError."""
+    """
+    Tests that a timeout during the eSearch API call raises a PubMedClientError.
+    """
     client = pubmed_client_fixture
     esearch_url = f"{client.config.base_url.rstrip('/')}/esearch.fcgi"
     httpx_mock.add_exception(httpx.TimeoutException("timeout"), url=esearch_url)
@@ -411,7 +443,9 @@ async def test_search_articles_timeout_handling(pubmed_client_fixture: PubMedCli
 
 @pytest.mark.asyncio
 async def test_search_articles_large_retmax(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
-    """Test search_articles with large max_results passes retmax parameter correctly."""
+    """
+    Tests that search_articles correctly passes a large max_results value as the retmax parameter and returns all expected articles when multiple PMIDs are found.
+    """
     client = pubmed_client_fixture
     # Create esearch response with three IDs
     large_esearch = {
@@ -474,7 +508,11 @@ async def test_search_articles_large_retmax(pubmed_client_fixture: PubMedClient,
     ],
 )
 def test_parse_esummary_response_edge_cases(xml_str, expected_titles, expected_authors):
-    """Test parsing eSummary XML edge cases with missing fields."""
+    """
+    Tests parsing of eSummary XML responses with edge cases such as missing or minimal fields.
+    
+    Verifies that the parsed article titles and author lists match the expected values for each edge case.
+    """
     client = PubMedClient(settings=Settings(pubmed=PubMedConfig(base_url="http://url", email="e@e.com")))
     articles = client._parse_esummary_response(xml_str)
     titles = [a.title for a in articles]

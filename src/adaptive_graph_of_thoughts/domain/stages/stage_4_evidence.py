@@ -210,6 +210,17 @@ class EvidenceStage(BaseStage):
     async def _execute_hypothesis_plan(
         self, hypothesis_data_from_neo4j: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
+        """
+        Executes an evidence search plan for a given hypothesis by querying external sources.
+        
+        Given hypothesis data, constructs a search query (from a plan or the hypothesis label) and asynchronously queries PubMed, Google Scholar, and Exa Search for relevant articles. For each source, extracts key information from results and formats them as evidence dictionaries, including content, source details, authors, publication dates, disciplinary tags, and placeholders for support and strength. Handles errors per source and logs progress.
+        
+        Args:
+            hypothesis_data_from_neo4j: Dictionary containing hypothesis node data, including label and optional search plan.
+        
+        Returns:
+            A list of dictionaries, each representing a piece of evidence found from the queried sources.
+        """
         hypo_label = hypothesis_data_from_neo4j.get("label", "")
         hypo_id = hypothesis_data_from_neo4j.get("id", "unknown_hypo")
 
@@ -619,6 +630,17 @@ class EvidenceStage(BaseStage):
     async def execute(
         self, current_session_data: GoTProcessorSessionData
     ) -> StageOutput:
+        """
+        Executes the evidence integration stage by retrieving hypotheses, searching for supporting or contradicting evidence, updating the knowledge graph, and tracking metrics.
+        
+        This method iterates through available hypotheses, selects candidates for evidence integration, queries external sources for evidence, creates evidence nodes and relationships in Neo4j, updates hypothesis confidence, and constructs interdisciplinary bridges and hyperedges as appropriate. It ensures all API clients are closed upon completion and returns a summary of actions performed, metrics, and context updates.
+        
+        Args:
+            current_session_data: The session data containing accumulated context, including hypothesis node IDs.
+        
+        Returns:
+            A StageOutput object summarizing the evidence integration process, including metrics and context updates.
+        """
         self._log_start(current_session_data.session_id)
         hypothesis_data = current_session_data.accumulated_context.get(HypothesisStage.stage_name, {})
         hypothesis_node_ids: List[str] = hypothesis_data.get("hypothesis_node_ids", [])
