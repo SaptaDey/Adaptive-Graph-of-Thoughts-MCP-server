@@ -102,6 +102,76 @@ NEO4J_PASSWORD="your_local_neo4j_password" # Replace with your actual password
 !!! warning "Ensure .env is in .gitignore"
     Ensure `.env` is listed in your `.gitignore` file to prevent accidental commits of credentials.
 
+## External API Client Settings
+
+The `EvidenceStage` (Stage 4) can leverage external APIs to search for and gather evidence. Configuration for these clients is optional; if a client is not configured, it will be skipped during the evidence gathering process. These settings are typically placed in `config/settings.yaml` or set via environment variables.
+
+### PubMed Client (`pubmed`)
+
+Connects to NCBI's E-utilities for searching PubMed.
+
+*   **`api_key`**: (Optional) Your NCBI API key. While not strictly required for basic use, it's recommended for higher rate limits if you anticipate frequent queries.
+    *   Environment: `PUBMED__API_KEY`
+*   **`base_url`**: The base URL for NCBI E-utilities.
+    *   Default: `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/`
+    *   Environment: `PUBMED__BASE_URL`
+*   **`email`**: (Recommended) Your email address. NCBI recommends providing an email address for E-utility access as a courtesy.
+    *   Environment: `PUBMED__EMAIL`
+
+!!! note
+    Providing an `email` is good practice when using NCBI E-utilities. An `api_key` can help avoid rate-limiting issues with frequent use.
+
+YAML Example:
+```yaml
+# In config/settings.yaml
+pubmed:
+  base_url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+  email: "your.email@example.com"
+  # api_key: "YOUR_NCBI_API_KEY" # Optional
+```
+
+### Google Scholar Client (`google_scholar`)
+
+Provides access to Google Scholar search results, typically via a third-party API provider like [SerpApi](https://serpapi.com/).
+
+*   **`api_key`**: (Required) Your API key from the third-party provider (e.g., SerpApi).
+    *   Environment: `GOOGLE_SCHOLAR__API_KEY`
+*   **`base_url`**: The base URL for the API. This should point to the search endpoint of your provider.
+    *   Default: `https://serpapi.com/search` (This is the default in `config.py` if using SerpApi)
+    *   Environment: `GOOGLE_SCHOLAR__BASE_URL`
+
+!!! critical "API Key Required for Google Scholar Client"
+    The Google Scholar client **will not function** without a valid `api_key` configured. Direct, free programmatic access to Google Scholar search results is not officially provided by Google for this type of application. Services like SerpApi provide an interface.
+
+YAML Example:
+```yaml
+# In config/settings.yaml
+google_scholar:
+  api_key: "YOUR_SERPAPI_API_KEY"
+  base_url: "https://serpapi.com/search"
+```
+
+### Exa Search Client (`exa_search`)
+
+Connects to the Exa AI API (formerly Metaphor) for neural search capabilities.
+
+*   **`api_key`**: (Required) Your API key from Exa AI.
+    *   Environment: `EXA_SEARCH__API_KEY`
+*   **`base_url`**: The base URL for the Exa API.
+    *   Default: `https://api.exa.ai`
+    *   Environment: `EXA_SEARCH__BASE_URL`
+
+!!! critical "API Key Required for Exa Search Client"
+    The Exa Search client **requires a valid `api_key`** from Exa AI to function.
+
+YAML Example:
+```yaml
+# In config/settings.yaml
+exa_search:
+  api_key: "YOUR_EXA_API_KEY"
+  base_url: "https://api.exa.ai"
+```
+
 ## Production Environment Variables
 
 When deploying Adaptive Graph of Thoughts to a production environment (e.g., Smithery.ai, Heroku, AWS, Azure, GCP), it's crucial to manage configuration securely using the platform's environment variable or secrets management system.

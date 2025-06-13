@@ -44,7 +44,6 @@ from adaptive_graph_of_thoughts.services.api_clients.pubmed_client import PubMed
 from adaptive_graph_of_thoughts.services.api_clients.google_scholar_client import GoogleScholarClient, GoogleScholarArticle
 from adaptive_graph_of_thoughts.services.api_clients.exa_search_client import ExaSearchClient, ExaArticleResult
 
-
 class EvidenceStage(BaseStage):
     stage_name: str = "EvidenceStage"
 
@@ -211,11 +210,8 @@ class EvidenceStage(BaseStage):
     async def _execute_hypothesis_plan(
         self, hypothesis_data_from_neo4j: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
-
-        Simulates the execution of a hypothesis plan to generate mock evidence data.
-        
-        This method currently produces randomized evidence data for a given hypothesis, including support/contradiction, strength, statistical power, disciplinary tags, and timestamps. In a production environment, this is the entry point for integrating real external data sources (e.g., PubMed, Exa Search) using API keys available via `self.settings`. The generated evidence data is returned as a list of dictionaries, each representing a piece of evidence.
-        hypo_label = hypothesis_data_from_neo4j.get("label", "Unknown Hypothesis")
+        hypo_label = hypothesis_data_from_neo4j.get("label", "")
+        hypo_id = hypothesis_data_from_neo4j.get("id", "unknown_hypo")
 
         plan_json_str = hypothesis_data_from_neo4j.get("plan_json")
 
@@ -662,11 +658,13 @@ class EvidenceStage(BaseStage):
                 current_hypothesis_id = selected_hypothesis_data["id"]
                 processed_hypotheses_this_run.add(current_hypothesis_id)
 
+
                 found_evidence_conceptual_list = await self._execute_hypothesis_plan(selected_hypothesis_data)
 
                 if not found_evidence_conceptual_list:
                     logger.debug(f"No new evidence found/generated for hypothesis '{selected_hypothesis_data.get('label', current_hypothesis_id)}'.")
                     continue
+
 
                 related_evidence_data_for_hyperedge: List[Dict[str,Any]] = []
                 for ev_idx, ev_conceptual_data in enumerate(found_evidence_conceptual_list):

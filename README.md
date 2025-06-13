@@ -48,6 +48,7 @@ Adaptive Graph of Thoughts leverages a **Neo4j graph database** to perform sophi
 **Key highlights:**
 - Process complex scientific queries using graph-based reasoning
 - Dynamic confidence scoring with multi-dimensional evaluations 
+- **Connects to external databases (PubMed, Google Scholar, Exa Search) for real-time evidence gathering**
 - Built with modern Python and FastAPI for high performance
 - Dockerized for easy deployment
 - Modular design for extensibility and customization
@@ -356,12 +357,6 @@ We have an exciting vision for the future of Adaptive Graph of Thoughts! Our roa
 
 For more details on our planned features and long-term goals, please see our [Roadmap](ROADMAP.md) (also available on the documentation site).
 
-## 🗺️ Roadmap and Future Directions
-
-We have an exciting vision for the future of Adaptive Graph of Thoughts! Our roadmap includes plans for enhanced graph visualization, integration with more data sources like Arxiv, and further refinements to the core reasoning engine.
-
-For more details on our planned features and long-term goals, please see our [Roadmap](ROADMAP.md).
-
 ## 🤝 Contributing
 
 We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) (also available on the documentation site) for details on how to get started, our branching strategy, code style, and more.
@@ -383,4 +378,3 @@ This project is licensed under the Apache License 2.0. [License](LICENSE).
   <p><strong>Built with ❤️ for the scientific research community</strong></p>
   <p><em>Adaptive Graph of Thoughts - Advancing scientific reasoning through intelligent graph structures</em></p>
 </div>
-# Aptive-Graph-of-Thought-MCP-

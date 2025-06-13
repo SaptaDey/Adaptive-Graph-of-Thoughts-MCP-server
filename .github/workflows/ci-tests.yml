@@ -31,7 +31,9 @@ jobs:
           virtualenvs-in-project: true # Recommended for CI caching
 
       - name: Add src to PYTHONPATH
+
         run: echo "PYTHONPATH=$(pwd)/src:$PYTHONPATH" >> $GITHUB_ENV
+
 
       - name: Install dependencies
         run: poetry install --with dev --all-extras # Ensure all dependencies for tests are installed
