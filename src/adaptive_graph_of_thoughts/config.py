@@ -99,6 +99,7 @@ class ClaudeAPIConfig(BaseModel):
     timeout_seconds: int = Field(default=120)
     max_retries: int = Field(default=2)
 
+# --- Models for Search Engine APIs ---
 class GoogleScholarConfig(BaseModel):
     api_key: Optional[str] = None
     base_url: str = "https://serpapi.com/search"
@@ -111,16 +112,6 @@ class PubMedConfig(BaseModel):
 class ExaSearchConfig(BaseModel):
     api_key: Optional[str] = None  # For Exa API
     base_url: str = "https://api.exa.ai"
-
-class Neo4jConfig(BaseModel):
-    uri: Optional[str] = None
-    username: Optional[str] = None
-    password: Optional[str] = None
-    database: Optional[str] = "neo4j"
-
-class OpenAIAPIConfig(BaseModel):
-    api_key: Optional[str] = None
-
 
 class KnowledgeDomain(BaseModel):
     name: str
@@ -164,13 +155,9 @@ class Settings(BaseSettings):
     asr_got: ASRGoTConfig = Field(default_factory=ASRGoTConfig)
     mcp_settings: MCPSettings = Field(default_factory=MCPSettings)
     claude_api: Optional[ClaudeAPIConfig] = None  # Optional section
-
     google_scholar: Optional[GoogleScholarConfig] = None
     pubmed: Optional[PubMedConfig] = None
     exa_search: Optional[ExaSearchConfig] = None
-    neo4j: Optional[Neo4jConfig] = None
-    openai_api: Optional[OpenAIAPIConfig] = None
-
     knowledge_domains: list[KnowledgeDomain] = Field(default_factory=list)
 
     model_config = SettingsConfigDict(

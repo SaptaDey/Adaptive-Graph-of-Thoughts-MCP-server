@@ -125,30 +125,11 @@ mcp_settings:
   # description: "Adaptive Graph of Thoughts provides advanced scientific reasoning capabilities." # If needed
 
 # Optional: Direct Claude API integration settings (if the app needs to call Claude API itself)
-claude_api:
-  api_key: "env_var:CLAUDE_API_KEY" # Example: Load from environment variable CLAUDE_API_KEY
-  default_model: "claude-3-opus-20240229"
-  timeout_seconds: 120
-  max_retries: 2
-
-# PubMed API settings
-pubmed:
-  api_key: "env_var:PUBMED_API_KEY" # Example: Load from environment variable PUBMED_API_KEY
-
-# ExaSearch API settings
-exa_search:
-  api_key: "env_var:EXA_SEARCH_API" # Example: Load from environment variable EXA_SEARCH_API
-
-# Neo4j connection settings
-neo4j:
-  uri: "env_var:NEO4J_URI"         # Example: Load from environment variable NEO4J_URI
-  username: "env_var:NEO4J_USERNAME" # Example: Load from environment variable NEO4J_USERNAME
-  password: "env_var:NEO4J_PASSWORD" # Example: Load from environment variable NEO4J_PASSWORD
-  database: "neo4j"                # Default database, or use "env_var:NEO4J_DATABASE"
-
-# Optional: Direct OpenAI API integration settings
-openai_api:
-  api_key: "env_var:OPENAI_API_KEY" # Example: Load from environment variable OPENAI_API_KEY
+# claude_api:
+#   api_key: "env_var:CLAUDE_API_KEY" # Example: Load from environment variable CLAUDE_API_KEY
+#   default_model: "claude-3-opus-20240229"
+#   timeout_seconds: 120
+#   max_retries: 2
 
 # Optional: Google Scholar API settings (e.g., via SerpApi)
 google_scholar:
