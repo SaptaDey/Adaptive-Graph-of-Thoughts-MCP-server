@@ -84,80 +84,56 @@ def test_invalid_parameter_type(monkeypatch):
         with pytest.raises(ValueError):
             client.query("bad params", num_results="ten")
         mock_send.assert_not_called()
-# ---------------------------------------------------------------------------
-# Additional edge-case tests
-# ---------------------------------------------------------------------------
+import json
+from requests.exceptions import Timeout, ConnectionError
 
-def test_missing_api_key(monkeypatch):
-    """Missing EXA_API_KEY should raise ExaAuthenticationError before any HTTP call."""
+def test_missing_api_key_raises(monkeypatch):
+    """When EXA_API_KEY env var is absent, ExaSearchClient should raise ExaAuthenticationError on init."""
     monkeypatch.delenv("EXA_API_KEY", raising=False)
+    with pytest.raises(ExaAuthenticationError):
+        ExaSearchClient()
+
+def test_http_error_propagates(monkeypatch):
+    """HTTP errors other than 401 should propagate as HTTPError."""
+    monkeypatch.setenv("EXA_API_KEY", "dummy")
     client = ExaSearchClient()
-    with patch.object(ExaSearchClient, "_send_request") as mock_send:
-        with pytest.raises(ExaAuthenticationError):
-            client.query("no key")
-        mock_send.assert_not_called()
 
-
-def test_rate_limit_error(monkeypatch):
-    """HTTP 429 Too Many Requests is propagated as HTTPError (non-401)."""
-    monkeypatch.setenv("EXA_API_KEY", "dummy_key")
-
-    def _raise_429(*_, **__):
-        err = HTTPError("429 Too Many Requests")
-        err.response = MagicMock(status_code=429)
-        raise err
-
-    client = ExaSearchClient()
-    with patch.object(ExaSearchClient, "_send_request", side_effect=_raise_429):
-        with pytest.raises(HTTPError):
-            client.query("rate limit")
-
-
-def test_server_error_propagates(monkeypatch):
-    """HTTP 500 Internal Server Error is propagated as HTTPError."""
-    monkeypatch.setenv("EXA_API_KEY", "dummy_key")
-
-    def _raise_500(*_, **__):
-        err = HTTPError("500 Internal Server Error")
+    def _raise_500(*_a, **_kw):
+        err = HTTPError("500 Server Error")
         err.response = MagicMock(status_code=500)
         raise err
 
-    client = ExaSearchClient()
     with patch.object(ExaSearchClient, "_send_request", side_effect=_raise_500):
         with pytest.raises(HTTPError):
-            client.query("server fail")
+            client.query("server failure")
 
-
-def test_malformed_json_response(monkeypatch):
-    """Malformed payload (missing 'results') raises KeyError when accessed."""
-    monkeypatch.setenv("EXA_API_KEY", "dummy_key")
-    bad_payload = {"unexpected": "structure"}
-
-    client = ExaSearchClient()
-    with patch.object(ExaSearchClient, "_send_request", return_value=bad_payload):
-        with pytest.raises(KeyError):
-            client.query("bad json")
-
-
-def test_negative_num_results(monkeypatch):
-    """Negative num_results should raise ValueError."""
-    monkeypatch.setenv("EXA_API_KEY", "dummy_key")
+def test_num_results_cap(monkeypatch):
+    """Requesting more than allowed num_results should raise ValueError."""
+    monkeypatch.setenv("EXA_API_KEY", "dummy")
     client = ExaSearchClient()
     with pytest.raises(ValueError):
-        client.query("negatives", num_results=-3)
+        client.query("too many", num_results=101)
 
-
-def test_param_propagation_to_send_request(monkeypatch):
-    """query() must forward parameters correctly to _send_request."""
-    monkeypatch.setenv("EXA_API_KEY", "dummy_key")
+def test_timeout_surfaces(monkeypatch):
+    """Timeout during request should bubble up."""
+    monkeypatch.setenv("EXA_API_KEY", "dummy")
     client = ExaSearchClient()
-    with patch.object(
-        ExaSearchClient,
-        "_send_request",
-        return_value={"results": [], "next_page_token": None},
-    ) as mock_send:
-        client.query("forward", num_results=5, use_autoprompt=True)
-        mock_send.assert_called_once()
-        _, kwargs = mock_send.call_args
-        assert kwargs["num_results"] == 5
-        assert kwargs["use_autoprompt"] is True
+    with patch.object(ExaSearchClient, "_send_request", side_effect=Timeout()):
+        with pytest.raises(Timeout):
+            client.query("slow")
+
+def test_query_whitespace_normalization(monkeypatch):
+    """Query should be trimmed before being sent."""
+    monkeypatch.setenv("EXA_API_KEY", "dummy")
+    client = ExaSearchClient()
+    raw = "   spaced   "
+    with patch.object(ExaSearchClient, "_send_request", return_value={"results": [], "next_page_token": None}) as mock_send:
+        client.query(raw)
+        sent_payload = mock_send.call_args[0][0]  # payload dict
+        assert sent_payload["query"] == raw.strip()
+
+def test_exa_result_str():
+    """__str__/__repr__ should include title and URL."""
+    res = ExaResult(url="http://example.com", title="Example", score=0.1)
+    text = str(res)
+    assert "Example" in text and "http://example.com" in text

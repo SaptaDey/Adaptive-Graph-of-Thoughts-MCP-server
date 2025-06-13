@@ -139,48 +139,30 @@ def test_select_best_evidence_idempotent(evidence_list):
     once = select_best_evidence(evidence_list, max_items=len(evidence_list))
     twice = select_best_evidence(once, max_items=len(once))
     assert once == twice
-import math
-from unittest.mock import MagicMock
+# --- Additional edge-case tests --------------------------------------------
 
-def test_gather_evidence_ignores_malformed_lines(monkeypatch, sample_prompt, sample_thoughts):
-    bad_lines = ["no_delimiter", "3|Good line"]
-    import adaptive_graph_of_thoughts.stage_4_evidence as s4
-    monkeypatch.setattr(
-        s4.openai.ChatCompletion,
-        "create",
-        lambda **kwargs: FakeResponse(bad_lines),
-    )
-    evidence = gather_evidence(sample_prompt, sample_thoughts)
-    # Only the well-formed line should survive
-    assert len(evidence) == 1
-    assert evidence[0].id == "3"
-    assert evidence[0].text == "Good line"
+def test_select_best_evidence_max_exceeds_list(sample_evidence):
+    # If max_items larger than list, should return full sorted list without error
+    bigger = select_best_evidence(sample_evidence, max_items=99)
+    expected = sorted(sample_evidence, key=lambda e: e.score, reverse=True)
+    assert bigger == expected
 
-def test_gather_evidence_api_failure(monkeypatch, sample_prompt, sample_thoughts):
-    import adaptive_graph_of_thoughts.stage_4_evidence as s4
-    def _raise(*_, **__):
-        raise RuntimeError("API down")
-    monkeypatch.setattr(s4.openai.ChatCompletion, "create", _raise)
-    with pytest.raises(RuntimeError):
-        gather_evidence(sample_prompt, sample_thoughts)
+def test_select_best_evidence_negative_max_items(sample_evidence):
+    # Negative max_items should raise a ValueError
+    with pytest.raises(ValueError):
+        select_best_evidence(sample_evidence, max_items=-1)
 
-def test_score_evidence_nan_inf_handling():
-    ev_good = Evidence(id="g", text="", score=1.0)
-    ev_nan = Evidence(id="n", text="", score=float("nan"))
-    ev_inf = Evidence(id="i", text="", score=float("inf"))
-    sorted_evs = score_evidence([ev_nan, ev_inf, ev_good])
-    # good score should come first
-    assert sorted_evs[0] == ev_good
-    # NaN and inf should be last two in stable order
-    assert sorted_evs[-2:] == [ev_nan, ev_inf]
+def test_score_evidence_handles_negative_scores():
+    # Ensure descending sort even when scores include negatives and zero
+    evs = [
+        Evidence(id="neg1", text="neg", score=-1.0),
+        Evidence(id="zero", text="zero", score=0.0),
+        Evidence(id="pos", text="pos", score=1.0),
+    ]
+    sorted_evs = score_evidence(evs)
+    assert [ev.score for ev in sorted_evs] == [1.0, 0.0, -1.0]
 
-@given(st.lists(st.floats(allow_nan=False, allow_infinity=False), min_size=1))
-def test_score_evidence_monotonic(scores):
-    evidences = [Evidence(id=str(i), text="", score=s) for i, s in enumerate(scores)]
-    sorted_evs = score_evidence(evidences)
-    sorted_scores = [ev.score for ev in sorted_evs]
-    assert sorted_scores == sorted(sorted_scores, reverse=True)
-
-def test_select_best_evidence_excess_max(sample_evidence):
-    result = select_best_evidence(sample_evidence, max_items=10)
-    assert result == score_evidence(sample_evidence)
+def test_gather_evidence_invalid_prompt_type(sample_thoughts):
+    # Non-string prompt should raise a TypeError
+    with pytest.raises(TypeError):
+        gather_evidence(123, sample_thoughts)

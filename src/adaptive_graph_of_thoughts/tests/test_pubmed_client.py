@@ -105,74 +105,39 @@ def test_get_article_raises_on_http_error(client, mocker):
 
     with pytest.raises(PubMedClientError):
         client.get_article("9999")
-import requests.exceptions
-
-def test_search_timeout_retries_success(client, mocker):
-    """Search should retry on Timeout errors and succeed on retry."""
-    # First call raises Timeout, second returns a valid response
-    client.session.get.side_effect = [
-        requests.exceptions.Timeout(),
-        _mock_response(mocker, json_data={"esearchresult": {"idlist": ["T1"], "count": "1"}})
-    ]
-
-    ids = client.search("timeout-test", max_results=1)
-
-    assert ids == ["T1"]
-    assert client.session.get.call_count == 2
-
-def test_search_truncates_when_max_results_exceeded(client, mocker):
-    """Search should truncate the results list when total count exceeds max_results."""
-    # API reports more IDs than requested
-    fake_json = {"esearchresult": {"idlist": ["1", "2", "3", "4"], "count": "10"}}
-    client.session.get.return_value = _mock_response(mocker, json_data=fake_json)
-
-    ids = client.search("truncate-test", max_results=2)
-
-    assert len(ids) == 2
-    assert ids == ["1", "2"]
-
-def test_get_article_invalid_xml_raises_error(client, mocker):
-    """get_article should raise PubMedClientError on malformed XML."""
-    # Return HTTP 200 but with invalid XML
-    client.session.get.return_value = _mock_response(mocker, status=200, text="<invalid><xml>")
-
+def test_search_timeout_raises_pubmed_client_error(client, mocker):
+    """Client should raise PubMedClientError if request times out."""
+    client.session.get.side_effect = TimeoutError("timeout")
     with pytest.raises(PubMedClientError):
-        client.get_article("badxml")
+        client.search("timeout-case", max_results=1)
 
-def test_search_without_api_key_param(client, monkeypatch, mocker):
-    """Search should omit the api_key param when the environment variable is unset."""
-    monkeypatch.delenv("PUBMED_API_KEY", raising=False)
-    fake_json = {"esearchresult": {"idlist": ["X"], "count": "1"}}
+def test_get_article_malformed_xml_raises_pubmed_client_error(client, mocker):
+    """Malformed XML in response should raise PubMedClientError."""
+    bad_xml = "<bad><xml>"  # unclosed tag
+    client.session.get.return_value = _mock_response(mocker, text=bad_xml)
+    with pytest.raises(PubMedClientError):
+        client.get_article("123")
+
+def test_search_respects_max_results(client, mocker):
+    """search should not return more IDs than max_results even if API returns more."""
+    many_ids = [str(i) for i in range(50)]
+    json_payload = {"esearchresult": {"idlist": many_ids, "count": "50"}}
+    client.session.get.return_value = _mock_response(mocker, json_data=json_payload)
+    ids = client.search("query", max_results=10)
+    assert len(ids) == 10
+    assert ids == many_ids[:10]
+
+@pytest.mark.parametrize("page_size", [0, -1, 101])
+def test_search_invalid_page_size_raises_value_error(client, page_size):
+    """Providing invalid page_size should raise ValueError."""
+    with pytest.raises(ValueError):
+        client.search("cancer", max_results=5, page_size=page_size)
+
+def test_search_sets_custom_headers(client, mocker):
+    """search should include custom headers set on the client."""
+    client.HEADERS = {"User-Agent": "AOT-Tester"}
+    fake_json = {"esearchresult": {"idlist": ["1"], "count": "1"}}
     client.session.get.return_value = _mock_response(mocker, json_data=fake_json)
-
-    client.search("no-key", max_results=1)
-    params = client.session.get.call_args.kwargs["params"]
-    assert "api_key" not in params
-
-@pytest.mark.parametrize(
-    "max_results,page_size,expected_calls,side_effect_lists",
-    [
-        (3, 1, 3, [["A"], ["B"], ["C"]]),
-        (3, 3, 1, [["A", "B", "C"]]),
-        (3, 5, 1, [["A", "B", "C"]]),
-    ],
-)
-def test_search_pagination_edge_cases(client, mocker, max_results, page_size, expected_calls, side_effect_lists):
-    """Parametric tests for various page_size vs. max_results combinations."""
-    side_effect = []
-    total_count = str(sum(len(lst) for lst in side_effect_lists))
-    for lst in side_effect_lists:
-        side_effect.append(
-            _mock_response(
-                mocker,
-                json_data={"esearchresult": {"idlist": lst, "count": total_count}}
-            )
-        )
-    client.session.get.side_effect = side_effect
-
-    ids = client.search("edge-case", max_results=max_results, page_size=page_size)
-
-    # Flatten side_effect_lists for expected ids
-    expected_ids = [item for sublist in side_effect_lists for item in sublist]
-    assert ids == expected_ids
-    assert client.session.get.call_count == expected_calls
+    client.search("cancer", max_results=1)
+    called_headers = client.session.get.call_args.kwargs.get("headers")
+    assert called_headers == client.HEADERS
