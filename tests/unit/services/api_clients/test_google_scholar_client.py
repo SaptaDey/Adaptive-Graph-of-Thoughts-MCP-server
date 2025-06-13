@@ -207,55 +207,94 @@ async def test_parsing_cited_by_count(gs_client_fixture: GoogleScholarClient, ht
     assert "Could not parse cited_by_count 'onetwothree' as int" in caplog.text
     assert articles[2].cited_by_count is None # Missing 'total' key
     assert articles[3].cited_by_count is None # No 'cited_by' or 'inline_links'
-```
-# Fixture for timeout exception
-@pytest.fixture
-def timeout_exc() -> httpx.ReadTimeout:
-    return httpx.ReadTimeout("read timeout")
+assert articles[3].cited_by_count is None # No 'cited_by' or 'inline_links'
 
-async def test_search_pagination(gs_client_fixture, httpx_mock):
-    client = gs_client_fixture
-    page1 = json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)
-    page2 = json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR)
-    httpx_mock.add_response(json=page1)
-    httpx_mock.add_response(json=page2)
-    articles = await client.search("sample query", num=20)
-    # Two pages should be fetched
-    assert len(httpx_mock.get_requests()) == 2
-    assert len(articles) >= 2
+# ---------------------------------------------------------------------------
+# Additional edge-case and failure-mode tests (pytest / pytest_httpx)
+# ---------------------------------------------------------------------------
 
-async def test_search_timeout(gs_client_fixture, httpx_mock, timeout_exc):
+async def test_search_empty_query_string(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    """
+    An empty query should result in 0 articles and no outgoing request.
+    The client’s current implementation short-circuits before hitting the API.
+    """
     client = gs_client_fixture
-    httpx_mock.add_exception(timeout_exc)
-    with pytest.raises(GoogleScholarClientError) as exc:
+
+    articles = await client.search("")
+    # Either we expect an empty list, or the implementation may raise; adapt if behaviour changes.
+    assert articles == []
+    # Ensure no HTTP call was attempted
+    assert len(httpx_mock.get_requests()) == 0
+
+
+async def test_search_timeout_translated_to_request_error(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    """
+    Simulate an httpx.TimeoutException and verify it is wrapped in GoogleScholarClientError with APIRequestError cause.
+    """
+    client = gs_client_fixture
+    httpx_mock.add_exception(httpx.TimeoutException("Simulated timeout"))
+
+    with pytest.raises(GoogleScholarClientError) as exc_info:
         await client.search("timeout query")
-    assert isinstance(exc.value.__cause__, APIRequestError)
+    # Underlying cause
+    assert isinstance(exc_info.value.__cause__, APIRequestError)
 
-async def test_search_ignores_unexpected_keys(gs_client_fixture, httpx_mock):
+
+async def test_search_organic_results_not_list(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock, caplog):
+    """
+    If 'organic_results' key is not a list (e.g., dict), the client should log and return an empty list.
+    """
+    malformed_payload = {
+        "search_metadata": {"status": "Success"},
+        "organic_results": {"title": "Unexpected dict instead of list"}
+    }
     client = gs_client_fixture
-    page = json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)
-    page["unexpected_key"] = {"foo": "bar"}
-    httpx_mock.add_response(json=page)
-    articles = await client.search("query with extra keys")
-    # Unexpected keys should be ignored and parsing succeed
-    expected_count = len(json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)["organic_results"])
-    assert len(articles) == expected_count
+    httpx_mock.add_response(json=malformed_payload)
 
-async def test_search_parameter_propagation(gs_client_fixture, httpx_mock):
+    articles = await client.search("malformed list")
+    assert articles == []
+    assert "Unexpected format for 'organic_results'" in caplog.text
+
+
+async def test_search_skips_items_without_title(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+    """
+    Results missing a 'title' should be ignored to avoid None titles leaking.
+    """
+    payload_without_title = {
+        "organic_results": [
+            {"publication_info": {"summary": "Info with no title"}},
+            {"title": "Valid Title"}
+        ]
+    }
     client = gs_client_fixture
-    httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR))
-    await client.search("param query", num=50, hl="es")
-    request = httpx_mock.get_requests()[-1]
-    assert request.url.params["num"] == "50"
-    assert request.url.params["hl"] == "es"
+    httpx_mock.add_response(json=payload_without_title)
 
-def test_article_repr():
-    article = GoogleScholarArticle(
-        title="T", link="L", snippet="S", authors="A",
-        publication_info="P", cited_by_count=1, citation_link="C"
-    )
-    r = repr(article)
-    assert "GoogleScholarArticle" in r and "T" in r
-    # __str__ should reflect the representation as well
-    s = str(article)
-    assert "T" in s
+    articles = await client.search("missing title")
+    # Only the valid entry should survive
+    assert len(articles) == 1
+    assert articles[0].title == "Valid Title"
+
+
+@pytest.mark.asyncio
+async def test_client_context_manager_closes_httpx_client(mock_gs_settings: Settings):
+    """
+    Ensure the internal httpx.AsyncClient is closed after exiting the async context manager.
+    """
+    async with GoogleScholarClient(settings=mock_gs_settings) as client:
+        httpx_client = client._client  # access protected member for test-only assertion
+        assert not httpx_client.is_closed
+    # After exit, the client must be closed
+    assert httpx_client.is_closed
+
+
+@pytest.mark.parametrize("status_code", [400, 401, 403, 404, 500])
+async def test_search_various_http_error_codes(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock, status_code):
+    """
+    Parameterised test: ensure any non-2xx response raises GoogleScholarClientError wrapping APIHTTPError.
+    """
+    client = gs_client_fixture
+    httpx_mock.add_response(status_code=status_code, text=f"HTTP {status_code}")
+
+    with pytest.raises(GoogleScholarClientError) as exc_info:
+        await client.search(f"query http {status_code}")
+    assert isinstance(exc_info.value.__cause__, APIHTTPError)

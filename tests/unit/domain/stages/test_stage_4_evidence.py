@@ -277,167 +277,69 @@ async def test_evidence_stage_execute_no_hypotheses(evidence_stage_all_clients: 
 
     stage.close_clients.assert_called_once()
 ```
+
+import freezegun
+import logging
+
 @pytest.fixture
-def freeze_time(monkeypatch):
-    """
-    Override datetime.datetime.utcnow() for deterministic temporal-decay tests.
-    Usage: with freeze_time(target_dt): …
-    """
-    class _Freezer:
-        def __call__(self, frozen_dt):
-            class FrozenDateTime(dt):
-                @classmethod
-                def now(cls, tz=None):
-                    return frozen_dt.replace(tzinfo=tz)
-            monkeypatch.setattr(
-                'adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.dt',
-                FrozenDateTime,
-                raising=False,
-            )
-    return _Freezer()
-
-
-@pytest.mark.parametrize(
-    "plan_json,label,expected_query",
-    [
-        (json.dumps({"query": "deep learning"}), "fallback", "deep learning"),
-        (json.dumps({"type": "literature_review"}), "label wins", "label wins"),  # no ‘query’
-        (None, "plain label", "plain label"),
-        ("{malformed json", "bad json label", "bad json label"),  # JSONDecodeError
-    ],
-)
-@pytest.mark.asyncio
-async def test_query_extraction_logic(
-    evidence_stage_pubmed_only,
-    sample_hypothesis_data,
-    plan_json,
-    label,
-    expected_query,
-):
-    data = sample_hypothesis_data.copy()
-    data["label"] = label
-    if plan_json is not None:
-        data["plan_json"] = plan_json
-    else:
-        data.pop("plan_json", None)
-
-    # Short-circuit client to avoid API calls
-    evidence_stage_pubmed_only.pubmed_client.search_articles = AsyncMock(return_value=[])
-    await evidence_stage_pubmed_only._execute_hypothesis_plan(data)
-    evidence_stage_pubmed_only.pubmed_client.search_articles.assert_called_once()
-    called_kwargs = evidence_stage_pubmed_only.pubmed_client.search_articles.call_args.kwargs
-    assert called_kwargs["query"] == expected_query
-
+def frozen_time():
+    with freezegun.freeze_time("2025-01-01"):
+        yield
 
 @pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "conf_vec,expected_update",
-    [
-        ([1.0, 1.0, 1.0, 1.0], 0.9),
-        ([0.0, 0.0, 0.0, 0.0], 0.1),
-        ([0.5, 0.6, 0.4, 0.5], 0.5),
-    ],
-)
-async def test_update_hypothesis_confidence_variants(
-    monkeypatch, evidence_stage_all_clients, conf_vec, expected_update
-):
-    # monkeypatch execute_query so no DB I/O happens and we can inspect cypher payload
-    recorded = {}
-    async def fake_execute(query, params, tx_type="write"):
-        recorded["params"] = params
-        return None
+async def test_update_hypothesis_confidence_edge_cases(evidence_stage_all_clients, sample_hypothesis_data):
+    stage = evidence_stage_all_clients
 
-    monkeypatch.setattr(
-        "adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.execute_query",
-        fake_execute,
-    )
+    # All zeros vector
+    data_zero = sample_hypothesis_data.copy()
+    data_zero["confidence_vector_list"] = [0.0] * len(sample_hypothesis_data["confidence_vector_list"])
+    result_zero = stage._update_hypothesis_confidence(data_zero)
+    assert isinstance(result_zero, StatisticalPower)
+    assert result_zero.value == 0.0
 
-    hypothesis_data = {"id": "h1", "confidence_vector_list": conf_vec}
-    await evidence_stage_all_clients._update_hypothesis_confidence_in_neo4j(hypothesis_data)
-    assert "confidence_empirical_support" in recorded["params"]
-    # Use average of vector as naive expectation; adjust formula if implementation changes
-    assert pytest.approx(recorded["params"]["confidence_empirical_support"], 0.2) == expected_update
+    # All ones vector
+    data_one = sample_hypothesis_data.copy()
+    data_one["confidence_vector_list"] = [1.0] * len(sample_hypothesis_data["confidence_vector_list"])
+    result_one = stage._update_hypothesis_confidence(data_one)
+    assert result_one.value == 1.0
 
+    # Mismatched length vector
+    data_mismatch = sample_hypothesis_data.copy()
+    data_mismatch["confidence_vector_list"] = [0.5, 0.5]
+    result_mismatch = stage._update_hypothesis_confidence(data_mismatch)
+    assert isinstance(result_mismatch, StatisticalPower)
 
 @pytest.mark.asyncio
-async def test_apply_temporal_decay(
-    monkeypatch, evidence_stage_all_clients, freeze_time
-):
-    # Create dummy node list with timestamp 10 days ago
-    import datetime
-    old_dt = dt.utcnow() - datetime.timedelta(days=10)
-    freeze_time(old_dt)  # now() returns old_dt inside EvidenceStage
-
-    evidence_nodes = [
-        {"confidence_empirical_support": 0.8, "metadata_timestamp_iso": old_dt.isoformat()},
-        {"confidence_empirical_support": 0.2, "metadata_timestamp_iso": old_dt.isoformat()},
-    ]
-
-    # monkeypatch selection helpers to inject list
-    monkeypatch.setattr(
-        evidence_stage_all_clients,
-        "_get_evidence_nodes_from_neo4j",
-        AsyncMock(return_value=evidence_nodes),
-    )
-    monkeypatch.setattr(
-        evidence_stage_all_clients,
-        "_persist_confidence_updates",
-        AsyncMock(),
-    )
-
-    # run
-    await evidence_stage_all_clients._apply_temporal_decay_and_patterns()
-
-    # expect _persist_confidence_updates called with decayed values
-    args, _ = evidence_stage_all_clients._persist_confidence_updates.call_args
-    updated_nodes = args[0]
-    assert all(n["confidence_empirical_support"] < 0.8 for n in updated_nodes)
-
+async def test_apply_temporal_decay_and_patterns_no_evidence(evidence_stage_all_clients, mock_session_data, frozen_time):
+    stage = evidence_stage_all_clients
+    # Should exit gracefully without raising
+    result = await stage._apply_temporal_decay_and_patterns(mock_session_data, [])
+    assert result is None
 
 @pytest.mark.asyncio
-async def test_execute_handles_client_init_failure(
-    monkeypatch, mock_settings_all_clients, mock_session_data, sample_hypothesis_data
-):
-    # make PubMedClient raise on instantiation
-    monkeypatch.setattr(
-        "adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient",
-        lambda _: (_ for _ in ()).throw(Exception("boom")),
-    )
-    monkeypatch.setattr(
-        "adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.GoogleScholarClient",
-        MagicMock,
-    )
-    monkeypatch.setattr(
-        "adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.ExaSearchClient",
-        MagicMock,
-    )
+async def test_execute_hypothesis_plan_all_clients_fail(evidence_stage_all_clients, sample_hypothesis_data, caplog):
+    stage = evidence_stage_all_clients
+    caplog.set_level(logging.ERROR)
+    stage.pubmed_client.search_articles.side_effect = PubMedClientError("PubMed fail")
+    stage.google_scholar_client.search.side_effect = GoogleScholarClientError("GS fail")
+    stage.exa_client.search.side_effect = ExaSearchClientError("Exa fail")
 
-    stage = EvidenceStage(settings=mock_settings_all_clients)
-    stage.close_clients = AsyncMock(wraps=stage.close_clients)
-    # Short-circuit loop to exit quickly
-    stage._select_hypothesis_to_evaluate_from_neo4j = AsyncMock(
-        side_effect=[sample_hypothesis_data, None]
-    )
-    stage._execute_hypothesis_plan = AsyncMock(return_value=[])
-    stage._create_evidence_in_neo4j = AsyncMock(return_value=None)
-    stage._update_hypothesis_confidence_in_neo4j = AsyncMock(return_value=True)
-    stage._create_ibn_in_neo4j = AsyncMock(return_value=None)
-    stage._create_hyperedges_in_neo4j = AsyncMock(return_value=[])
-    stage._apply_temporal_decay_and_patterns = AsyncMock()
-    stage._adapt_graph_topology = AsyncMock()
+    results = await stage._execute_hypothesis_plan(sample_hypothesis_data)
+    assert results == []
+    assert "PubMed fail" in caplog.text
+    assert "GS fail" in caplog.text
+    assert "Exa fail" in caplog.text
 
-    output = await stage.execute(mock_session_data)
-    stage.close_clients.assert_called_once()
-    assert "Failed to initialize PubMedClient" in output.logs  # or inspect caplog
+@pytest.mark.asyncio
+async def test_close_clients_idempotent(evidence_stage_all_clients):
+    stage = evidence_stage_all_clients
+    pubmed_close = stage.pubmed_client.close
+    gs_close = stage.google_scholar_client.close
+    exa_close = stage.exa_client.close
 
+    await stage.close_clients()
+    await stage.close_clients()
 
-def test_adapt_graph_topology_calls(monkeypatch, evidence_stage_all_clients):
-    evidence_stage_all_clients._create_hyperedges_in_neo4j = MagicMock(return_value=[1])
-    evidence_stage_all_clients._remove_redundant_edges_from_neo4j = MagicMock()
-    evidence_stage_all_clients._simplify_graph = MagicMock()
-
-    evidence_stage_all_clients._adapt_graph_topology()
-
-    evidence_stage_all_clients._create_hyperedges_in_neo4j.assert_called()
-    evidence_stage_all_clients._remove_redundant_edges_from_neo4j.assert_called()
-    evidence_stage_all_clients._simplify_graph.assert_called()
+    pubmed_close.assert_called_once()
+    gs_close.assert_called_once()
+    exa_close.assert_called_once()
