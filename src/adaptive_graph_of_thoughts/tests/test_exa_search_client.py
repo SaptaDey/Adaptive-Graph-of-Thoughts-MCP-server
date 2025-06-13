@@ -77,7 +77,9 @@ def test_invalid_api_key_raises(monkeypatch):
             client.query("auth failure")
 
 def test_invalid_parameter_type(monkeypatch):
-    """Test that invalid parameter types raise ValueError before any HTTP call."""
+    """
+    Tests that providing an invalid parameter type to the query method raises ValueError before any HTTP request is made.
+    """
     monkeypatch.setenv("EXA_API_KEY", "dummy_key")
     client = ExaSearchClient()
     with patch.object(ExaSearchClient, "_send_request") as mock_send:
@@ -94,11 +96,18 @@ def test_missing_api_key_raises(monkeypatch):
         ExaSearchClient()
 
 def test_http_error_propagates(monkeypatch):
-    """HTTP errors other than 401 should propagate as HTTPError."""
+    """
+    Tests that HTTP errors with status codes other than 401 raised by the client propagate as HTTPError exceptions.
+    """
     monkeypatch.setenv("EXA_API_KEY", "dummy")
     client = ExaSearchClient()
 
     def _raise_500(*_a, **_kw):
+        """
+        Raises an HTTPError simulating a 500 Server Error response.
+        
+        This function is typically used in tests to mock server-side failures.
+        """
         err = HTTPError("500 Server Error")
         err.response = MagicMock(status_code=500)
         raise err

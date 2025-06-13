@@ -12,20 +12,27 @@ from adaptive_graph_of_thoughts.domain.stages.stage_4_evidence import Stage4Evid
 class MinimalState:
     """Minimal stub for conversation/pipeline state required by Stage4Evidence."""
     def __init__(self):
+        """
+        Initializes a MinimalState instance with default step, evidence, and data attributes.
+        """
         self.step = 0
         self.evidence = []
         self.data = {}
 
 @pytest.fixture
 def minimal_state():
-    """Provides a minimal valid state object."""
+    """
+    Creates and returns a minimal valid state object with step set to 4.
+    """
     state = MinimalState()
     state.step = 4
     return state
 
 @pytest.fixture
 def evidence_items():
-    """Returns a list of valid evidence strings for happy-path tests."""
+    """
+    Provides a list of valid evidence strings for use in standard test scenarios.
+    """
     return ["evidence one", "evidence two", "evidence three"]
 
 def test_run_returns_successful_state(minimal_state, evidence_items, monkeypatch):
@@ -47,7 +54,9 @@ def test_run_with_empty_evidence_list(minimal_state):
         stage.run(minimal_state, [], config={})
 
 def test_run_with_max_evidence(minimal_state):
-    """Ensure that providing more than MAX_EVIDENCE items is truncated correctly."""
+    """
+    Tests that providing more than the maximum allowed evidence items results in truncation to MAX_EVIDENCE items in the updated state.
+    """
     stage = Stage4Evidence()
     items = [f"evidence {i}" for i in range(MAX_EVIDENCE + 2)]
     updated_state, success = stage.run(minimal_state, items, config={})

@@ -10,6 +10,15 @@ from src.config.validation import validate_config, ConfigValidationError
 
 @pytest.fixture
 def valid_config(tmp_path):
+    """
+    Creates a temporary YAML configuration file with all required and optional fields for testing.
+    
+    Args:
+        tmp_path: Temporary directory path provided by pytest.
+    
+    Returns:
+        A tuple containing the file path to the YAML config and the configuration dictionary.
+    """
     cfg = {
         "host": "localhost",
         "port": 8080,
@@ -30,6 +39,15 @@ def test_valid_config(valid_config):
 
 @pytest.fixture
 def minimal_config(tmp_path):
+    """
+    Creates a minimal YAML configuration file with only required fields for testing.
+    
+    Args:
+        tmp_path: Temporary directory path provided by pytest.
+    
+    Returns:
+        A tuple containing the file path to the minimal config file and the config dictionary.
+    """
     cfg = {
         "host": "127.0.0.1",
         "port": 1
@@ -40,6 +58,11 @@ def minimal_config(tmp_path):
 
 
 def test_minimal_config(minimal_config):
+    """
+    Tests that a minimal configuration file with only required fields is validated correctly.
+    
+    Asserts that required fields are preserved and optional fields default to expected values.
+    """
     path, expected = minimal_config
     result = validate_config(path)
     # optional fields should default
@@ -51,6 +74,11 @@ def test_minimal_config(minimal_config):
 
 @pytest.mark.parametrize("missing_key", ["host", "port"])
 def test_missing_keys(tmp_path, missing_key):
+    """
+    Tests that `validate_config` raises a ConfigValidationError when a required key is missing from the configuration file.
+    
+    Asserts that the error message includes the name of the missing key.
+    """
     cfg = {"host": "localhost", "port": 8080}
     cfg.pop(missing_key)
     file_path = tmp_path / "config_missing.yaml"
@@ -67,6 +95,11 @@ def test_missing_keys(tmp_path, missing_key):
     ("databases", "not_a_list"),
 ])
 def test_wrong_types(tmp_path, field, value):
+    """
+    Tests that `validate_config` raises a ConfigValidationError when a configuration field has an incorrect data type.
+    
+    The test writes a config file with one field set to an invalid type, validates it, and asserts that the error message mentions the problematic field.
+    """
     cfg = {"host": "localhost", "port": 8080}
     cfg[field] = value
     file_path = tmp_path / "config_bad_type.yaml"
@@ -77,6 +110,9 @@ def test_wrong_types(tmp_path, field, value):
 
 
 def test_empty_file(tmp_path):
+    """
+    Tests that validating an empty configuration file raises a ConfigValidationError.
+    """
     file_path = tmp_path / "empty.yaml"
     file_path.write_text("")
     with pytest.raises(ConfigValidationError):
@@ -84,6 +120,11 @@ def test_empty_file(tmp_path):
 
 
 def test_unreadable_file(tmp_path):
+    """
+    Tests that validating an unreadable configuration file raises a ConfigValidationError or PermissionError.
+    
+    Creates a valid config file, removes its read permissions, and asserts that validation fails due to file inaccessibility. Restores permissions after the test to allow cleanup.
+    """
     file_path = tmp_path / "config_unreadable.yaml"
     file_path.write_text("host: localhost\nport: 8080")
     # remove read permissions
@@ -98,6 +139,11 @@ def test_unreadable_file(tmp_path):
 
 @pytest.mark.parametrize("port", [1, 65535])
 def test_boundary_values(tmp_path, port):
+    """
+    Tests that the configuration validator accepts boundary values for the port field.
+    
+    Validates a configuration file where the port is set to a boundary value (e.g., 1 or 65535) and asserts that the validated configuration preserves the specified port.
+    """
     cfg = {"host": "localhost", "port": port}
     file_path = tmp_path / f"config_port_{port}.yaml"
     file_path.write_text(yaml.safe_dump(cfg))

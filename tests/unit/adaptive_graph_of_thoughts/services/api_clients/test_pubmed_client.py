@@ -44,6 +44,9 @@ def test_search_happy_path(requests_mock):
     assert result == ["12345"]
 
 def test_search_empty_result(requests_mock):
+    """
+    Tests that the search method returns an empty list when no articles are found.
+    """
     client = PubMedClient()
     url = f"{client.BASE_URL}/esearch.fcgi"
     requests_mock.get(url, json=SAMPLE_SEARCH_EMPTY_RESPONSE, status_code=200)
@@ -58,6 +61,9 @@ def test_search_non_200_status(requests_mock):
         client.search("error")
 
 def test_search_malformed_json(requests_mock):
+    """
+    Tests that the search method raises PublicationAPIError when the API returns malformed JSON.
+    """
     client = PubMedClient()
     url = f"{client.BASE_URL}/esearch.fcgi"
     requests_mock.get(url, text="not a json", status_code=200)
@@ -67,12 +73,22 @@ def test_search_malformed_json(requests_mock):
 def test_search_timeout(monkeypatch):
     client = PubMedClient()
     def raise_timeout(*args, **kwargs):
+        """
+        Simulates a timeout by raising a requests.exceptions.Timeout exception.
+        
+        Intended for use in tests to mock timeout behavior in HTTP requests.
+        """
         raise requests.exceptions.Timeout
     monkeypatch.setattr(client._session, "get", raise_timeout)
     with pytest.raises(PublicationAPIError):
         client.search("timeout")
 
 def test_fetch_article_happy_path(requests_mock):
+    """
+    Tests that fetch_article successfully retrieves and parses an article when the API returns a valid XML response.
+    
+    Asserts that the returned article object has the expected ID and title.
+    """
     client = PubMedClient()
     url = f"{client.BASE_URL}/efetch.fcgi"
     requests_mock.get(url, text=SAMPLE_EFETCH_RESPONSE, status_code=200)
@@ -88,6 +104,9 @@ def test_fetch_article_404(requests_mock):
         client.fetch_article("99999")
 
 def test_fetch_article_malformed_xml(requests_mock):
+    """
+    Tests that fetch_article raises PublicationAPIError when the API returns malformed XML.
+    """
     client = PubMedClient()
     url = f"{client.BASE_URL}/efetch.fcgi"
     requests_mock.get(url, text="<invalid><xml>", status_code=200)
