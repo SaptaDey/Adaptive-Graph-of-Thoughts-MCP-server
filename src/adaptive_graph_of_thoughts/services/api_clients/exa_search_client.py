@@ -2,7 +2,7 @@ from typing import Optional, List, Dict, Any
 from loguru import logger
 from pydantic import BaseModel, Field
 
-from adaptive_graph_of_thoughts.config import Settings, ExaSearchConfig
+from adaptive_graph_of_thoughts.config import Config, ExaSearchConfig # Changed Settings to Config
 from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPIClientError
 
 class ExaArticleResult(BaseModel):
@@ -20,14 +20,14 @@ class ExaSearchClientError(BaseAPIClientError):
     pass
 
 class ExaSearchClient:
-    def __init__(self, settings: Settings):
-        if not settings.exa_search or \
-           not settings.exa_search.base_url or \
-           not settings.exa_search.api_key:
+    def __init__(self, main_config: Config): # Changed settings: Settings to main_config: Config
+        if not main_config.exa_search or \
+           not main_config.exa_search.base_url or \
+           not main_config.exa_search.api_key:
             logger.error("Exa Search configuration (base_url, api_key) is missing in settings.")
             raise ExaSearchClientError("Exa Search configuration is not properly set.")
 
-        self.config: ExaSearchConfig = settings.exa_search
+        self.config: ExaSearchConfig = main_config.exa_search
         self.api_key = self.config.api_key
 
         # Default headers for Exa API
@@ -97,8 +97,9 @@ class ExaSearchClient:
     ) -> List[ExaArticleResult]:
         logger.debug(f"Searching Exa for query: '{query}', type: {type}, num_results: {num_results}, autoprompt: {use_autoprompt}")
 
+        stripped_query = query.strip() # Added strip
         payload: Dict[str, Any] = {
-            "query": query,
+            "query": stripped_query, # Use stripped query
             "num_results": num_results,
             "type": type,
         }
@@ -172,36 +173,36 @@ class ExaSearchClient:
 
 # Example Usage (for testing)
 async def main_exa_search_test():
-    from adaptive_graph_of_thoughts.config import Settings, ExaSearchConfig
+    from adaptive_graph_of_thoughts.config import Config, ExaSearchConfig # Changed Settings to Config
 
     try:
-        settings = Settings()
-        if not settings.exa_search or not settings.exa_search.api_key or not settings.exa_search.base_url:
+        main_app_config = Config() # Changed settings = Settings() to main_app_config = Config()
+        if not main_app_config.exa_search or not main_app_config.exa_search.api_key or not main_app_config.exa_search.base_url:
             logger.warning("Exa Search config (api_key, base_url) not fully set in settings; test may use placeholders or fail.")
-            if not settings.exa_search:
-                settings.exa_search = ExaSearchConfig(api_key="test_api_key_placeholder", base_url="https://api.exa.ai")
-            elif not settings.exa_search.api_key:
-                settings.exa_search.api_key = "test_api_key_placeholder"
-            if not settings.exa_search.base_url:
-                 settings.exa_search.base_url="https://api.exa.ai"
+            if not main_app_config.exa_search:
+                main_app_config.exa_search = ExaSearchConfig(api_key="test_api_key_placeholder", base_url="https://api.exa.ai")
+            elif not main_app_config.exa_search.api_key:
+                main_app_config.exa_search.api_key = "test_api_key_placeholder"
+            if not main_app_config.exa_search.base_url:
+                 main_app_config.exa_search.base_url="https://api.exa.ai"
 
 
     except Exception as e:
         logger.warning(f"Could not load settings ({e}), using mock Exa Search config for testing.")
-        settings = Settings(
+        main_app_config = Config( # Changed settings = Settings()
             exa_search=ExaSearchConfig(api_key="YOUR_EXA_API_KEY_HERE", base_url="https://api.exa.ai")
         )
 
-    exa_config = settings.exa_search
-    if not exa_config or not exa_config.api_key or \
-       "YOUR_EXA_API_KEY_HERE" in exa_config.api_key or \
-       "placeholder" in exa_config.api_key:
+    exa_config_section = main_app_config.exa_search # Renamed exa_config to exa_config_section
+    if not exa_config_section or not exa_config_section.api_key or \
+       "YOUR_EXA_API_KEY_HERE" in exa_config_section.api_key or \
+       "placeholder" in exa_config_section.api_key:
         logger.error("Actual Exa API key is required to run this test. Please configure it in settings.yaml or environment variables (EXA_SEARCH__API_KEY). Skipping test.")
         return
 
-    logger.info(f"Attempting Exa client test with API Key: ...{exa_config.api_key[-4:] if exa_config.api_key else 'N/A'}")
+    logger.info(f"Attempting Exa client test with API Key: ...{exa_config_section.api_key[-4:] if exa_config_section.api_key else 'N/A'}")
 
-    async with ExaSearchClient(settings=settings) as client:
+    async with ExaSearchClient(main_config=main_app_config) as client: # Changed settings=settings to main_config=main_app_config
         try:
             # Test Search
             search_query = "latest advancements in battery technology"

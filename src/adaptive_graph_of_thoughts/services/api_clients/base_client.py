@@ -1,7 +1,7 @@
 import httpx
 from typing import Optional, Dict, Any
 from loguru import logger
-from adaptive_graph_of_thoughts.config import Settings # May not be used initially but good for future config
+from adaptive_graph_of_thoughts.config import Config # May not be used initially but good for future config
 
 class BaseAPIClientError(Exception):
     """Base exception for API client errors."""
@@ -27,10 +27,12 @@ class AsyncHTTPClient:
     def __init__(
         self,
         base_url: str,
-        settings: Optional[Settings] = None, # For future use (e.g., global timeouts)
+        settings: Optional[Config] = None, # Changed Settings to Config
         api_key: Optional[str] = None, # Specific clients might handle API keys differently
         default_headers: Optional[Dict[str, str]] = None,
     ):
+        if not isinstance(base_url, str):
+            raise TypeError(f"base_url must be a string, got {type(base_url)}")
         self.base_url = base_url.rstrip('/')
         self.api_key = api_key # Store if needed for common auth, though often header-specific
         self.settings = settings
