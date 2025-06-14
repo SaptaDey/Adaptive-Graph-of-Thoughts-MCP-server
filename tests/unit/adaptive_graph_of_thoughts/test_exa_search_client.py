@@ -5,12 +5,12 @@ import httpx # Added import
 from unittest.mock import patch, MagicMock
 from requests.exceptions import HTTPError
 
-from adaptive_graph_of_thoughts.services.api_clients.exa_search_client import (
+from src.adaptive_graph_of_thoughts.services.api_clients.exa_search_client import (
     ExaSearchClient,
     ExaArticleResult, # Changed from ExaResult
     ExaSearchClientError, # Changed from ExaAuthenticationError
 )
-from adaptive_graph_of_thoughts.config import Config, ExaSearchConfig # For dummy config
+from src.adaptive_graph_of_thoughts.config import Config, ExaSearchConfig # For dummy config
 
 @pytest.fixture
 def dummy_main_config():

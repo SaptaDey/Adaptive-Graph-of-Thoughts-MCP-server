@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 from unittest.mock import patch, mock_open
-from adaptive_graph_of_thoughts.config import Config # Updated import
+from adaptive_graph_of_thoughts.config import Config
 
 class TestSettings: # Test class name can remain, or change to TestConfigOldSchema if desired
     """Test suite for Settings class (now using Config from config.py)."""
@@ -423,9 +423,9 @@ class TestConfigProperties:
     
     def test_config_validation_chain(self):
         """Test Config validation is called in proper order."""
-        with patch('adaptive_graph_of_thoughts.config.validate_learning_rate') as mock_lr:
-            with patch('adaptive_graph_of_thoughts.config.validate_batch_size') as mock_bs:
-                with patch('adaptive_graph_of_thoughts.config.validate_max_steps') as mock_ms:
+        with patch('src.adaptive_graph_of_thoughts.config.validate_learning_rate') as mock_lr:
+            with patch('src.adaptive_graph_of_thoughts.config.validate_batch_size') as mock_bs:
+                with patch('src.adaptive_graph_of_thoughts.config.validate_max_steps') as mock_ms:
                     Config(learning_rate=0.01, batch_size=32, max_steps=1000)
                     
                     mock_lr.assert_called_once_with(0.01)
