@@ -1,6 +1,6 @@
 import pytest
 import json # Import the json module
-from unittest.mock import AsyncMock, MagicMock, patch # Using unittest.mock for AsyncMock
+import datetime # Moved from test_apply_temporal_decay
 from unittest.mock import AsyncMock, MagicMock, patch # Using unittest.mock for AsyncMock
 from typing import List, Dict, Any
 from datetime import datetime as dt
@@ -379,7 +379,7 @@ async def test_evidence_stage_execute_no_hypotheses(evidence_stage_all_clients: 
     assert output.next_stage_context_update[EvidenceStage.stage_name]["error"] == "No hypotheses found"
 
     stage.close_clients.assert_called_once()
-```
+
 @pytest.fixture
 def freeze_time(monkeypatch):
     """
@@ -499,7 +499,6 @@ async def test_apply_temporal_decay(
     values appropriately. It uses monkeypatching to inject mock evidence nodes and to
     capture the updated confidence values after decay is applied.
     """
-    import datetime
     old_dt = dt.utcnow() - datetime.timedelta(days=10)
     freeze_time(old_dt)  # now() returns old_dt inside EvidenceStage
 

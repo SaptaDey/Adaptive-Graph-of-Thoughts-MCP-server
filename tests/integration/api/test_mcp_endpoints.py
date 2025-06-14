@@ -1,6 +1,7 @@
 """
 Test script for the Adaptive Graph of Thoughts MCP server endpoints.
 """
+import pytest
 import json
 from typing import Any, Dict, Optional
 

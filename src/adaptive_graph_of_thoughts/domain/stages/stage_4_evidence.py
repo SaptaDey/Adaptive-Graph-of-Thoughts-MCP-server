@@ -404,12 +404,11 @@ class EvidenceStage(BaseStage):
         else:
             ev_props_for_neo4j["metadata_timestamp_iso"] = dt.now().isoformat() # Fallback timestamp
 
-
-        create_ev_node_query = """
-        MERGE (e:Node {id: $props.id}) SET e += $props
+        # Ensuring the multiline string is correctly formatted.
+        # The content of the query itself remains unchanged.
+        create_ev_node_query = """MERGE (e:Node {id: $props.id}) SET e += $props
         WITH e, $type_label AS typeLabel CALL apoc.create.addLabels(e, [typeLabel]) YIELD node
-        RETURN node.id AS evidence_id, properties(node) as evidence_props
-        """
+        RETURN node.id AS evidence_id, properties(node) as evidence_props"""
         try:
             result_ev_node = await execute_query(create_ev_node_query, {"props": ev_props_for_neo4j, "type_label": NodeType.EVIDENCE.value}, tx_type='write')
             if not result_ev_node or not result_ev_node[0].get("evidence_id"):

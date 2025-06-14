@@ -1,3 +1,7 @@
+import pytest
+import requests
+from adaptive_graph_of_thoughts.services.api_clients.pubmed_client import PubMedClient, PublicationAPIError
+
 # Sample fixtures for search and fetch responses
 SAMPLE_SEARCH_RESPONSE = {
     "esearchresult": {

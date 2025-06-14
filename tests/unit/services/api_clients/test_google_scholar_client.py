@@ -249,7 +249,7 @@ async def test_parsing_cited_by_count(gs_client_fixture: GoogleScholarClient, ht
     assert "Could not parse cited_by_count 'onetwothree' as int" in caplog.text
     assert articles[2].cited_by_count is None # Missing 'total' key
     assert articles[3].cited_by_count is None # No 'cited_by' or 'inline_links'
-```
+
 # Fixture for timeout exception
 @pytest.fixture
 def timeout_exc() -> httpx.ReadTimeout:
