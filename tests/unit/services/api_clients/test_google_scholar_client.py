@@ -3,7 +3,7 @@ from pytest_httpx import HTTPXMock
 import json # For converting string to dict for httpx_mock.add_response json parameter
 import httpx # For specific exceptions like httpx.ConnectError
 
-from adaptive_graph_of_thoughts.config import Settings, GoogleScholarConfig
+from adaptive_graph_of_thoughts.config import Config, GoogleScholarConfig
 from adaptive_graph_of_thoughts.services.api_clients.google_scholar_client import (
     GoogleScholarClient,
     GoogleScholarArticle,
@@ -71,14 +71,14 @@ SAMPLE_GS_CITED_BY_VARIATIONS_JSON_STR = """{
 
 # --- Fixtures ---
 @pytest.fixture
-def mock_gs_settings() -> Settings:
+def mock_gs_settings() -> Config:
     """
     Creates a Settings instance with a minimal GoogleScholarConfig for testing purposes.
     
     Returns:
         A Settings object configured with a base URL and API key for Google Scholar.
     """
-    return Settings(
+    return Config(
         google_scholar=GoogleScholarConfig(
             base_url="https://serpapi.com/search",  # Example base URL
             api_key="test_gs_api_key"
@@ -86,7 +86,7 @@ def mock_gs_settings() -> Settings:
     )
 
 @pytest.fixture
-async def gs_client_fixture(mock_gs_settings: Settings) -> GoogleScholarClient:
+async def gs_client_fixture(mock_gs_settings: Config) -> GoogleScholarClient:
     """
     Provides an asynchronous fixture that yields a GoogleScholarClient instance configured with mock settings for use in tests.
     """
@@ -95,7 +95,7 @@ async def gs_client_fixture(mock_gs_settings: Settings) -> GoogleScholarClient:
 
 # --- Test Cases ---
 
-def test_gs_client_initialization(mock_gs_settings: Settings):
+def test_gs_client_initialization(mock_gs_settings: Config):
     """Test successful initialization of GoogleScholarClient."""
     client = GoogleScholarClient(settings=mock_gs_settings)
     assert client is not None
@@ -107,13 +107,13 @@ def test_gs_client_initialization_missing_config():
     Verifies that GoogleScholarClient raises GoogleScholarClientError when required configuration (API key or base URL) is missing.
     """
     with pytest.raises(GoogleScholarClientError, match="Google Scholar configuration is not properly set"):
-        GoogleScholarClient(settings=Settings(google_scholar=None))
+        GoogleScholarClient(settings=Config(google_scholar=None))
 
     with pytest.raises(GoogleScholarClientError, match="Google Scholar configuration is not properly set"):
-        GoogleScholarClient(settings=Settings(google_scholar=GoogleScholarConfig(api_key=None, base_url="https://base.url"))) # type: ignore
+        GoogleScholarClient(settings=Config(google_scholar=GoogleScholarConfig(api_key=None, base_url="https://base.url"))) # type: ignore
 
     with pytest.raises(GoogleScholarClientError, match="Google Scholar configuration is not properly set"):
-        GoogleScholarClient(settings=Settings(google_scholar=GoogleScholarConfig(api_key="key", base_url=None))) # type: ignore
+        GoogleScholarClient(settings=Config(google_scholar=GoogleScholarConfig(api_key="key", base_url=None))) # type: ignore
 
 
 async def test_search_success(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
@@ -209,7 +209,7 @@ async def test_correct_api_key_usage(httpx_mock: HTTPXMock):
     Verifies that the GoogleScholarClient uses the correct API key from its configuration when making a search request.
     """
     specific_api_key = "specific_test_api_key_12345"
-    settings = Settings(
+    settings = Config(
         google_scholar=GoogleScholarConfig(
             base_url="https://serpapi.com/search", api_key=specific_api_key
         )

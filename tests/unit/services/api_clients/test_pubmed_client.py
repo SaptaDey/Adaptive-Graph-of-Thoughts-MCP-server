@@ -2,11 +2,11 @@ import pytest
 from pytest_httpx import HTTPXMock
 import json # For loading JSON strings if needed, though direct dicts are often easier for responses
 
-from adaptive_graph_of_thoughts.config import Settings, PubMedConfig
+from adaptive_graph_of_thoughts.config import Config, PubMedConfig
 from adaptive_graph_of_thoughts.services.api_clients.pubmed_client import (
     PubMedClient,
     PubMedArticle,
-    PubMedClientError,
+    PubMedClientError, # Ensure this is PubMedClientError
 )
 from adaptive_graph_of_thoughts.services.api_clients.base_client import (
     APIHTTPError,
@@ -119,14 +119,14 @@ SAMPLE_EMPTY_ESEARCH_RESPONSE_JSON = {
 
 # --- Fixtures ---
 @pytest.fixture
-def mock_settings() -> Settings:
+def mock_settings() -> Config:
     """
     Creates a Settings instance with a minimal PubMed configuration for testing.
     
     Returns:
         A Settings object containing a PubMedConfig with a base URL and email.
     """
-    return Settings(
+    return Config(
         pubmed=PubMedConfig(
             base_url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
             email="test@example.com" # Recommended by NCBI
@@ -134,7 +134,7 @@ def mock_settings() -> Settings:
     )
 
 @pytest.fixture
-async def pubmed_client_fixture(mock_settings: Settings) -> PubMedClient:
+async def pubmed_client_fixture(mock_settings: Config) -> PubMedClient:
     """
     Provides an asynchronous fixture that yields a PubMedClient instance configured with mock settings for testing.
     """
@@ -143,7 +143,7 @@ async def pubmed_client_fixture(mock_settings: Settings) -> PubMedClient:
 
 # --- Test Cases ---
 
-def test_pubmed_client_initialization(mock_settings: Settings):
+def test_pubmed_client_initialization(mock_settings: Config):
     """Test successful initialization of PubMedClient."""
     client = PubMedClient(settings=mock_settings)
     assert client is not None
@@ -153,10 +153,10 @@ def test_pubmed_client_initialization(mock_settings: Settings):
 def test_pubmed_client_initialization_missing_config():
     """Test PubMedClientError is raised if PubMed config is missing or incomplete."""
     with pytest.raises(PubMedClientError, match="PubMed configuration (base_url) is not set"):
-        PubMedClient(settings=Settings(pubmed=None))
+        PubMedClient(settings=Config(pubmed=None))
 
     with pytest.raises(PubMedClientError, match="PubMed configuration (base_url) is not set"):
-        PubMedClient(settings=Settings(pubmed=PubMedConfig(base_url=None))) # type: ignore
+        PubMedClient(settings=Config(pubmed=PubMedConfig(base_url=None))) # type: ignore
 
 async def test_search_articles_success(pubmed_client_fixture: PubMedClient, httpx_mock: HTTPXMock):
     """
@@ -324,7 +324,7 @@ async def test_api_key_and_email_usage(httpx_mock: HTTPXMock):
     
     This test ensures that the email and api_key are present in the query parameters for esearch, esummary, and efetch requests.
     """
-    settings_with_key = Settings(
+    settings_with_key = Config(
         pubmed=PubMedConfig(
             base_url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/",
             email="user_with_key@example.com",
@@ -427,7 +427,7 @@ async def test_fetch_abstract_malformed_xml(pubmed_client_fixture: PubMedClient,
 
 def test_pubmed_client_invalid_base_url():
     """Test initialization fails with invalid base_url."""
-    bad_settings = Settings(pubmed=PubMedConfig(base_url="htt://bad url", email="x@y.com"))
+    bad_settings = Config(pubmed=PubMedConfig(base_url="htt://bad url", email="x@y.com"))
     with pytest.raises(PubMedClientError, match="base_url"):
         PubMedClient(settings=bad_settings)
 
@@ -519,7 +519,7 @@ def test_parse_esummary_response_edge_cases(xml_str, expected_titles, expected_a
         expected_titles: List of expected article titles after parsing.
         expected_authors: List of expected author lists after parsing.
     """
-    client = PubMedClient(settings=Settings(pubmed=PubMedConfig(base_url="http://url", email="e@e.com")))
+    client = PubMedClient(settings=Config(pubmed=PubMedConfig(base_url="http://url", email="e@e.com")))
     articles = client._parse_esummary_response(xml_str)
     titles = [a.title for a in articles]
     authors = [a.authors for a in articles]

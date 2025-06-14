@@ -1,9 +1,12 @@
 from typing import Optional, List, Dict, Any
 from loguru import logger
 from pydantic import BaseModel, Field
+import httpx # Import httpx
+
+__all__ = ["PubMedClient", "PubMedArticle", "PubMedClientError"]
 import xml.etree.ElementTree as ET
 
-from adaptive_graph_of_thoughts.config import Settings, PubMedConfig
+from adaptive_graph_of_thoughts.config import Config, PubMedConfig
 from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPIClientError
 
 class PubMedArticle(BaseModel):
@@ -21,7 +24,7 @@ class PubMedClientError(BaseAPIClientError):
     pass
 
 class PubMedClient:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         if not settings.pubmed or not settings.pubmed.base_url:
             logger.error("PubMed configuration is missing in settings.")
             raise PubMedClientError("PubMed configuration (base_url) is not set.")
@@ -125,8 +128,11 @@ class PubMedClient:
             if not pmids: # Handles case where idlist is empty
                 logger.info(f"eSearch returned no PMIDs for query: {query}")
                 return []
-        except (APIHTTPError, APIRequestError) as e:
+        except (APIHTTPError, APIRequestError, httpx.RequestError) as e: # Added httpx.RequestError
             logger.error(f"PubMed eSearch API error for query '{query}': {e}")
+            # isinstance check to differentiate if needed, though base_client should wrap httpx.RequestError into APIRequestError
+            if isinstance(e, httpx.RequestError) and not isinstance(e, (APIHTTPError, APIRequestError)):
+                 raise PubMedClientError(f"PubMed eSearch network/request error: {e}") from e
             raise PubMedClientError(f"PubMed eSearch failed: {e}") from e
         except ValueError as e: # JSONDecodeError inherits from ValueError
             logger.error(f"Failed to decode JSON from PubMed eSearch for query '{query}': {e}")
@@ -146,25 +152,24 @@ class PubMedClient:
             articles = self._parse_esummary_response(xml_text)
 
             # Fetch abstracts for each article found
-            # This makes search_articles more comprehensive but potentially slower.
-            # Consider if abstracts should always be fetched or if it's an optional step / separate call.
             for article in articles:
-                if article.pmid: # Ensure pmid is valid before fetching abstract
+                if article.pmid:
                     try:
                         abstract = await self.fetch_abstract(article.pmid)
-                        article.abstract = abstract # Populate abstract field
-                    except PubMedClientError as e:
-                        logger.warning(f"Could not fetch abstract for PMID {article.pmid}: {e}")
-                        # Decide if this should halt processing or just log and continue
-                        article.abstract = None
+                        article.abstract = abstract
+                    except PubMedClientError as e: # Specific catch for abstract fetching issues
+                        logger.warning(f"Could not fetch abstract for PMID {article.pmid} during search: {e}")
+                        article.abstract = None # Ensure abstract is None if fetching fails
 
             logger.info(f"Successfully retrieved and parsed {len(articles)} articles from PubMed for query: '{query}'.")
             return articles
-        except (APIHTTPError, APIRequestError) as e:
+        except (APIHTTPError, APIRequestError, httpx.RequestError) as e: # Added httpx.RequestError
             logger.error(f"PubMed eSummary API error for PMIDs '{','.join(pmids)}': {e}")
+            if isinstance(e, httpx.RequestError) and not isinstance(e, (APIHTTPError, APIRequestError)):
+                raise PubMedClientError(f"PubMed eSummary network/request error: {e}") from e
             raise PubMedClientError(f"PubMed eSummary failed: {e}") from e
         # Errors from _parse_esummary_response are already logged and potentially re-raised
-        return [] # Should not be reached if successful, but as a fallback
+        return []
 
     async def fetch_abstract(self, pmid: str) -> Optional[str]:
         logger.debug(f"Fetching abstract for PubMed PMID: {pmid}")
@@ -203,7 +208,7 @@ class PubMedClient:
                 full_abstract = "\n".join(abstract_texts)
                 logger.debug(f"Successfully fetched abstract for PMID: {pmid}")
                 return full_abstract
-            else: # Check for alternative abstract locations if primary is empty
+            else:
                 for other_abstract_node in root.findall(".//OtherAbstract/AbstractText"):
                     text_content = "".join(other_abstract_node.itertext()).strip()
                     if text_content:
@@ -218,20 +223,22 @@ class PubMedClient:
         except ET.ParseError as e:
             logger.error(f"Failed to parse PubMed eFetch XML for PMID {pmid}: {e}")
             raise PubMedClientError(f"XML parsing error for eFetch (PMID {pmid}): {e}") from e
-        except (APIHTTPError, APIRequestError) as e:
+        except (APIHTTPError, APIRequestError, httpx.RequestError) as e: # Added httpx.RequestError
             logger.error(f"PubMed eFetch API error for PMID {pmid}: {e}")
+            if isinstance(e, httpx.RequestError) and not isinstance(e, (APIHTTPError, APIRequestError)):
+                 raise PubMedClientError(f"PubMed eFetch network/request error: {e}") from e
             raise PubMedClientError(f"PubMed eFetch failed (PMID {pmid}): {e}") from e
-        except Exception as e:
+        except Exception as e: # General catch-all, should be more specific if possible
             logger.error(f"Unexpected error fetching abstract for PMID {pmid}: {e}")
             raise PubMedClientError(f"Unexpected error in fetch_abstract (PMID {pmid}): {e}") from e
 
 # Example Usage (for testing)
 async def main_pubmed_test():
-    from adaptive_graph_of_thoughts.config import Settings, PubMedConfig # Ensure PubMedConfig is imported
+    from adaptive_graph_of_thoughts.config import Config, PubMedConfig # Ensure PubMedConfig is imported
 
     # Attempt to load settings, fallback to a default mock if issues occur
     try:
-        settings = Settings()
+        settings = Config()
         if not settings.pubmed or not settings.pubmed.base_url:
             logger.warning("PubMed config not fully set in settings.yaml or env vars; using mock for testing.")
             # Provide a default email, as NCBI recommends it.
@@ -239,7 +246,7 @@ async def main_pubmed_test():
     except Exception as e:
         logger.warning(f"Could not load global settings ({e}), using mock PubMed config for testing.")
         # Manually create a Settings object with a default PubMedConfig
-        settings = Settings(
+        settings = Config(
             pubmed=PubMedConfig(base_url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", email="test.user@example.com")
             # app, asr_got, etc., would use their defaults or be None if not specified
         )

@@ -1,0 +1,4 @@
+# file: /app/src/adaptive_graph_of_thoughts/domain/models/graph_elements.py
+# hypothesis_version: 6.135.9
+
+[0.0, 0.1, 0.7, 0.8, 1.0, 'associative', 'author', 'caused_by', 'causes', 'confidence', 'confounded_by', 'contradictory', 'cooccurs_with', 'correlative', 'counterfactual_to', 'curator', 'cyclic', 'cyclic_relationship', 'decomposition_of', 'delayed_effect_of', 'enables', 'event_driven', 'evidence', 'example_of', 'generalization', 'generates_hypothesis', 'has_subquestion', 'high', 'hyperedge_component', 'hypothesis', 'ibn_source_link', 'ibn_target_link', 'linear', 'low', 'medium', 'new', 'node_ids', 'old', 'other', 'overlaps_with', 'placeholder_gap', 'prerequisite', 'prevents', 'relevant_to', 'research_question', 'root', 'specialization', 'supportive', 'task_understanding', 'temporal_follows', 'temporal_precedes', 'update_confidence', 'validator']

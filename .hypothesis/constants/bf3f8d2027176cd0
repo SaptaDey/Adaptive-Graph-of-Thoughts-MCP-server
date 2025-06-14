@@ -1,0 +1,4 @@
+# file: /app/src/adaptive_graph_of_thoughts/services/api_clients/google_scholar_client.py
+# hypothesis_version: 6.135.9
+
+[', ', '/', '/search', 'Google Scholar', 'N/A', '__main__', 'api_key', 'authors', 'citation_link', 'cited_by', 'cited_by_count', 'cited_by_link', 'en', 'engine', 'error', 'gl', 'google_scholar', 'hl', 'inline_links', 'link', 'name', 'num', 'organic_results', 'placeholder', 'publication_info', 'q', 'raw_result', 'related_pages_link', 'search_parameters', 'serpapi_cite_link', 'snippet', 'summary', 'title', 'total', 'us', 'versions', 'versions_link']

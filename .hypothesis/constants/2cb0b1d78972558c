@@ -1,0 +1,4 @@
+# file: /app/src/adaptive_graph_of_thoughts/domain/stages/stage_1_initialization.py
+# hypothesis_version: 6.135.9
+
+[0.0, 0.9, 'InitializationStage', 'Task Understanding', 'current_tags', 'error', 'id', 'initial_layer', 'initial_query', 'label', 'model_dump', 'new_node_id', 'nodeId', 'node_id', 'operational_params', 'props', 'read', 'root_node_id', 'tags', 'type_label', 'write']

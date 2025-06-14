@@ -1,0 +1,4 @@
+# file: /app/src/adaptive_graph_of_thoughts/domain/stages/stage_3_hypothesis.py
+# hypothesis_version: 6.135.9
+
+[0.15, 0.2, 0.8, 0.9, 1.0, 5.0, 'Anchoring Bias', 'Confirmation Bias', 'HypothesisStage', 'No dimensions found', 'Unknown Dimension', 'batch_data', 'batch_rels', 'bias_flags', 'confidence', 'created_hyp_id', 'dataset_X', 'dim_id', 'dim_id_source', 'dimension_id', 'dimension_node_ids', 'disciplinary_tags', 'error', 'expert_A', 'hyp_id', 'hypo_label', 'hypo_label_original', 'hypotheses_results', 'hypothesis_layer', 'hypothesis_node_ids', 'id', 'impact_score', 'label', 'low', 'medium', 'metadata_layer_id', 'model_dump', 'operational_params', 'plan', 'props', 'read', 'total_rels_created', 'type_label_value', 'write']

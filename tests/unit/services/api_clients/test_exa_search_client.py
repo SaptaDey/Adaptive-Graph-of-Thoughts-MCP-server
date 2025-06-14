@@ -3,7 +3,7 @@ from pytest_httpx import HTTPXMock
 import json # For converting string to dict for httpx_mock.add_response json parameter
 import httpx # For specific exceptions like httpx.ConnectError
 
-from adaptive_graph_of_thoughts.config import Settings, ExaSearchConfig
+from adaptive_graph_of_thoughts.config import Config, ExaSearchConfig
 from adaptive_graph_of_thoughts.services.api_clients.exa_search_client import (
     ExaSearchClient,
     ExaArticleResult,
@@ -38,14 +38,14 @@ SAMPLE_EXA_MISSING_RESULTS_KEY_JSON_STR = """{
 
 # --- Fixtures ---
 @pytest.fixture
-def mock_exa_settings() -> Settings:
+def mock_exa_settings() -> Config:
     """
     Creates a Settings instance with a minimal ExaSearchConfig for testing purposes.
     
     Returns:
         A Settings object configured with a base URL and API key for the Exa Search API.
     """
-    return Settings(
+    return Config(
         exa_search=ExaSearchConfig(
             base_url="https://api.exa.ai",
             api_key="test_exa_api_key"
@@ -53,7 +53,7 @@ def mock_exa_settings() -> Settings:
     )
 
 @pytest.fixture
-async def exa_client_fixture(mock_exa_settings: Settings) -> ExaSearchClient:
+async def exa_client_fixture(mock_exa_settings: Config) -> ExaSearchClient:
     """
     Yields an `ExaSearchClient` instance configured with mock settings for use in asynchronous tests.
     """
@@ -62,7 +62,7 @@ async def exa_client_fixture(mock_exa_settings: Settings) -> ExaSearchClient:
 
 # --- Test Cases ---
 
-def test_exa_client_initialization(mock_exa_settings: Settings):
+def test_exa_client_initialization(mock_exa_settings: Config):
     """Test successful initialization of ExaSearchClient."""
     client = ExaSearchClient(settings=mock_exa_settings)
     assert client is not None
@@ -76,13 +76,13 @@ def test_exa_client_initialization(mock_exa_settings: Settings):
 def test_exa_client_initialization_missing_config():
     """Test ExaSearchClientError if config (API key or base URL) is missing."""
     with pytest.raises(ExaSearchClientError, match="Exa Search configuration is not properly set"):
-        ExaSearchClient(settings=Settings(exa_search=None))
+        ExaSearchClient(settings=Config(exa_search=None))
 
     with pytest.raises(ExaSearchClientError, match="Exa Search configuration is not properly set"):
-        ExaSearchClient(settings=Settings(exa_search=ExaSearchConfig(api_key=None, base_url="https://api.exa.ai"))) # type: ignore
+        ExaSearchClient(settings=Config(exa_search=ExaSearchConfig(api_key=None, base_url="https://api.exa.ai"))) # type: ignore
 
     with pytest.raises(ExaSearchClientError, match="Exa Search configuration is not properly set"):
-        ExaSearchClient(settings=Settings(exa_search=ExaSearchConfig(api_key="key", base_url=None))) # type: ignore
+        ExaSearchClient(settings=Config(exa_search=ExaSearchConfig(api_key="key", base_url=None))) # type: ignore
 
 async def test_search_success(exa_client_fixture: ExaSearchClient, httpx_mock: HTTPXMock):
     """
@@ -352,7 +352,7 @@ async def test_find_similar_invalid_param_combo(exa_client_fixture: ExaSearchCli
         await client.find_similar(url="http://e.com", text="should conflict")
 
 @pytest.mark.asyncio
-async def test_client_context_manager_closes_session(mock_exa_settings: Settings):
+async def test_client_context_manager_closes_session(mock_exa_settings: Config):
     """
     Ensure underlying httpx.AsyncClient is closed after exiting async context manager.
     """

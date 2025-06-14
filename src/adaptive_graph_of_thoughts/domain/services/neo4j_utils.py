@@ -41,33 +41,26 @@ def get_neo4j_driver() -> Driver:
     global _driver
     # Create a driver only if one doesn't yet exist or has been closed
     if _driver is None or _driver.closed:
+        current_neo4j_settings = get_neo4j_settings() # Get the initialized settings
 
-        if settings.neo4j is None:
-            logger.error("Neo4j configuration is missing in global settings.")
-            raise ServiceUnavailable("Neo4j configuration is not available.")
-
-        uri = settings.neo4j.uri
-        username = settings.neo4j.username
-        password = settings.neo4j.password
-
-        if not uri or not username or not password:
+        if not current_neo4j_settings.uri or not current_neo4j_settings.user or not current_neo4j_settings.password:
             logger.error("Neo4j URI, username, or password missing in configuration.")
             raise ServiceUnavailable("Neo4j connection details are incomplete in settings.")
 
-        logger.info(f"Initializing Neo4j driver for URI: {uri}")
-
-            _driver = GraphDatabase.driver(settings.uri, auth=(settings.user, settings.password))
+        logger.info(f"Initializing Neo4j driver for URI: {current_neo4j_settings.uri}")
+        try: # Added try block here
+            _driver = GraphDatabase.driver(current_neo4j_settings.uri, auth=(current_neo4j_settings.user, current_neo4j_settings.password))
             # Verify connectivity
             _driver.verify_connectivity()
             logger.info("Neo4j driver initialized and connectivity verified.")
         except ServiceUnavailable as e:
-            logger.error(f"Failed to connect to Neo4j at {settings.uri}: {e}")
+            logger.error(f"Failed to connect to Neo4j at {current_neo4j_settings.uri}: {e}")
             _driver = None # Ensure driver is None if connection failed
             raise  # Re-raise the exception to signal connection failure
         except Exception as e:
             logger.error(f"An unexpected error occurred while initializing Neo4j driver: {e}")
             _driver = None # Ensure driver is None on other errors
-            raise
+            raise # Re-raise other unexpected errors
     return _driver
 
 def close_neo4j_driver() -> None:

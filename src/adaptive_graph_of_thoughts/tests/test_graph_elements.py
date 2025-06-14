@@ -1,8 +1,6 @@
 from adaptive_graph_of_thoughts.domain.models.graph_elements import Graph, Node, Edge
 from unittest.mock import Mock, patch
 import sys
-</newLines>
-<newLines>
 # Additional comprehensive tests for Graph class
 
 def test_add_edge_to_nonexistent_nodes_raises(empty_graph):

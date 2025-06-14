@@ -1,0 +1,4 @@
+# file: /app/src/adaptive_graph_of_thoughts/services/api_clients/exa_search_client.py
+# hypothesis_version: 6.135.9
+
+['/', '/find_similar', '/search', 'Accept', 'Content-Type', 'User-Agent', '__main__', 'application/json', 'author', 'category', 'endPublishedDate', 'error', 'highlights', 'https://api.exa.ai', 'id', 'neural', 'num_results', 'placeholder', 'publishedDate', 'query', 'raw_result', 'results', 'score', 'startPublishedDate', 'title', 'type', 'url', 'use_autoprompt', 'x-api-key']

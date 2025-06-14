@@ -2,7 +2,7 @@ from typing import Optional, List, Dict, Any
 from loguru import logger
 from pydantic import BaseModel, Field
 
-from adaptive_graph_of_thoughts.config import Settings, GoogleScholarConfig
+from adaptive_graph_of_thoughts.config import Config, GoogleScholarConfig
 from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPIClientError
 
 class GoogleScholarArticle(BaseModel):
@@ -30,7 +30,7 @@ class GoogleScholarClientError(BaseAPIClientError):
     pass
 
 class GoogleScholarClient:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         if not settings.google_scholar or \
            not settings.google_scholar.base_url or \
            not settings.google_scholar.api_key:
@@ -166,10 +166,10 @@ class GoogleScholarClient:
 
 # Example Usage (for testing)
 async def main_google_scholar_test():
-    from adaptive_graph_of_thoughts.config import Settings, GoogleScholarConfig
+    from adaptive_graph_of_thoughts.config import Config, GoogleScholarConfig
 
     try:
-        settings = Settings() # Load from settings.yaml or environment variables
+        settings = Config() # Load from settings.yaml or environment variables
         # Check if google_scholar config exists and has essential fields
         if not settings.google_scholar or not settings.google_scholar.api_key or not settings.google_scholar.base_url:
             logger.warning("Google Scholar config (api_key, base_url) not fully set in settings; test may use placeholders or fail.")
@@ -184,7 +184,7 @@ async def main_google_scholar_test():
 
     except Exception as e: # Broad exception for issues loading settings
         logger.warning(f"Could not load global settings ({e}), using default mock Google Scholar config for testing.")
-        settings = Settings( # Create a new Settings object with a default GoogleScholarConfig
+        settings = Config( # Create a new Settings object with a default GoogleScholarConfig
             google_scholar=GoogleScholarConfig(api_key="YOUR_SERPAPI_KEY_HERE", base_url="https://serpapi.com/search")
         )
 

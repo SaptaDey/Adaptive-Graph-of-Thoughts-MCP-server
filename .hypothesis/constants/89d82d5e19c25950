@@ -1,0 +1,4 @@
+# file: /app/src/adaptive_graph_of_thoughts/services/api_clients/pubmed_client.py
+# hypothesis_version: 6.135.9
+
+[',', './/AbstractText', 'AuthorList', 'DOI', 'DocSum', 'Id', 'Item', "Item[@Name='Author']", 'Label', 'Name', 'NlmCategory', 'PubDate', 'Source', 'Title', '__main__', 'abstract', 'api_key', 'authors', 'db', 'doi', 'efetch.fcgi', 'email', 'esearch.fcgi', 'esearchresult', 'esummary.fcgi', 'id', 'idlist', 'journal', 'json', 'pmid', 'publication_date', 'pubmed', 'retmax', 'retmode', 'rettype', 'term', 'title', 'unknown', 'url', 'usehistory', 'xml', 'y']

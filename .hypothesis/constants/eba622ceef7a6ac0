@@ -1,0 +1,4 @@
+# file: /app/src/adaptive_graph_of_thoughts/config.py
+# hypothesis_version: 6.135.9
+
+[0.2, 0.3, 0.5, 0.6, 0.8, 0.9, 120, 8000, '*', '0.0.0.0', '0.1.0', '2024-11-05', 'AI Research Group', 'APP_AUTH_TOKEN', 'APP_UVICORN_RELOAD', 'APP_UVICORN_WORKERS', 'Config', 'INFO', 'MCP_HTTP_ENABLED', 'MCP_STDIO_ENABLED', 'MCP_TRANSPORT_TYPE', '__', 'config', 'config.schema.json', 'http', 'https://api.exa.ai', 'ignore', 'max', 'min', 'root_layer', 'settings.yaml']

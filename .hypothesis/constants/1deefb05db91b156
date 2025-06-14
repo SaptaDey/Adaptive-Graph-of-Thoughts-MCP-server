@@ -1,0 +1,4 @@
+# file: /app/src/adaptive_graph_of_thoughts/domain/services/got_processor.py
+# hypothesis_version: 6.135.9
+
+[0.0, 0.1, 1000, '.', 'CompositionStage', 'DecompositionStage', 'Error:', 'EvidenceStage', 'HypothesisStage', 'InitializationStage', 'Processing halted', 'ReflectionStage', 'duration_ms', 'error', 'hypotheses_results', 'initial_context', 'metrics', 'no_evidence_found', 'nodes_extracted', 'operational_params', 'pipeline_stages', 'root_node_id', 'stage_name', 'stage_number', 'summary']

@@ -5,7 +5,7 @@ import subprocess
 import pytest
 from pathlib import Path
 
-from adaptive_graph_of_thoughts.config import settings
+from adaptive_graph_of_thoughts.config import config
 
 @pytest.fixture(scope="module")
 def stdio_process():

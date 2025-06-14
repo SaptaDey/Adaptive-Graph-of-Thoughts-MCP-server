@@ -3,7 +3,7 @@ from typing import Any, Optional, List, Dict, Set
 from loguru import logger
 from pydantic import BaseModel, Field
 
-from adaptive_graph_of_thoughts.config import Settings
+from adaptive_graph_of_thoughts.config import Config
 from adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
 from adaptive_graph_of_thoughts.domain.models.graph_elements import NodeType # Node removed as not used for in-memory graph
 # from adaptive_graph_of_thoughts.domain.models.graph_state import ASRGoTGraph # No longer used
@@ -42,7 +42,7 @@ class ExtractedSubgraphData(BaseModel): # Renamed for clarity
 class SubgraphExtractionStage(BaseStage):
     stage_name: str = "SubgraphExtractionStage"
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         super().__init__(settings)
         self.default_extraction_criteria: List[SubgraphCriterion] = [
             SubgraphCriterion(name="high_confidence_core", description="Nodes with high average confidence and impact.",

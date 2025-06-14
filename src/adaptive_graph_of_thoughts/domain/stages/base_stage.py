@@ -5,7 +5,7 @@ from loguru import logger  # type: ignore
 from pydantic import BaseModel, Field
 
 from adaptive_graph_of_thoughts.config import (
-    Settings,  # To access ASRGoTDefaultParams if needed by stages
+    Config,  # To access ASRGoTDefaultParams if needed by stages
 )
 from adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
 # ASRGoTGraph has been removed as part of refactoring
@@ -27,7 +27,7 @@ class BaseStage(ABC):
 
     stage_name: str = "UnknownStage"  # Override in subclasses
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         self.settings = settings
         self.default_params = settings.asr_got.default_parameters
         # Log initialization

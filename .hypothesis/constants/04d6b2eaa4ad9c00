@@ -1,0 +1,4 @@
+# file: /app/src/adaptive_graph_of_thoughts/domain/stages/stage_2_decomposition.py
+# hypothesis_version: 6.135.9
+
+[0.7, 0.95, 'DecompositionStage', 'Root Task', 'batch_data', 'batch_rels', 'confidence', 'created_label', 'created_node_id', 'description', 'dim_id', 'dimension_layer', 'dimension_node_ids', 'error', 'id', 'label', 'metadata_layer_id', 'model_dump', 'operational_params', 'original_identifier', 'props', 'read', 'root_id', 'root_node_id', 'total_rels_created', 'type_label_value', 'write']

@@ -5,7 +5,7 @@ from typing import Any, Optional, List, Dict, Set, Union, Tuple
 
 from loguru import logger # type: ignore
 
-from adaptive_graph_of_thoughts.config import Config # Changed Settings to Config
+from adaptive_graph_of_thoughts.config import Config
 from adaptive_graph_of_thoughts.domain.models.common import (
     ConfidenceVector,
     EpistemicStatus,
@@ -15,9 +15,9 @@ from adaptive_graph_of_thoughts.domain.models.graph_elements import (
     Edge,
     EdgeMetadata,
     EdgeType,
-    Hyperedge, # Assuming Hyperedge model might be used later, keep import
+    Hyperedge,
     HyperedgeMetadata,
-    InformationTheoreticMetrics, # Assuming this might be used, keep import
+    InformationTheoreticMetrics,
     InterdisciplinaryInfo,
     Node,
     NodeMetadata,
@@ -36,8 +36,8 @@ from adaptive_graph_of_thoughts.domain.utils.metadata_helpers import (
 from adaptive_graph_of_thoughts.domain.stages.base_stage import BaseStage, StageOutput
 from .stage_3_hypothesis import HypothesisStage # To access hypothesis_node_ids
 
-from datetime import datetime as dt # Alias dt for datetime.datetime
-from enum import Enum # For property preparation
+from datetime import datetime as dt
+from enum import Enum
 
 # Import API Clients and their data models
 from adaptive_graph_of_thoughts.services.api_clients.pubmed_client import PubMedClient, PubMedArticle
@@ -47,13 +47,12 @@ from adaptive_graph_of_thoughts.services.api_clients.exa_search_client import Ex
 class EvidenceStage(BaseStage):
     stage_name: str = "EvidenceStage"
 
-    def __init__(self, settings: Config): # Changed settings: Settings to settings: Config
+    def __init__(self, settings: Config):
         super().__init__(settings)
         self.max_iterations = self.default_params.evidence_max_iterations
         self.ibn_similarity_threshold = getattr(self.default_params, "ibn_similarity_threshold", 0.5)
         self.min_nodes_for_hyperedge_consideration = getattr(self.default_params, "min_nodes_for_hyperedge", 2)
 
-        # Initialize API Clients
         self.pubmed_client: Optional[PubMedClient] = None
         if settings.pubmed and settings.pubmed.base_url:
             try:
@@ -214,6 +213,7 @@ class EvidenceStage(BaseStage):
         Executes an evidence search plan for a given hypothesis and gathers supporting evidence.
         
         Uses the hypothesis label or a specified query plan to search external sources (PubMed, Google Scholar, Exa Search) for relevant articles or results. For each source, retrieves up to two results, extracts key information, and constructs evidence data dictionaries with content, source details, authors, publication date, confidence placeholders, disciplinary tags, timestamps, and raw data. Returns a list of evidence items found for the hypothesis.
+        """
         hypo_label = hypothesis_data_from_neo4j.get("label", "")
         hypo_id = hypothesis_data_from_neo4j.get("id", "unknown_hypo")
 
@@ -227,10 +227,6 @@ class EvidenceStage(BaseStage):
                 plan_dict = json.loads(plan_json_str)
                 search_query = plan_dict.get("query", hypo_label)
                 plan_type = plan_dict.get("type", "default_plan")
-                # Further plan interpretation can happen here:
-                # - Specific sources to query (e.g., plan_dict.get("sources", ["pubmed", "google_scholar", "exa"]))
-                # - Max results per source
-                # - Specific keywords or refined queries for different sources
                 plan_details = f"using query from plan ('{search_query}') of type '{plan_type}'."
             except json.JSONDecodeError:
                 logger.warning(f"Could not parse plan_json for hypothesis {hypo_label}. Defaulting to label for query.")
@@ -239,108 +235,73 @@ class EvidenceStage(BaseStage):
 
         found_evidence_list: List[Dict[str, Any]] = []
 
-        # Default disciplinary tags from hypothesis or system defaults
         default_tags = self._deserialize_tags(hypothesis_data_from_neo4j.get("metadata_disciplinary_tags"))
         if not default_tags and self.default_params:
             default_tags = set(self.default_params.default_disciplinary_tags)
 
-        # --- PubMed Search ---
         if self.pubmed_client:
             try:
                 logger.info(f"Querying PubMed with: '{search_query}' for hypothesis {hypo_id}")
-                # Reduced max_results for now to manage API call volume during development
                 pubmed_articles = await self.pubmed_client.search_articles(query=search_query, max_results=2)
                 for article in pubmed_articles:
                     content = article.title
-                    if article.abstract: # Keep it concise
+                    if article.abstract:
                         content += f" | Abstract (preview): {article.abstract[:250]}..."
-
                     evidence_item = {
-                        "content": content,
-                        "source_description": "PubMed Search Result",
-                        "url": article.url,
-                        "doi": article.doi,
-                        "authors_list": article.authors, # Directly use List[str] from PubMedArticle
-                        "publication_date_str": article.publication_date, # Optional[str] from PubMedArticle
-                        "supports_hypothesis": True, # Placeholder
-                        "strength": 0.65, # Placeholder
-                        "statistical_power": StatisticalPower(value=0.6, method_description="Default placeholder SP."),
-                        "disciplinary_tags": list(default_tags), # Inherit or use defaults
-                        "timestamp": dt.now(),
-                        "raw_source_data_type": "PubMedArticle",
-                        "original_data": article.model_dump() # Store raw Pydantic model
+                        "content": content, "source_description": "PubMed Search Result", "url": article.url,
+                        "doi": article.doi, "authors_list": article.authors,
+                        "publication_date_str": article.publication_date, "supports_hypothesis": True,
+                        "strength": 0.65, "statistical_power": StatisticalPower(value=0.6, method_description="Default placeholder SP."),
+                        "disciplinary_tags": list(default_tags), "timestamp": dt.now(),
+                        "raw_source_data_type": "PubMedArticle", "original_data": article.model_dump()
                     }
                     found_evidence_list.append(evidence_item)
                 logger.info(f"Found {len(pubmed_articles)} articles from PubMed for '{search_query}'.")
-            except Exception as e: # Catching broad Exception from client calls
+            except Exception as e:
                 logger.error(f"Error querying PubMed for '{search_query}': {e}")
 
-        # --- Google Scholar Search ---
         if self.google_scholar_client:
             try:
                 logger.info(f"Querying Google Scholar with: '{search_query}' for hypothesis {hypo_id}")
                 gs_articles = await self.google_scholar_client.search(query=search_query, num_results=2)
                 for article in gs_articles:
                     content = article.title
-                    if article.snippet:
-                        content += f" | Snippet: {article.snippet}"
-
-                    # Basic DOI extraction attempt (very naive)
+                    if article.snippet: content += f" | Snippet: {article.snippet}"
                     doi_candidate = None
-                    if article.link and "doi.org/" in article.link:
-                        doi_candidate = article.link.split("doi.org/")[-1]
-
-                    gs_authors_str = article.authors # This is Optional[str] from GoogleScholarArticle
+                    if article.link and "doi.org/" in article.link: doi_candidate = article.link.split("doi.org/")[-1]
+                    gs_authors_str = article.authors
                     authors_list_gs = [a.strip() for a in gs_authors_str.split(',')] if gs_authors_str else []
-
                     evidence_item = {
-                        "content": content,
-                        "source_description": "Google Scholar Search Result",
-                        "url": article.link,
-                        "doi": doi_candidate, # May be None
-                        "authors_list": authors_list_gs,
-                        "publication_date_str": article.publication_info, # Often "Journal, Year" or similar
-                        "supports_hypothesis": True, # Placeholder
-                        "strength": 0.6 + (article.cited_by_count / 500 if article.cited_by_count else 0), # Simple strength heuristic
+                        "content": content, "source_description": "Google Scholar Search Result", "url": article.link,
+                        "doi": doi_candidate, "authors_list": authors_list_gs,
+                        "publication_date_str": article.publication_info, "supports_hypothesis": True,
+                        "strength": 0.6 + (article.cited_by_count / 500 if article.cited_by_count else 0),
                         "statistical_power": StatisticalPower(value=0.5, method_description="Default placeholder SP."),
-                        "disciplinary_tags": list(default_tags),
-                        "timestamp": dt.now(),
-                        "raw_source_data_type": "GoogleScholarArticle",
-                        "original_data": article.model_dump()
+                        "disciplinary_tags": list(default_tags), "timestamp": dt.now(),
+                        "raw_source_data_type": "GoogleScholarArticle", "original_data": article.model_dump()
                     }
                     found_evidence_list.append(evidence_item)
                 logger.info(f"Found {len(gs_articles)} articles from Google Scholar for '{search_query}'.")
             except Exception as e:
                 logger.error(f"Error querying Google Scholar for '{search_query}': {e}")
 
-        # --- Exa Search ---
         if self.exa_client:
             try:
                 logger.info(f"Querying Exa Search with: '{search_query}' for hypothesis {hypo_id}")
-                # Exa's neural search might be better with descriptive queries from hypothesis text
                 exa_results = await self.exa_client.search(query=search_query, num_results=2, type="neural")
                 for result in exa_results:
                     content = result.title if result.title else "Untitled Exa Result"
-                    if result.highlights:
-                        content += f" | Highlight: {result.highlights[0]}"
-
-                    exa_author_str = result.author # Optional[str] from ExaArticleResult
+                    if result.highlights: content += f" | Highlight: {result.highlights[0]}"
+                    exa_author_str = result.author
                     authors_list_exa = [exa_author_str] if exa_author_str else []
-
                     evidence_item = {
-                        "content": content,
-                        "source_description": "Exa Search Result",
-                        "url": result.url,
-                        "doi": None, # Exa results are general web pages, DOI less common
-                        "authors_list": authors_list_exa,
-                        "publication_date_str": result.published_date, # Optional[str] from ExaArticleResult (aliased)
-                        "supports_hypothesis": True, # Placeholder
+                        "content": content, "source_description": "Exa Search Result", "url": result.url,
+                        "doi": None, "authors_list": authors_list_exa,
+                        "publication_date_str": result.published_date, "supports_hypothesis": True,
                         "strength": result.score if result.score is not None else 0.5,
                         "statistical_power": StatisticalPower(value=0.5, method_description="Default placeholder SP."),
-                        "disciplinary_tags": list(default_tags),
-                        "timestamp": dt.now(),
-                        "raw_source_data_type": "ExaArticleResult",
-                        "original_data": result.model_dump()
+                        "disciplinary_tags": list(default_tags), "timestamp": dt.now(),
+                        "raw_source_data_type": "ExaArticleResult", "original_data": result.model_dump()
                     }
                     found_evidence_list.append(evidence_item)
                 logger.info(f"Found {len(exa_results)} results from Exa Search for '{search_query}'.")
@@ -360,7 +321,7 @@ class EvidenceStage(BaseStage):
         evidence_id = f"ev_{hypothesis_id}_{iteration}_{evidence_index}"
         edge_type = EdgeType.SUPPORTIVE if evidence_data["supports_hypothesis"] else EdgeType.CONTRADICTORY
         
-        sp_value = 0.5 # Default if no SP object
+        sp_value = 0.5
         if evidence_data.get("statistical_power") and isinstance(evidence_data.get("statistical_power"), StatisticalPower):
             sp_value = evidence_data.get("statistical_power").value
 
@@ -369,26 +330,18 @@ class EvidenceStage(BaseStage):
             "source_description": evidence_data.get("source_description", "N/A"),
             "epistemic_status": EpistemicStatus.EVIDENCE_SUPPORTED if evidence_data.get("supports_hypothesis", True) else EpistemicStatus.EVIDENCE_CONTRADICTED,
             "disciplinary_tags": set(evidence_data.get("disciplinary_tags", [])),
-            "statistical_power": evidence_data.get("statistical_power"), # This should be a StatisticalPower object
+            "statistical_power": evidence_data.get("statistical_power"),
             "impact_score": evidence_data.get("strength", 0.5) * sp_value,
             "layer_id": hypothesis_layer_id,
-
-            # New direct mappings to NodeMetadata fields
-            "url": evidence_data.get("url"),
-            "doi": evidence_data.get("doi"),
-            "authors": evidence_data.get("authors_list", []), # Expects List[str]
-            "publication_date": evidence_data.get("publication_date_str"), # Expects Optional[str]
-
-            # Data for misc_details field
+            "url": evidence_data.get("url"), "doi": evidence_data.get("doi"),
+            "authors": evidence_data.get("authors_list", []),
+            "publication_date": evidence_data.get("publication_date_str"),
             "misc_details": {
                 "raw_source_data_type": evidence_data.get("raw_source_data_type"),
-                "original_data_dump": evidence_data.get("original_data") # Storing the model_dump here
+                "original_data_dump": evidence_data.get("original_data")
             }
         }
-        # Ensure timestamp is handled; it's part of evidence_data, not directly in NodeMetadata Pydantic model by default
-        # It will be added to ev_props_for_neo4j directly.
         evidence_metadata = NodeMetadata(**evidence_metadata_dict)
-
         evidence_confidence_vec = ConfidenceVector(
             empirical_support=evidence_data.get("strength",0.5),
             methodological_rigor=evidence_data.get("methodological_rigor", evidence_data.get("strength",0.5) * 0.8),
@@ -402,13 +355,13 @@ class EvidenceStage(BaseStage):
         if "timestamp" in evidence_data and isinstance(evidence_data["timestamp"], dt):
              ev_props_for_neo4j["metadata_timestamp_iso"] = evidence_data["timestamp"].isoformat()
         else:
-            ev_props_for_neo4j["metadata_timestamp_iso"] = dt.now().isoformat() # Fallback timestamp
+            ev_props_for_neo4j["metadata_timestamp_iso"] = dt.now().isoformat()
 
-        # Ensuring the multiline string is correctly formatted.
-        # The content of the query itself remains unchanged.
-        create_ev_node_query = """MERGE (e:Node {id: $props.id}) SET e += $props
-        WITH e, $type_label AS typeLabel CALL apoc.create.addLabels(e, [typeLabel]) YIELD node
-        RETURN node.id AS evidence_id, properties(node) as evidence_props"""
+        create_ev_node_query = (
+            "MERGE (e:Node {id: $props.id}) SET e += $props "
+            "WITH e, $type_label AS typeLabel CALL apoc.create.addLabels(e, [typeLabel]) YIELD node "
+            "RETURN node.id AS evidence_id, properties(node) as evidence_props"
+        )
         try:
             result_ev_node = await execute_query(create_ev_node_query, {"props": ev_props_for_neo4j, "type_label": NodeType.EVIDENCE.value}, tx_type='write')
             if not result_ev_node or not result_ev_node[0].get("evidence_id"):
@@ -425,13 +378,13 @@ class EvidenceStage(BaseStage):
                 metadata=EdgeMetadata(description=f"Evidence '{evidence_node_pydantic.label[:20]}...' {'supports' if evidence_data['supports_hypothesis'] else 'contradicts'} hypothesis.")
             )
             edge_props_for_neo4j = self._prepare_edge_properties_for_neo4j(edge_pydantic)
-            create_rel_query = f"""
-             MATCH (ev:Node {{id: $evidence_id}})
-             MATCH (hyp:Node {{id: $hypothesis_id}})
-            MERGE (ev)-[r:`{edge_type.value}` {{id: $props.id}}]->(hyp)
-             SET r += $props
-             RETURN r.id as rel_id
-            """
+            create_rel_query = (
+                f"MATCH (ev:Node {{id: $evidence_id}}) "
+                f"MATCH (hyp:Node {{id: $hypothesis_id}}) "
+                f"MERGE (ev)-[r:`{edge_type.value}` {{id: $props.id}}]->(hyp) "
+                f"SET r += $props "
+                f"RETURN r.id as rel_id"
+            )
             params_rel = {"evidence_id": created_evidence_id, "hypothesis_id": hypothesis_id, "props": edge_props_for_neo4j}
             result_rel = await execute_query(create_rel_query, params_rel, tx_type="write")
             if not result_rel or not result_rel[0].get("rel_id"):
@@ -439,7 +392,6 @@ class EvidenceStage(BaseStage):
                 return None
             
             logger.debug(f"Created evidence node {created_evidence_id} and linked to hypothesis {hypothesis_id} with type {edge_type.value}.")
-            # Return the properties fetched from Neo4j, which are more reliable than local construction for subsequent steps
             return {"id": created_evidence_id, **created_evidence_props}
         except Neo4jError as e:
             logger.error(f"Neo4j error creating evidence or link: {e}")
@@ -486,16 +438,12 @@ class EvidenceStage(BaseStage):
         self, evidence_node_data: Dict[str, Any], hypothesis_node_data: Dict[str, Any]
     ) -> Optional[str]:
         hypo_tags_raw = hypothesis_node_data.get("metadata_disciplinary_tags")
-        # evidence_node_data comes from _create_evidence_in_neo4j, which returns Neo4j properties
-        # So, metadata_disciplinary_tags should be directly accessible if set.
         ev_tags_raw = evidence_node_data.get("metadata_disciplinary_tags")
-
         hypo_tags = self._deserialize_tags(hypo_tags_raw)
         ev_tags = self._deserialize_tags(ev_tags_raw)
 
         if not hypo_tags or not ev_tags or hypo_tags.intersection(ev_tags): return None
 
-        # Use labels from the Neo4j data passed in
         hypo_label_for_sim = hypothesis_node_data.get("label", "")
         ev_label_for_sim = evidence_node_data.get("label", "")
         similarity = calculate_semantic_similarity(hypo_label_for_sim, ev_label_for_sim)
@@ -561,8 +509,7 @@ class EvidenceStage(BaseStage):
         hyperedge_center_id = f"hyper_{hypothesis_data['id']}_{random.randint(1000,9999)}"
         hyperedge_node_ids_for_pydantic = {hypothesis_data['id']} | {ev_data['id'] for ev_data in related_evidence_data_list}
 
-        # Use confidence from Neo4j data which is more reliable
-        hypo_conf_emp = hypothesis_data.get("conf_empirical", 0.5) # Adjusted key from _select_hypothesis_to_evaluate_from_neo4j
+        hypo_conf_emp = hypothesis_data.get("conf_empirical", 0.5)
         avg_emp_support = (hypo_conf_emp + sum(ev.get("confidence_empirical_support", 0.5) for ev in related_evidence_data_list)) / (1 + len(related_evidence_data_list))
         
         hyper_confidence = ConfidenceVector(empirical_support=avg_emp_support, theoretical_basis=0.4, methodological_rigor=0.5, consensus_alignment=0.4)
@@ -592,7 +539,7 @@ class EvidenceStage(BaseStage):
                 edge_id = f"edge_hyper_{created_hyperedge_center_id}_hasmember_{member_id}"
                 batch_member_links_data.append({
                     "hyperedge_center_id": created_hyperedge_center_id, "member_node_id": member_id,
-                    "props": {"id": edge_id} # Minimal edge props for now
+                    "props": {"id": edge_id}
                 })
             if batch_member_links_data:
                 link_members_query = """
@@ -651,12 +598,11 @@ class EvidenceStage(BaseStage):
                            "hypotheses_updated_in_neo4j": 0, "ibns_created_in_neo4j": 0,
                            "hyperedges_created_in_neo4j": 0}
                 context_update = {"evidence_integration_completed": False, "error": "No hypotheses found"}
-                # Ensure stage_name is used as key for context_update
                 return StageOutput(summary=summary, metrics=metrics, next_stage_context_update={self.stage_name: context_update})
 
             processed_hypotheses_this_run: Set[str] = set()
             for iteration_num in range(self.max_iterations):
-                iterations_run = iteration_num + 1 # Correctly increment iterations_run
+                iterations_run = iteration_num + 1
                 logger.info(f"Evidence integration iteration {iterations_run}/{self.max_iterations}")
                 
                 eligible_ids_for_selection = [hid for hid in hypothesis_node_ids if hid not in processed_hypotheses_this_run]
@@ -672,13 +618,11 @@ class EvidenceStage(BaseStage):
                 current_hypothesis_id = selected_hypothesis_data["id"]
                 processed_hypotheses_this_run.add(current_hypothesis_id)
 
-
                 found_evidence_conceptual_list = await self._execute_hypothesis_plan(selected_hypothesis_data)
 
                 if not found_evidence_conceptual_list:
                     logger.debug(f"No new evidence found/generated for hypothesis '{selected_hypothesis_data.get('label', current_hypothesis_id)}'.")
                     continue
-
 
                 related_evidence_data_for_hyperedge: List[Dict[str,Any]] = []
                 for ev_idx, ev_conceptual_data in enumerate(found_evidence_conceptual_list):
@@ -704,8 +648,6 @@ class EvidenceStage(BaseStage):
                     )
                     if update_successful: hypotheses_updated_count +=1
 
-                    # Defensive checks for keys needed by _create_ibn_in_neo4j
-                    # created_evidence_neo4j_data now comes from Neo4j, so 'label' and 'metadata_disciplinary_tags' should be Neo4j property names
                     if 'label' not in created_evidence_neo4j_data:
                         created_evidence_neo4j_data['label'] = f"Ev_default_label_{iteration_num}_{ev_idx}"
                     if 'metadata_disciplinary_tags' not in created_evidence_neo4j_data:
@@ -715,10 +657,9 @@ class EvidenceStage(BaseStage):
                     if ibn_created_id: ibns_created_count += 1
 
                 if related_evidence_data_for_hyperedge:
-                    # Ensure evidence data for hyperedge has 'confidence_empirical_support' (Neo4j property name)
                     for ev_data_item in related_evidence_data_for_hyperedge:
-                        if 'confidence_empirical_support' not in ev_data_item: # This is Neo4j property name
-                             ev_data_item['confidence_empirical_support'] = ev_data_item.get('confidence_empirical_support', 0.5) # Default if still missing
+                        if 'confidence_empirical_support' not in ev_data_item:
+                             ev_data_item['confidence_empirical_support'] = ev_data_item.get('confidence_empirical_support', 0.5)
 
                     hyperedge_ids = await self._create_hyperedges_in_neo4j(selected_hypothesis_data, related_evidence_data_for_hyperedge)
                     hyperedges_created_count += len(hyperedge_ids)
@@ -727,13 +668,13 @@ class EvidenceStage(BaseStage):
             await self._adapt_graph_topology()
 
         finally:
-            await self.close_clients() # Ensure clients are closed
+            await self.close_clients()
 
         summary = (f"Evidence integration completed. Iterations run: {iterations_run}. "
                    f"Evidence created: {evidence_created_count}. Hypotheses updated: {hypotheses_updated_count}. "
                    f"IBNs created: {ibns_created_count}. Hyperedges created: {hyperedges_created_count}.")
         metrics = {
-            "iterations_completed": iterations_run, # Use the counter
+            "iterations_completed": iterations_run,
             "evidence_nodes_created_in_neo4j": evidence_created_count,
             "hypotheses_updated_in_neo4j": hypotheses_updated_count,
             "ibns_created_in_neo4j": ibns_created_count,
@@ -742,5 +683,3 @@ class EvidenceStage(BaseStage):
         context_update = {"evidence_integration_completed": True, "evidence_nodes_added_count": evidence_created_count}
         
         return StageOutput(summary=summary, metrics=metrics, next_stage_context_update={self.stage_name: context_update})
-
-```

@@ -1,7 +1,7 @@
 from typing import Optional
 from loguru import logger
 
-from adaptive_graph_of_thoughts.config import Settings
+from adaptive_graph_of_thoughts.config import Config
 from adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
 from adaptive_graph_of_thoughts.domain.models.graph_elements import (
     Edge,
@@ -20,7 +20,7 @@ from typing import List, Dict, Any, Set # For type hints
 class PruningMergingStage(BaseStage):
     stage_name: str = "PruningMergingStage"
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         super().__init__(settings)
         # P1.5: Pruning and Merging thresholds from settings
         self.pruning_confidence_threshold = self.default_params.pruning_confidence_threshold

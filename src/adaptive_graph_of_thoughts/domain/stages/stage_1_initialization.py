@@ -7,7 +7,7 @@ from typing import Any, Optional, List, Dict, Set, Union
 from loguru import logger
 from pydantic import BaseModel
 
-from adaptive_graph_of_thoughts.config import Settings
+from adaptive_graph_of_thoughts.config import Config
 from adaptive_graph_of_thoughts.domain.models.common import (
     ConfidenceVector,
     EpistemicStatus,
@@ -33,7 +33,7 @@ from adaptive_graph_of_thoughts.domain.stages.base_stage import BaseStage, Stage
 class InitializationStage(BaseStage):
     stage_name: str = "InitializationStage"
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         super().__init__(settings)
         self.root_node_label = "Task Understanding"
         self.initial_confidence_values = self.default_params.initial_confidence

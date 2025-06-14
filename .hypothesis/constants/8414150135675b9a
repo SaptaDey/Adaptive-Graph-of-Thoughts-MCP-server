@@ -1,0 +1,4 @@
+# file: /app/src/adaptive_graph_of_thoughts/domain/models/common.py
+# hypothesis_version: 6.135.9
+
+[0.0, 1e-06, 0.5, 1.0, 4.0, 'ConfidenceVector', 'assumption', 'disputed', 'evidence_supported', 'hypothesis', 'inferred', 'outcomes', 'probabilities', 'speculation', 'unknown', 'widely_accepted']

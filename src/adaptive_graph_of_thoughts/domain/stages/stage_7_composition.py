@@ -4,7 +4,7 @@ from typing import Optional, Union, Dict, List, Any
 from loguru import logger
 from pydantic import BaseModel, Field, ValidationError
 
-from adaptive_graph_of_thoughts.config import Settings
+from adaptive_graph_of_thoughts.config import Config
 from adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
 from adaptive_graph_of_thoughts.domain.models.graph_elements import ( # Node might not be needed if processing dicts directly
     NodeType, # Still useful for type checking
@@ -56,7 +56,7 @@ class LocalExtractedSubgraphData(BaseModel):
 class CompositionStage(BaseStage):
     stage_name: str = "CompositionStage"
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         super().__init__(settings)
         self.citation_style = "Vancouver"
 

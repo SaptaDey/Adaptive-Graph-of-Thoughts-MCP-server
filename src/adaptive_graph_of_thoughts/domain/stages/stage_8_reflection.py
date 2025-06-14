@@ -3,7 +3,7 @@ from typing import Any, Optional, Dict, List
 from loguru import logger
 from pydantic import BaseModel, Field, ValidationError
 
-from adaptive_graph_of_thoughts.config import Settings
+from adaptive_graph_of_thoughts.config import Config
 from adaptive_graph_of_thoughts.domain.models.common import ConfidenceVector
 from adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
 from adaptive_graph_of_thoughts.domain.models.graph_elements import (
@@ -36,7 +36,7 @@ class AuditCheckResult(BaseModel):
 class ReflectionStage(BaseStage):
     stage_name: str = "ReflectionStage"
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         super().__init__(settings)
         self.high_confidence_threshold = getattr(self.default_params, "high_confidence_threshold", 0.7)
         self.high_impact_threshold = getattr(self.default_params, "high_impact_threshold", 0.7)

@@ -8,7 +8,7 @@ import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), 'src')))
 
 from adaptive_graph_of_thoughts.domain.services.got_processor import GoTProcessor
-from adaptive_graph_of_thoughts.config import settings # Use the global settings instance
+from adaptive_graph_of_thoughts.config import config # Use the global settings instance
 
 async def main(): # Renamed back to main as per instruction
     """
@@ -17,7 +17,7 @@ async def main(): # Renamed back to main as per instruction
     Initializes the GoTProcessor with global settings, submits a predefined query about climate change and ocean acidification, and prints a truncated summary of the final answer from the session data.
     """
     print("Initializing GoTProcessor...")
-    processor = GoTProcessor(settings=settings)
+    processor = GoTProcessor(settings=config)
     
     query = "What is the relationship between climate change and ocean acidification?"
     operational_params = {

@@ -2,7 +2,7 @@ from typing import Any
 
 from loguru import logger  # type: ignore
 
-from adaptive_graph_of_thoughts.config import Settings
+from adaptive_graph_of_thoughts.config import Config
 from adaptive_graph_of_thoughts.domain.models.common import (
     ConfidenceVector,
     EpistemicStatus,
@@ -30,7 +30,7 @@ from typing import Dict, List, Set, Optional # For type hints
 class DecompositionStage(BaseStage):
     stage_name: str = "DecompositionStage"
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         super().__init__(settings)
         self.default_dimensions_config = (
             self.default_params.default_decomposition_dimensions

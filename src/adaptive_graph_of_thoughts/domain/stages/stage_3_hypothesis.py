@@ -3,7 +3,7 @@ from typing import Any
 
 from loguru import logger
 
-from adaptive_graph_of_thoughts.config import Settings
+from adaptive_graph_of_thoughts.config import Config
 from adaptive_graph_of_thoughts.domain.models.common import (
     ConfidenceVector,
     EpistemicStatus,
@@ -37,7 +37,7 @@ from .stage_2_decomposition import DecompositionStage
 class HypothesisStage(BaseStage):
     stage_name: str = "HypothesisStage"
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         super().__init__(settings)
         self.k_min_hypotheses = self.default_params.hypotheses_per_dimension.min_hypotheses
         self.k_max_hypotheses = self.default_params.hypotheses_per_dimension.max_hypotheses
