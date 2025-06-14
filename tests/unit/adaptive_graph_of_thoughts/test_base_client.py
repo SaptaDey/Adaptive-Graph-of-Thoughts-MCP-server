@@ -7,7 +7,11 @@ import time
 import asyncio
 import httpx
 
-from src.adaptive_graph_of_thoughts.services.api_clients.base_client import AsyncHTTPClient as BaseClient, APIRequestError as TimeoutError, APIHTTPError
+from adaptive_graph_of_thoughts.services.api_clients.base_client import (
+    AsyncHTTPClient as BaseClient,
+    APIRequestError as TimeoutError,
+    APIHTTPError,
+)
 
 class DummyTransport:
     def __init__(self, responses):
