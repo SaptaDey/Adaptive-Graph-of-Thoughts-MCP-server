@@ -4,7 +4,7 @@ import json
 import os
 from pathlib import Path
 from unittest.mock import patch, mock_open
-from src.adaptive_graph_of_thoughts.config import Config # Updated import
+from adaptive_graph_of_thoughts.config import Config
 
 class TestSettings: # Test class name can remain, or change to TestConfigOldSchema if desired
     """Test suite for Settings class (now using Config from config.py)."""
