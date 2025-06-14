@@ -213,7 +213,7 @@ class TestBayesianUpdateConfidence:
             # Should decrease from 1.0
             assert value <= 1.0
 
-    @patch('src.adaptive_graph_of_thoughts.domain.utils.math_helpers.logger')
+    @patch('adaptive_graph_of_thoughts.domain.utils.math_helpers.logger')
     def test_bayesian_update_logs_debug_message(self, mock_logger, sample_confidence_vector):
         """Test that bayesian update logs a debug message."""
         bayesian_update_confidence(
