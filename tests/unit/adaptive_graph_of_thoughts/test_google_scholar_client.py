@@ -2,7 +2,7 @@
 import os
 import requests
 import pytest
-from src.adaptive_graph_of_thoughts.google_scholar_client import (
+from adaptive_graph_of_thoughts.google_scholar_client import (
     GoogleScholarClient,
     GoogleScholarError,
 )
