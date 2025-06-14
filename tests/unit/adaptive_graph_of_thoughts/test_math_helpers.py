@@ -6,7 +6,10 @@ from src.adaptive_graph_of_thoughts.domain.utils.math_helpers import (
     bayesian_update_confidence,
     calculate_information_gain,
 )
-from src.adaptive_graph_of_thoughts.domain.models.common import CertaintyScore, ConfidenceVector
+from src.adaptive_graph_of_thoughts.domain.models.common import (
+    CertaintyScore,
+    ConfidenceVector
+)
 from src.adaptive_graph_of_thoughts.domain.models.graph_elements import EdgeType, StatisticalPower
 
 @pytest.fixture
