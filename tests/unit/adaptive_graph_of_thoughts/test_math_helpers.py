@@ -491,8 +491,8 @@ class TestMathHelpersModuleIntegrity:
     def test_module_imports_correctly(self):
         """Test that the math_helpers module can be imported without errors."""
         try:
-            from src.adaptive_graph_of_thoughts.domain.utils import math_helpers
-            assert hasattr(math_helpers, 'bayesian_update_confidence')
+from adaptive_graph_of_thoughts.domain.utils import math_helpers
+assert hasattr(math_helpers, 'bayesian_update_confidence')
             assert hasattr(math_helpers, 'calculate_information_gain')
         except ImportError as e:
             pytest.fail(f"Failed to import math_helpers module: {e}")
