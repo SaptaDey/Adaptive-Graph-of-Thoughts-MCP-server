@@ -11,7 +11,7 @@ from typing import Dict, Any, List
 # Add the src directory to the path for importing the module under test
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', '..'))
 
-from adaptive_graph_of_thoughts.metadata_helpers import (
+from src.adaptive_graph_of_thoughts.metadata_helpers import (
     MetadataManager,
     ValidationError,
     MetadataValidator,
@@ -457,7 +457,7 @@ class TestIntegrationScenarios:
 
 def test_module_imports():
     """Test that all expected functions and classes can be imported."""
-    from adaptive_graph_of_thoughts.metadata_helpers import (
+    from src.adaptive_graph_of_thoughts.metadata_helpers import (
         MetadataManager,
         ValidationError,
         extract_metadata,

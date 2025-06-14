@@ -4,7 +4,7 @@
 
 import pytest
 
-from adaptive_graph_of_thoughts.stage_4_evidence import (
+from src.adaptive_graph_of_thoughts.stage_4_evidence import (
     gather_evidence,
     score_evidence,
     select_best_evidence,
@@ -45,7 +45,7 @@ class FakeResponse:
 def test_gather_evidence_happy_path(monkeypatch, sample_prompt, sample_thoughts):
     # Stub the OpenAI ChatCompletion.create to return deterministic fake responses
     fake_contents = ["1|First evidence text", "2|Second evidence text"]
-    import adaptive_graph_of_thoughts.stage_4_evidence as s4
+    import src.adaptive_graph_of_thoughts.stage_4_evidence as s4
     monkeypatch.setattr(
         s4.openai.ChatCompletion,
         "create",
@@ -70,7 +70,7 @@ def test_gather_evidence_invalid_thoughts_type(sample_prompt):
 
 def test_gather_evidence_deterministic_multiple_calls(monkeypatch, sample_prompt, sample_thoughts):
     fake_contents = ["A|Alpha", "B|Beta"]
-    import adaptive_graph_of_thoughts.stage_4_evidence as s4
+    import src.adaptive_graph_of_thoughts.stage_4_evidence as s4
     monkeypatch.setattr(
         s4.openai.ChatCompletion,
         "create",

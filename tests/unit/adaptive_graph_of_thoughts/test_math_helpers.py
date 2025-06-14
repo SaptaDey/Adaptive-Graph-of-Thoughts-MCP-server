@@ -2,12 +2,12 @@ import pytest
 from unittest.mock import Mock, patch, MagicMock
 from typing import Optional
 
-from adaptive_graph_of_thoughts.domain.utils.math_helpers import (
+from src.adaptive_graph_of_thoughts.domain.utils.math_helpers import (
     bayesian_update_confidence,
     calculate_information_gain,
 )
-from adaptive_graph_of_thoughts.domain.models.common import CertaintyScore, ConfidenceVector
-from adaptive_graph_of_thoughts.domain.models.graph_elements import EdgeType, StatisticalPower
+from src.adaptive_graph_of_thoughts.domain.models.common import CertaintyScore, ConfidenceVector
+from src.adaptive_graph_of_thoughts.domain.models.graph_elements import EdgeType, StatisticalPower
 
 @pytest.fixture
 def sample_confidence_vector():
@@ -210,7 +210,7 @@ class TestBayesianUpdateConfidence:
             # Should decrease from 1.0
             assert value <= 1.0
 
-    @patch('adaptive_graph_of_thoughts.domain.utils.math_helpers.logger')
+    @patch('src.adaptive_graph_of_thoughts.domain.utils.math_helpers.logger')
     def test_bayesian_update_logs_debug_message(self, mock_logger, sample_confidence_vector):
         """Test that bayesian update logs a debug message."""
         bayesian_update_confidence(
@@ -335,7 +335,7 @@ class TestCalculateInformationGain:
         # Should be very small due to precision differences
         assert result < 1e-5
 
-    @patch('adaptive_graph_of_thoughts.domain.utils.math_helpers.logger')
+    @patch('src.adaptive_graph_of_thoughts.domain.utils.math_helpers.logger')
     def test_information_gain_logs_debug_message(self, mock_logger):
         """Test that information gain calculation logs a debug message."""
         prior = [0.5, 0.5]
@@ -488,7 +488,7 @@ class TestMathHelpersModuleIntegrity:
     def test_module_imports_correctly(self):
         """Test that the math_helpers module can be imported without errors."""
         try:
-            from adaptive_graph_of_thoughts.domain.utils import math_helpers
+            from src.adaptive_graph_of_thoughts.domain.utils import math_helpers
             assert hasattr(math_helpers, 'bayesian_update_confidence')
             assert hasattr(math_helpers, 'calculate_information_gain')
         except ImportError as e:
@@ -496,7 +496,7 @@ class TestMathHelpersModuleIntegrity:
 
     def test_all_functions_are_callable(self):
         """Test that all exported functions are callable."""
-        from adaptive_graph_of_thoughts.domain.utils.math_helpers import (
+        from src.adaptive_graph_of_thoughts.domain.utils.math_helpers import (
             bayesian_update_confidence,
             calculate_information_gain,
         )
@@ -507,7 +507,7 @@ class TestMathHelpersModuleIntegrity:
     def test_function_signatures_match_expected(self):
         """Test that function signatures match expected parameters."""
         import inspect
-        from adaptive_graph_of_thoughts.domain.utils.math_helpers import (
+        from src.adaptive_graph_of_thoughts.domain.utils.math_helpers import (
             bayesian_update_confidence,
             calculate_information_gain,
         )
@@ -531,10 +531,10 @@ class TestMathHelpersModuleIntegrity:
         assert actual_gain_params == expected_gain_params, \
             f"Information gain function signature mismatch: {actual_gain_params}"
 
-    @patch('adaptive_graph_of_thoughts.domain.utils.math_helpers.logger')
+    @patch('src.adaptive_graph_of_thoughts.domain.utils.math_helpers.logger')
     def test_module_logging_integration(self, mock_logger, sample_confidence_vector):
         """Test that module-level logging works correctly."""
-        from adaptive_graph_of_thoughts.domain.utils.math_helpers import (
+        from src.adaptive_graph_of_thoughts.domain.utils.math_helpers import (
             bayesian_update_confidence,
             calculate_information_gain,
         )
@@ -554,7 +554,7 @@ class TestMathHelpersModuleIntegrity:
     def test_module_has_proper_typing(self):
         """Test that module functions have proper type annotations."""
         import inspect
-        from adaptive_graph_of_thoughts.domain.utils.math_helpers import (
+        from src.adaptive_graph_of_thoughts.domain.utils.math_helpers import (
             bayesian_update_confidence,
             calculate_information_gain,
         )
