@@ -1,7 +1,7 @@
 import pytest
 import yaml
 
-from adaptive_graph_of_thoughts.config import Config
+from adaptive_graph_of_thoughts.config import Settings
 
 def test_config_load_from_yaml(tmp_path):
     config_data = {"learning_rate": 0.01, "batch_size": 32, "max_steps": 1000}

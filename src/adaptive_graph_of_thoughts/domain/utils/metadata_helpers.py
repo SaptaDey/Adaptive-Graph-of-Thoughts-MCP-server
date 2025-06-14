@@ -2,7 +2,7 @@ from typing import Any, Optional
 
 from loguru import logger
 
-# from src.adaptive_graph_of_thoughts.domain.models.graph_elements import FalsificationCriteria, BiasFlag # If needed
+# from adaptive_graph_of_thoughts.domain.models.graph_elements import FalsificationCriteria, BiasFlag # If needed
 
 
 def assess_falsifiability_score(

@@ -4,8 +4,6 @@ import uuid
 from datetime import datetime
 from hypothesis import given, strategies as st
 
-from adaptive_graph_of_thoughts.domain.models.graph_elements import GraphElement
-
 # Hypothesis strategies for GraphElement parameters
 valid_uuid = st.uuids()
 short_label = st.text(min_size=0, max_size=50)

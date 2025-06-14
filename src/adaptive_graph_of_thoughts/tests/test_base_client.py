@@ -5,7 +5,7 @@ import pytest
 import threading
 import time
 
-from adaptive_graph_of_thoughts.base_client import BaseClient, TimeoutError
+from adaptive_graph_of_thoughts.services.api_clients.base_client import BaseClient, TimeoutError
 
 class DummyTransport:
     def __init__(self, responses):

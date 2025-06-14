@@ -1,3 +1,5 @@
+import pytest
+
 @pytest.fixture
 def empty_graph():
     """Provide an empty Graph for testing."""
