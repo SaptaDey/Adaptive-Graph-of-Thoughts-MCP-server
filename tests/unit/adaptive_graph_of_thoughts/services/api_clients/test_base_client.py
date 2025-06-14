@@ -1,6 +1,7 @@
 # --- Additional pytest test cases for BaseClient ---
 
 import httpx
+import pytest
 from adaptive_graph_of_thoughts.services.api_clients import base_client as base_client_module
 from adaptive_graph_of_thoughts.services.api_clients.base_client import BaseClient, BaseClientError, BaseClientTimeoutError
 

@@ -420,12 +420,10 @@ async def test_fetch_abstract_malformed_xml(pubmed_client_fixture: PubMedClient,
         url=f"{client.config.base_url.rstrip('/')}/efetch.fcgi?db=pubmed&id={pmid}&rettype=abstract&retmode=xml&email=test%40example.com",
         text="<unclosedTag"
     )
-    with pytest.raises(PubMedClientError, match=f"XML parsing error for eFetch \(PMID {pmid}\)"):
+    with pytest.raises(PubMedClientError, match=rf"XML parsing error for eFetch \(PMID {pmid}\)"):
         await client.fetch_abstract(pmid)
-await client.fetch_abstract(pmid)
 
 # --- Additional Edge-Case Tests ---
-import httpx
 
 def test_pubmed_client_invalid_base_url():
     """Test initialization fails with invalid base_url."""

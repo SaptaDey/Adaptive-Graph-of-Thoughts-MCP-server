@@ -2,6 +2,13 @@
 # Additional tests for ExaSearchClient                                        #
 # Framework: pytest                                                           #
 # --------------------------------------------------------------------------- #
+import pytest
+from adaptive_graph_of_thoughts.services.api_clients.exa_search_client import ExaSearchClient
+
+class MockExaClient:
+    def search(self, query, num_results):
+        # A simple mock, can be expanded if needed
+        return [{"url": f"http://example.com/{i}", "title": f"Result {i}", "id": str(i)} for i in range(num_results)]
 
 class EmptyMockExaClient:
     def search(self, query, num_results):
