@@ -150,7 +150,7 @@ class AppSettings(BaseModel):
         description="Enable HTTP transport"
     )
 
-class Settings(BaseSettings):
+class Config(BaseSettings): # Renamed from Settings
     app: AppSettings = Field(default_factory=AppSettings)
     asr_got: ASRGoTConfig = Field(default_factory=ASRGoTConfig)
     mcp_settings: MCPSettings = Field(default_factory=MCPSettings)
@@ -177,7 +177,7 @@ class Settings(BaseSettings):
     @classmethod
     def settings_customise_sources(
         cls,
-        settings_cls: Type[BaseSettings], # Re-added settings_cls
+        settings_cls: Type['Config'], # Updated from Type[BaseSettings] to Type['Config']
         init_settings: PydanticBaseSettingsSource,
         env_settings: PydanticBaseSettingsSource,
         dotenv_settings: PydanticBaseSettingsSource,
@@ -193,7 +193,7 @@ class Settings(BaseSettings):
         and file secrets, in that order.
         """
         class YamlConfigSettingsSource(PydanticBaseSettingsSource):
-            def __init__(self, settings_cls: Type[BaseSettings]):
+            def __init__(self, settings_cls: Type['Config']): # Updated from Type[BaseSettings] to Type['Config']
                 super().__init__(settings_cls)
                 self._yaml_config = yaml_config  # Use pre-loaded config
 
@@ -215,10 +215,10 @@ class Settings(BaseSettings):
             file_secret_settings,
         )
 
-# Global settings instance, to be imported by other modules
-settings = Settings()
+# Global config instance, to be imported by other modules
+config = Config() # Renamed from settings = Settings()
 
 # Example of how to access settings:
-# from src.adaptive_graph_of_thoughts.config import settings
-# print(settings.app.name)
-# print(settings.asr_got.default_parameters.initial_confidence)
+# from src.adaptive_graph_of_thoughts.config import config # Updated comment
+# print(config.app.name) # Updated comment
+# print(config.asr_got.default_parameters.initial_confidence) # Updated comment

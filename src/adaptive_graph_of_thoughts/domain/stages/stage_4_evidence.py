@@ -5,7 +5,7 @@ from typing import Any, Optional, List, Dict, Set, Union, Tuple
 
 from loguru import logger # type: ignore
 
-from adaptive_graph_of_thoughts.config import Settings
+from adaptive_graph_of_thoughts.config import Config # Changed Settings to Config
 from adaptive_graph_of_thoughts.domain.models.common import (
     ConfidenceVector,
     EpistemicStatus,
@@ -47,7 +47,7 @@ from adaptive_graph_of_thoughts.services.api_clients.exa_search_client import Ex
 class EvidenceStage(BaseStage):
     stage_name: str = "EvidenceStage"
 
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config): # Changed settings: Settings to settings: Config
         super().__init__(settings)
         self.max_iterations = self.default_params.evidence_max_iterations
         self.ibn_similarity_threshold = getattr(self.default_params, "ibn_similarity_threshold", 0.5)
