@@ -210,6 +210,10 @@ class EvidenceStage(BaseStage):
     async def _execute_hypothesis_plan(
         self, hypothesis_data_from_neo4j: Dict[str, Any]
     ) -> List[Dict[str, Any]]:
+        """
+        Executes an evidence search plan for a given hypothesis and gathers supporting evidence.
+        
+        Uses the hypothesis label or a specified query plan to search external sources (PubMed, Google Scholar, Exa Search) for relevant articles or results. For each source, retrieves up to two results, extracts key information, and constructs evidence data dictionaries with content, source details, authors, publication date, confidence placeholders, disciplinary tags, timestamps, and raw data. Returns a list of evidence items found for the hypothesis.
         hypo_label = hypothesis_data_from_neo4j.get("label", "")
         hypo_id = hypothesis_data_from_neo4j.get("id", "unknown_hypo")
 
@@ -619,6 +623,17 @@ class EvidenceStage(BaseStage):
     async def execute(
         self, current_session_data: GoTProcessorSessionData
     ) -> StageOutput:
+        """
+        Executes the evidence integration stage by gathering evidence for hypotheses, updating the Neo4j graph, and tracking progress.
+        
+        This method iterates through hypotheses, retrieves supporting or contradictory evidence from external sources, creates corresponding nodes and edges in Neo4j, updates hypothesis confidence, and manages interdisciplinary bridge nodes (IBNs) and hyperedges. It tracks and returns metrics on evidence integration progress and updates the session context accordingly.
+        
+        Args:
+        	current_session_data: The session data containing accumulated context, including hypothesis node IDs.
+        
+        Returns:
+        	A StageOutput object summarizing the number of iterations, evidence nodes created, hypotheses updated, IBNs and hyperedges created, and context updates.
+        """
         self._log_start(current_session_data.session_id)
         hypothesis_data = current_session_data.accumulated_context.get(HypothesisStage.stage_name, {})
         hypothesis_node_ids: List[str] = hypothesis_data.get("hypothesis_node_ids", [])

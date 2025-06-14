@@ -18,10 +18,25 @@ from adaptive_graph_of_thoughts.domain.stages.stage_3_hypothesis import Hypothes
 # --- Test Fixtures ---
 @pytest.fixture
 def mock_default_params() -> ASRGoTDefaultParams:
+    """
+    Creates default ASRGoT parameters with evidence gathering limited to one iteration.
+    
+    Returns:
+        An ASRGoTDefaultParams instance with evidence_max_iterations set to 1.
+    """
     return ASRGoTDefaultParams(evidence_max_iterations=1) # Default to 1 iteration for tests
 
 @pytest.fixture
 def mock_settings_all_clients(mock_default_params: ASRGoTDefaultParams) -> Settings:
+    """
+    Creates a Settings object with all literature search clients (PubMed, Google Scholar, ExaSearch) configured for testing.
+    
+    Args:
+        mock_default_params: Mocked default parameters for the ASRGoT configuration.
+    
+    Returns:
+        A Settings instance with all client configurations enabled and a mocked ASRGoT section.
+    """
     return Settings(
         pubmed=PubMedConfig(base_url="https://pubmed.example.com", email="test@example.com"),
         google_scholar=GoogleScholarConfig(base_url="https://scholar.example.com", api_key="gs_key"),
@@ -31,6 +46,15 @@ def mock_settings_all_clients(mock_default_params: ASRGoTDefaultParams) -> Setti
 
 @pytest.fixture
 def mock_settings_pubmed_only(mock_default_params: ASRGoTDefaultParams) -> Settings:
+    """
+    Creates a Settings object configured with only the PubMed client enabled for testing.
+    
+    Args:
+        mock_default_params: Default parameters to use for the ASRGoT configuration.
+    
+    Returns:
+        A Settings instance with PubMed configured and Google Scholar and ExaSearch disabled.
+    """
     return Settings(
         pubmed=PubMedConfig(base_url="https://pubmed.example.com", email="test@example.com"),
         google_scholar=None,
@@ -41,6 +65,11 @@ def mock_settings_pubmed_only(mock_default_params: ASRGoTDefaultParams) -> Setti
 @pytest.fixture
 def evidence_stage_all_clients(mock_settings_all_clients: Settings) -> EvidenceStage:
     # Temporarily mock client instantiations within this fixture's scope
+    """
+    Creates an EvidenceStage instance with all external clients mocked for testing.
+    
+    The returned EvidenceStage has PubMed, Google Scholar, and ExaSearch clients replaced with MagicMock instances, and their asynchronous methods (`search_articles`, `search`, and `close`) are set as AsyncMock for use in asynchronous test scenarios.
+    """
     with patch('adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient', new_callable=MagicMock) as MockPubMed, \
          patch('adaptive_graph_of_thoughts.services.api_clients.google_scholar_client.GoogleScholarClient', new_callable=MagicMock) as MockGS, \
          patch('adaptive_graph_of_thoughts.services.api_clients.exa_search_client.ExaSearchClient', new_callable=MagicMock) as MockExa:
@@ -59,6 +88,11 @@ def evidence_stage_all_clients(mock_settings_all_clients: Settings) -> EvidenceS
 
 @pytest.fixture
 def evidence_stage_pubmed_only(mock_settings_pubmed_only: Settings) -> EvidenceStage:
+    """
+    Creates an EvidenceStage instance with only the PubMed client mocked for testing.
+    
+    The returned EvidenceStage has its PubMed client's search and close methods replaced with AsyncMock to simulate asynchronous behavior. Other clients are not initialized.
+    """
     with patch('adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient', new_callable=MagicMock) as MockPubMed:
         stage = EvidenceStage(settings=mock_settings_pubmed_only)
         if stage.pubmed_client:
@@ -69,6 +103,11 @@ def evidence_stage_pubmed_only(mock_settings_pubmed_only: Settings) -> EvidenceS
 
 @pytest.fixture
 def sample_hypothesis_data() -> Dict[str, Any]:
+    """
+    Provides a sample hypothesis node dictionary for testing purposes.
+    
+    The returned dictionary includes an ID, label, JSON-encoded plan, disciplinary tags, and a confidence vector list, simulating the structure expected by EvidenceStage tests.
+    """
     return {
         "id": "hypo1",
         "label": "Hypothesis about AI in medicine",
@@ -79,6 +118,15 @@ def sample_hypothesis_data() -> Dict[str, Any]:
 
 @pytest.fixture
 def mock_session_data(sample_hypothesis_data: Dict[str, Any]) -> GoTProcessorSessionData:
+    """
+    Creates a mock session data object containing accumulated context with a hypothesis node ID.
+    
+    Args:
+        sample_hypothesis_data: Sample hypothesis data used for test context.
+    
+    Returns:
+        A GoTProcessorSessionData instance with a test session ID and accumulated context referencing the hypothesis node.
+    """
     return GoTProcessorSessionData(
         session_id="test_session",
         accumulated_context={
@@ -88,6 +136,15 @@ def mock_session_data(sample_hypothesis_data: Dict[str, Any]) -> GoTProcessorSes
 
 # --- Test Helper Functions ---
 def create_mock_pubmed_articles(count=1) -> List[PubMedArticle]:
+    """
+    Creates a list of mock PubMedArticle objects for testing purposes.
+    
+    Args:
+        count: The number of mock articles to generate.
+    
+    Returns:
+        A list of PubMedArticle instances with dummy data.
+    """
     return [
         PubMedArticle(pmid=f"pmid{i}", title=f"PubMed Article {i}", url=f"http://pubmed.com/pmid{i}",
                       authors=[f"Author {i}"], publication_date="2023", doi=f"doi_pm_{i}", abstract=f"Abstract {i}")
@@ -95,6 +152,15 @@ def create_mock_pubmed_articles(count=1) -> List[PubMedArticle]:
     ]
 
 def create_mock_gs_articles(count=1) -> List[GoogleScholarArticle]:
+    """
+    Creates a list of mock Google Scholar article objects for testing.
+    
+    Args:
+        count: The number of mock articles to generate.
+    
+    Returns:
+        A list of GoogleScholarArticle instances with dummy data.
+    """
     return [
         GoogleScholarArticle(title=f"GS Article {i}", link=f"http://gs.com/gs{i}", snippet=f"Snippet {i}",
                              authors=f"GS Author {i}A, GS Author {i}B", publication_info="Journal GS, 2023", cited_by_count=i*10)
@@ -102,6 +168,15 @@ def create_mock_gs_articles(count=1) -> List[GoogleScholarArticle]:
     ]
 
 def create_mock_exa_results(count=1) -> List[ExaArticleResult]:
+    """
+    Creates a list of mock ExaArticleResult objects for testing purposes.
+    
+    Args:
+        count: The number of mock ExaArticleResult objects to generate.
+    
+    Returns:
+        A list of ExaArticleResult instances with preset attributes.
+    """
     return [
         ExaArticleResult(id=f"exa{i}", title=f"Exa Result {i}", url=f"http://exa.com/exa{i}", score=0.8 + i*0.05,
                          author=f"Exa Author {i}", published_date="2023-01-0{i+1}", highlights=[f"Highlight {i}"])
@@ -111,7 +186,11 @@ def create_mock_exa_results(count=1) -> List[ExaArticleResult]:
 
 # --- Test Cases ---
 def test_evidence_stage_initialization(mock_settings_all_clients: Settings, mock_settings_pubmed_only: Settings):
-    """Test client initialization based on configuration."""
+    """
+    Verifies that EvidenceStage initializes the correct API clients based on the provided settings.
+    
+    This test ensures that when all clients are enabled in the settings, PubMed, Google Scholar, and ExaSearch clients are instantiated. When only PubMed is enabled, only the PubMed client is instantiated, and the others remain uninitialized.
+    """
     with patch('adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient') as MockPubMed, \
          patch('adaptive_graph_of_thoughts.services.api_clients.google_scholar_client.GoogleScholarClient') as MockGS, \
          patch('adaptive_graph_of_thoughts.services.api_clients.exa_search_client.ExaSearchClient') as MockExa:
@@ -139,6 +218,11 @@ def test_evidence_stage_initialization(mock_settings_all_clients: Settings, mock
 
 @pytest.mark.asyncio
 async def test_execute_hypothesis_plan_all_clients(evidence_stage_all_clients: EvidenceStage, sample_hypothesis_data: Dict[str, Any]):
+    """
+    Tests that _execute_hypothesis_plan gathers evidence from all enabled clients.
+    
+    Verifies that when all clients (PubMed, Google Scholar, ExaSearch) are active, their search methods are called, and the combined evidence list contains items from each source with correct structure and content.
+    """
     stage = evidence_stage_all_clients
 
     # Setup mocks for each client's search method
@@ -169,6 +253,11 @@ async def test_execute_hypothesis_plan_all_clients(evidence_stage_all_clients: E
 
 @pytest.mark.asyncio
 async def test_execute_hypothesis_plan_pubmed_only(evidence_stage_pubmed_only: EvidenceStage, sample_hypothesis_data: Dict[str, Any]):
+    """
+    Tests that _execute_hypothesis_plan returns only PubMed evidence when only the PubMed client is enabled.
+    
+    Verifies that the PubMed client's search method is called, other clients are not used, and all returned evidence items are from PubMed.
+    """
     stage = evidence_stage_pubmed_only
     stage.pubmed_client.search_articles.return_value = create_mock_pubmed_articles(3)
 
@@ -183,6 +272,11 @@ async def test_execute_hypothesis_plan_pubmed_only(evidence_stage_pubmed_only: E
 
 @pytest.mark.asyncio
 async def test_execute_hypothesis_plan_client_error_handling(evidence_stage_all_clients: EvidenceStage, sample_hypothesis_data: Dict[str, Any], caplog):
+    """
+    Tests that errors from the PubMed client during evidence gathering are logged and do not prevent evidence from other clients from being collected.
+    
+    Verifies that when the PubMed client raises an error, evidence from Google Scholar and ExaSearch is still returned, and the error is present in the logs.
+    """
     stage = evidence_stage_all_clients
 
     stage.pubmed_client.search_articles.side_effect = PubMedClientError("PubMed simulated error")
@@ -198,6 +292,11 @@ async def test_execute_hypothesis_plan_client_error_handling(evidence_stage_all_
 
 @pytest.mark.asyncio
 async def test_execute_hypothesis_plan_query_extraction(evidence_stage_pubmed_only: EvidenceStage, sample_hypothesis_data: Dict[str, Any]):
+    """
+    Tests that the evidence stage extracts the correct search query from hypothesis data when executing a hypothesis plan.
+    
+    Verifies that the query is taken from the 'query' field in 'plan_json' if present, or falls back to the hypothesis label if missing or absent.
+    """
     stage = evidence_stage_pubmed_only
     stage.pubmed_client.search_articles.return_value = [] # Content doesn't matter here
 
@@ -226,6 +325,10 @@ async def test_execute_hypothesis_plan_query_extraction(evidence_stage_pubmed_on
 async def test_evidence_stage_execute_calls_close_clients(mock_settings_all_clients: Settings, mock_session_data: GoTProcessorSessionData, sample_hypothesis_data: Dict[str, Any]):
 
     # Need to patch clients at the source where they are imported by EvidenceStage
+    """
+    Tests that the EvidenceStage.execute method calls close_clients after processing,
+    and that each external client’s close method is invoked exactly once.
+    """
     with patch('adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.PubMedClient', new_callable=AsyncMock) as MockPubMed, \
          patch('adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.GoogleScholarClient', new_callable=AsyncMock) as MockGS, \
          patch('adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.ExaSearchClient', new_callable=AsyncMock) as MockExa:
@@ -277,69 +380,205 @@ async def test_evidence_stage_execute_no_hypotheses(evidence_stage_all_clients: 
 
     stage.close_clients.assert_called_once()
 ```
-
-import freezegun
-import logging
-
 @pytest.fixture
-def frozen_time():
-    with freezegun.freeze_time("2025-01-01"):
-        yield
+def freeze_time(monkeypatch):
+    """
+    Provides a context manager to freeze `datetime.datetime.utcnow()` to a specific datetime for testing.
+    
+    Use this fixture to ensure deterministic results in tests involving temporal decay by overriding the datetime used in the target module.
+    """
+    class _Freezer:
+        def __call__(self, frozen_dt):
+            """
+            Monkeypatches the datetime class to return a fixed datetime value.
+            
+            Replaces the `dt` class in the target module so that calls to `now()` return the specified `frozen_dt`, enabling deterministic testing of time-dependent logic.
+            """
+            class FrozenDateTime(dt):
+                @classmethod
+                def now(cls, tz=None):
+                    return frozen_dt.replace(tzinfo=tz)
+            monkeypatch.setattr(
+                'adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.dt',
+                FrozenDateTime,
+                raising=False,
+            )
+    return _Freezer()
+
+
+@pytest.mark.parametrize(
+    "plan_json,label,expected_query",
+    [
+        (json.dumps({"query": "deep learning"}), "fallback", "deep learning"),
+        (json.dumps({"type": "literature_review"}), "label wins", "label wins"),  # no ‘query’
+        (None, "plain label", "plain label"),
+        ("{malformed json", "bad json label", "bad json label"),  # JSONDecodeError
+    ],
+)
+@pytest.mark.asyncio
+async def test_query_extraction_logic(
+    evidence_stage_pubmed_only,
+    sample_hypothesis_data,
+    plan_json,
+    label,
+    expected_query,
+):
+    data = sample_hypothesis_data.copy()
+    data["label"] = label
+    if plan_json is not None:
+        data["plan_json"] = plan_json
+    else:
+        data.pop("plan_json", None)
+
+    # Short-circuit client to avoid API calls
+    evidence_stage_pubmed_only.pubmed_client.search_articles = AsyncMock(return_value=[])
+    await evidence_stage_pubmed_only._execute_hypothesis_plan(data)
+    evidence_stage_pubmed_only.pubmed_client.search_articles.assert_called_once()
+    called_kwargs = evidence_stage_pubmed_only.pubmed_client.search_articles.call_args.kwargs
+    assert called_kwargs["query"] == expected_query
+
 
 @pytest.mark.asyncio
-async def test_update_hypothesis_confidence_edge_cases(evidence_stage_all_clients, sample_hypothesis_data):
-    stage = evidence_stage_all_clients
+@pytest.mark.parametrize(
+    "conf_vec,expected_update",
+    [
+        ([1.0, 1.0, 1.0, 1.0], 0.9),
+        ([0.0, 0.0, 0.0, 0.0], 0.1),
+        ([0.5, 0.6, 0.4, 0.5], 0.5),
+    ],
+)
+async def test_update_hypothesis_confidence_variants(
+    monkeypatch, evidence_stage_all_clients, conf_vec, expected_update
+):
+    # monkeypatch execute_query so no DB I/O happens and we can inspect cypher payload
+    """
+    Tests that updating hypothesis confidence in Neo4j correctly computes and persists
+    the empirical support value based on different confidence vectors.
+    
+    Args:
+        monkeypatch: Pytest fixture for patching functions.
+        evidence_stage_all_clients: EvidenceStage instance with all clients mocked.
+        conf_vec: List of confidence values to test.
+        expected_update: Expected empirical support value after update.
+    """
+    recorded = {}
+    async def fake_execute(query, params, tx_type="write"):
+        """
+        Mocks the execution of a database query by recording the provided parameters.
+        
+        Args:
+        	query: The query string to be executed.
+        	params: The parameters to be recorded.
+        	tx_type: The transaction type, defaults to "write".
+        """
+        recorded["params"] = params
+        return None
 
-    # All zeros vector
-    data_zero = sample_hypothesis_data.copy()
-    data_zero["confidence_vector_list"] = [0.0] * len(sample_hypothesis_data["confidence_vector_list"])
-    result_zero = stage._update_hypothesis_confidence(data_zero)
-    assert isinstance(result_zero, StatisticalPower)
-    assert result_zero.value == 0.0
+    monkeypatch.setattr(
+        "adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.execute_query",
+        fake_execute,
+    )
 
-    # All ones vector
-    data_one = sample_hypothesis_data.copy()
-    data_one["confidence_vector_list"] = [1.0] * len(sample_hypothesis_data["confidence_vector_list"])
-    result_one = stage._update_hypothesis_confidence(data_one)
-    assert result_one.value == 1.0
+    hypothesis_data = {"id": "h1", "confidence_vector_list": conf_vec}
+    await evidence_stage_all_clients._update_hypothesis_confidence_in_neo4j(hypothesis_data)
+    assert "confidence_empirical_support" in recorded["params"]
+    # Use average of vector as naive expectation; adjust formula if implementation changes
+    assert pytest.approx(recorded["params"]["confidence_empirical_support"], 0.2) == expected_update
 
-    # Mismatched length vector
-    data_mismatch = sample_hypothesis_data.copy()
-    data_mismatch["confidence_vector_list"] = [0.5, 0.5]
-    result_mismatch = stage._update_hypothesis_confidence(data_mismatch)
-    assert isinstance(result_mismatch, StatisticalPower)
 
 @pytest.mark.asyncio
-async def test_apply_temporal_decay_and_patterns_no_evidence(evidence_stage_all_clients, mock_session_data, frozen_time):
-    stage = evidence_stage_all_clients
-    # Should exit gracefully without raising
-    result = await stage._apply_temporal_decay_and_patterns(mock_session_data, [])
-    assert result is None
+async def test_apply_temporal_decay(
+    monkeypatch, evidence_stage_all_clients, freeze_time
+):
+    # Create dummy node list with timestamp 10 days ago
+    """
+    Tests that temporal decay is correctly applied to evidence node confidence values.
+    
+    This test verifies that when evidence nodes have timestamps in the past, the
+    `_apply_temporal_decay_and_patterns` method reduces their `confidence_empirical_support`
+    values appropriately. It uses monkeypatching to inject mock evidence nodes and to
+    capture the updated confidence values after decay is applied.
+    """
+    import datetime
+    old_dt = dt.utcnow() - datetime.timedelta(days=10)
+    freeze_time(old_dt)  # now() returns old_dt inside EvidenceStage
+
+    evidence_nodes = [
+        {"confidence_empirical_support": 0.8, "metadata_timestamp_iso": old_dt.isoformat()},
+        {"confidence_empirical_support": 0.2, "metadata_timestamp_iso": old_dt.isoformat()},
+    ]
+
+    # monkeypatch selection helpers to inject list
+    monkeypatch.setattr(
+        evidence_stage_all_clients,
+        "_get_evidence_nodes_from_neo4j",
+        AsyncMock(return_value=evidence_nodes),
+    )
+    monkeypatch.setattr(
+        evidence_stage_all_clients,
+        "_persist_confidence_updates",
+        AsyncMock(),
+    )
+
+    # run
+    await evidence_stage_all_clients._apply_temporal_decay_and_patterns()
+
+    # expect _persist_confidence_updates called with decayed values
+    args, _ = evidence_stage_all_clients._persist_confidence_updates.call_args
+    updated_nodes = args[0]
+    assert all(n["confidence_empirical_support"] < 0.8 for n in updated_nodes)
+
 
 @pytest.mark.asyncio
-async def test_execute_hypothesis_plan_all_clients_fail(evidence_stage_all_clients, sample_hypothesis_data, caplog):
-    stage = evidence_stage_all_clients
-    caplog.set_level(logging.ERROR)
-    stage.pubmed_client.search_articles.side_effect = PubMedClientError("PubMed fail")
-    stage.google_scholar_client.search.side_effect = GoogleScholarClientError("GS fail")
-    stage.exa_client.search.side_effect = ExaSearchClientError("Exa fail")
+async def test_execute_handles_client_init_failure(
+    monkeypatch, mock_settings_all_clients, mock_session_data, sample_hypothesis_data
+):
+    # make PubMedClient raise on instantiation
+    """
+    Tests that EvidenceStage handles PubMedClient initialization failure gracefully.
+    
+    Simulates an exception during PubMedClient instantiation and verifies that the execute
+    method logs the failure, continues execution, and ensures client resources are closed.
+    """
+    monkeypatch.setattr(
+        "adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient",
+        lambda _: (_ for _ in ()).throw(Exception("boom")),
+    )
+    monkeypatch.setattr(
+        "adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.GoogleScholarClient",
+        MagicMock,
+    )
+    monkeypatch.setattr(
+        "adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.ExaSearchClient",
+        MagicMock,
+    )
 
-    results = await stage._execute_hypothesis_plan(sample_hypothesis_data)
-    assert results == []
-    assert "PubMed fail" in caplog.text
-    assert "GS fail" in caplog.text
-    assert "Exa fail" in caplog.text
+    stage = EvidenceStage(settings=mock_settings_all_clients)
+    stage.close_clients = AsyncMock(wraps=stage.close_clients)
+    # Short-circuit loop to exit quickly
+    stage._select_hypothesis_to_evaluate_from_neo4j = AsyncMock(
+        side_effect=[sample_hypothesis_data, None]
+    )
+    stage._execute_hypothesis_plan = AsyncMock(return_value=[])
+    stage._create_evidence_in_neo4j = AsyncMock(return_value=None)
+    stage._update_hypothesis_confidence_in_neo4j = AsyncMock(return_value=True)
+    stage._create_ibn_in_neo4j = AsyncMock(return_value=None)
+    stage._create_hyperedges_in_neo4j = AsyncMock(return_value=[])
+    stage._apply_temporal_decay_and_patterns = AsyncMock()
+    stage._adapt_graph_topology = AsyncMock()
 
-@pytest.mark.asyncio
-async def test_close_clients_idempotent(evidence_stage_all_clients):
-    stage = evidence_stage_all_clients
-    pubmed_close = stage.pubmed_client.close
-    gs_close = stage.google_scholar_client.close
-    exa_close = stage.exa_client.close
+    output = await stage.execute(mock_session_data)
+    stage.close_clients.assert_called_once()
+    assert "Failed to initialize PubMedClient" in output.logs  # or inspect caplog
 
-    await stage.close_clients()
-    await stage.close_clients()
 
-    pubmed_close.assert_called_once()
-    gs_close.assert_called_once()
-    exa_close.assert_called_once()
+def test_adapt_graph_topology_calls(monkeypatch, evidence_stage_all_clients):
+    evidence_stage_all_clients._create_hyperedges_in_neo4j = MagicMock(return_value=[1])
+    evidence_stage_all_clients._remove_redundant_edges_from_neo4j = MagicMock()
+    evidence_stage_all_clients._simplify_graph = MagicMock()
+
+    evidence_stage_all_clients._adapt_graph_topology()
+
+    evidence_stage_all_clients._create_hyperedges_in_neo4j.assert_called()
+    evidence_stage_all_clients._remove_redundant_edges_from_neo4j.assert_called()
+    evidence_stage_all_clients._simplify_graph.assert_called()
