@@ -338,7 +338,7 @@ class TestCalculateInformationGain:
         # Should be very small due to precision differences
         assert result < 1e-5
 
-    @patch('src.adaptive_graph_of_thoughts.domain.utils.math_helpers.logger')
+    @patch('adaptive_graph_of_thoughts.domain.utils.math_helpers.logger')
     def test_information_gain_logs_debug_message(self, mock_logger):
         """Test that information gain calculation logs a debug message."""
         prior = [0.5, 0.5]
