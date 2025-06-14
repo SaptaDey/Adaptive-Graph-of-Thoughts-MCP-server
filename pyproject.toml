@@ -28,7 +28,7 @@ uvicorn = {extras = ["standard"], version = "^0.30.0"} # For running the FastAPI
 pydantic = "^2.7.0"
 pydantic-settings = "^2.3.0" # For loading settings from files/env vars
 networkx = "^3.3"          # For graph data structures and algorithms
-httpx = "^0.27.0"          # For making HTTP requests (e.g., to external services)
+httpx = "^0.28.0"          # For making HTTP requests (e.g., to external services)
 python-dotenv = "^1.0.1"   # For loading .env files
 PyYAML = "^6.0.1"          # For YAML configuration files
 typer = {extras = ["all"], version = "^0.12.3"} # For CLI commands (optional, but good for management scripts)
@@ -46,17 +46,24 @@ neo4j = "^5.17.0"          # For Neo4j database interaction
 # python-louvain = "^0.16" # Also known as community
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.0.0"
-pytest-cov = "^5.0.0"      # For test coverage
-pytest-asyncio = "^0.23.0" # For testing async code
-ruff = "^0.4.0"            # Linter and formatter
-pre-commit = "^3.7.0"      # For running checks before commit
+hypothesis = "^6.0"
+mkdocs = "^1.6.0"  # Updated to a more recent version
+mkdocs-material = "^9.5.0" # Updated to a more recent version
 mypy = "^1.10.0"           # Static type checker
-types-pyyaml = "^6.0.12.20250516"
+pre-commit = "^3.7.0"      # For running checks before commit
+pytest = "^8.0.0"
+pytest-asyncio = "^0.23.0" # For testing async code
+pytest-cov = "^5.0.0"      # For test coverage
+pytest-httpx = "^0.35.0"   # For testing HTTPX client usage
+ruff = "^0.4.0"            # Linter and formatter
 types-jsonschema = "^4.21.0.20250518" # Type hints for jsonschema
+
+types-pyyaml = "^6.0.12.20250516"
+
 mkdocs = "^1.6.0"  # Updated to a more recent version
 mkdocs-material = "^9.5.0" # Updated to a more recent version
 hypothesis = "^6.0"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
