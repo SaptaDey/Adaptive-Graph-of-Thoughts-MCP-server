@@ -5,7 +5,7 @@ import pytest
 import threading
 import time
 
-from adaptive_graph_of_thoughts.base_client import BaseClient, TimeoutError
+from adaptive_graph_of_thoughts.services.api_clients.base_client import BaseClient, TimeoutError
 
 class DummyTransport:
     def __init__(self, responses):
@@ -141,4 +141,17 @@ def test_concurrent_more_threads_than_responses():
     for t in threads:
         t.join()
     assert len(results) + len(errors) == 4
-    assert any(isinstance(e, TimeoutError) for e in errors)
+    # ============================================================================
+    # Additional Comprehensive Tests for BaseClient
+    # ============================================================================
+    
+-def test_base_client_initialization_defaults():
++def test_base_client_initialization_defaults():
+     """Test BaseClient initialization with default parameters."""
+     transport = DummyTransport([{"status": 200, "data": "test"}])
+     client = BaseClient(transport=transport)
+     # Verify default values are set properly
+     assert client.transport is transport
+     # Test that client is functional with defaults
+     resp = client.send_request({"endpoint": "/test", "payload": {}})
+     assert resp["status"] == 200

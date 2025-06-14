@@ -2,8 +2,8 @@ from typing import Optional
 
 from loguru import logger
 
-from src.adaptive_graph_of_thoughts.domain.models.common import CertaintyScore, ConfidenceVector
-from src.adaptive_graph_of_thoughts.domain.models.graph_elements import (
+from adaptive_graph_of_thoughts.domain.models.common import CertaintyScore, ConfidenceVector
+from adaptive_graph_of_thoughts.domain.models.graph_elements import (
     EdgeType,
     StatisticalPower,
 )
