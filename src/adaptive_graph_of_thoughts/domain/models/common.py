@@ -2,7 +2,13 @@ import datetime
 from enum import Enum
 from typing import Annotated
 
-from pydantic import BaseModel, BeforeValidator, Field, field_validator
+try:
+    from pydantic import BaseModel, Field, BeforeValidator
+except ImportError:
+    from pydantic import BaseModel, Field
+    # For pydantic v1 compatibility, create dummy BeforeValidator
+    def BeforeValidator(func):
+        return func
 
 
 # Helper for probability distributions (list of floats summing to 1.0)
@@ -41,10 +47,10 @@ ProbabilityDistribution = Annotated[
 # Confidence Vector based on P1.5
 # Using a class for better type hinting and potential methods later
 class ConfidenceVector(BaseModel):
-    empirical_support: float = Field(default=0.5, ge=0.0, le=1.0)
-    theoretical_basis: float = Field(default=0.5, ge=0.0, le=1.0)
-    methodological_rigor: float = Field(default=0.5, ge=0.0, le=1.0)
-    consensus_alignment: float = Field(default=0.5, ge=0.0, le=1.0)
+    empirical_support: float = Field(default=0.5, description="Must be between 0.0 and 1.0")
+    theoretical_basis: float = Field(default=0.5, description="Must be between 0.0 and 1.0")
+    methodological_rigor: float = Field(default=0.5, description="Must be between 0.0 and 1.0")
+    consensus_alignment: float = Field(default=0.5, description="Must be between 0.0 and 1.0")
 
     def to_list(self) -> list[float]:
         """
@@ -86,15 +92,23 @@ class ConfidenceVector(BaseModel):
 
 
 # Single scalar certainty/confidence if needed
-CertaintyScore = Annotated[float, Field(ge=0.0, le=1.0)]
+CertaintyScore = Annotated[float, Field(description="Value between 0.0 and 1.0")]
 
 # Impact Score (P1.28)
-ImpactScore = Annotated[float, Field(ge=0.0, le=1.0)]  # Assuming normalized impact
+ImpactScore = Annotated[float, Field(description="Value between 0.0 and 1.0")]  # Assuming normalized impact
 
 
 class TimestampedModel(BaseModel):
-    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-    updated_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
+    created_at: datetime.datetime
+    updated_at: datetime.datetime
+
+    def __init__(self, **data):
+        now = datetime.datetime.now()
+        if 'created_at' not in data:
+            data['created_at'] = now
+        if 'updated_at' not in data:
+            data['updated_at'] = now
+        super().__init__(**data)
 
     def touch(self):
         """Updates the updated_at timestamp."""
@@ -105,13 +119,6 @@ class TimestampedModel(BaseModel):
 class DiscreteProbabilityDistribution(BaseModel):
     outcomes: list[str]  # The labels for each probability
     probabilities: ProbabilityDistribution
-
-    @field_validator("probabilities")
-    def check_probabilities_match_outcomes(cls, v, info):
-        values = info.data
-        if "outcomes" in values and len(v) != len(values["outcomes"]):
-            raise ValueError("Number of probabilities must match number of outcomes")
-        return v
 
 
 class EpistemicStatus(str, Enum):

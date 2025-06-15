@@ -1,5 +1,12 @@
 {
   "tasks": {
     "build": "poetry install && poetry run pre-commit install"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python"
+      ]
+    }
   }
 }

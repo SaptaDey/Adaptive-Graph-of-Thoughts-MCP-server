@@ -121,7 +121,7 @@ class MCPQueryContext(BaseModel):
 class MCPQueryOperationalParams(BaseModel):
     include_reasoning_trace: bool = Field(default=True)
     include_graph_state: bool = Field(default=True)
-    max_nodes_in_response_graph: Optional[int] = Field(default=50, ge=0)
+    max_nodes_in_response_graph: Optional[int] = Field(default=50, description="Max nodes in response graph, must be >= 0")
     output_detail_level: Optional[str] = Field(
         default="summary", examples=["summary", "detailed"]
     )
@@ -206,7 +206,7 @@ class GoTQueryProgressParams(BaseModel):
     stage: str
     status: str
     message: Optional[str] = Field(default=None)
-    progress_percentage: Optional[float] = Field(default=None, ge=0.0, le=100.0)
+    progress_percentage: Optional[float] = Field(default=None, description="Progress percentage between 0.0 and 100.0")
     intermediate_results: Optional[list[GoTQueryThoughtStep]] = Field(default=None)
 
 

@@ -6,7 +6,7 @@ from adaptive_graph_of_thoughts.config import Config, ExaSearchConfig # Changed 
 from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPIClientError
 
 class ExaArticleResult(BaseModel):
-    id: str # Exa's result ID
+    id: str  # Exa's result ID - required field
     url: Optional[str] = None
     title: Optional[str] = None
     author: Optional[str] = None

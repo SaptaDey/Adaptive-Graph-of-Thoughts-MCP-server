@@ -27,20 +27,20 @@ class TestSettings: # Test class name can remain, or change to TestConfigOldSche
     @pytest.mark.parametrize("invalid_lr", [-1, 0, 2.0, "fast", None])
     def test_settings_invalid_learning_rate(self, invalid_lr):
         """Test Settings raises ValueError for invalid learning rates."""
-        # This test's expectation of ValueError might be incorrect for the imported Config
-        # Pydantic usually raises ValidationError for type issues, or handles extra fields via `extra` config.
-        # The Config from config.py has extra='ignore', so it might not raise an error here.
-        Config(learning_rate=invalid_lr, batch_size=32) # This line will be problematic.
+        with pytest.raises(ValueError):
+            Config(learning_rate=invalid_lr, batch_size=32)
     
     @pytest.mark.parametrize("invalid_batch", [0, -1, 1.5, "large", None])
     def test_settings_invalid_batch_size(self, invalid_batch):
         """Test Settings raises ValueError for invalid batch sizes."""
-        Config(learning_rate=0.01, batch_size=invalid_batch)
+        with pytest.raises(ValueError):
+            Config(learning_rate=0.01, batch_size=invalid_batch)
     
     @pytest.mark.parametrize("invalid_steps", [-1, 0, 1.5, "many", None])
     def test_settings_invalid_max_steps(self, invalid_steps):
         """Test Settings raises ValueError for invalid max_steps."""
-        Config(learning_rate=0.01, batch_size=32, max_steps=invalid_steps)
+        with pytest.raises(ValueError):
+            Config(learning_rate=0.01, batch_size=32, max_steps=invalid_steps)
     
     def test_settings_to_dict(self):
         """Test Settings can be converted to dictionary."""
@@ -423,9 +423,9 @@ class TestConfigProperties:
     
     def test_config_validation_chain(self):
         """Test Config validation is called in proper order."""
-        with patch('src.adaptive_graph_of_thoughts.config.validate_learning_rate') as mock_lr:
-            with patch('src.adaptive_graph_of_thoughts.config.validate_batch_size') as mock_bs:
-                with patch('src.adaptive_graph_of_thoughts.config.validate_max_steps') as mock_ms:
+        with patch('adaptive_graph_of_thoughts.config.validate_learning_rate') as mock_lr:
+            with patch('adaptive_graph_of_thoughts.config.validate_batch_size') as mock_bs:
+                with patch('adaptive_graph_of_thoughts.config.validate_max_steps') as mock_ms:
                     Config(learning_rate=0.01, batch_size=32, max_steps=1000)
                     
                     mock_lr.assert_called_once_with(0.01)

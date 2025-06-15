@@ -2,27 +2,27 @@ from typing import Optional, List, Dict, Any
 from loguru import logger
 from pydantic import BaseModel, Field
 
-from adaptive_graph_of_thoughts.config import Settings, GoogleScholarConfig
+from adaptive_graph_of_thoughts.config import Config, GoogleScholarConfig
 from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPIClientError
 
 class GoogleScholarArticle(BaseModel):
-    title: str
-    link: Optional[str] = None
-    snippet: Optional[str] = None
-    publication_info: Optional[str] = None # e.g., "Nature, 2021"
-    authors: Optional[str] = None # SerpApi often returns this as a single string or list of dicts
-    source: str = Field(default="Google Scholar")
+    title: str = Field(description="Article title")
+    link: Optional[str] = Field(default=None, description="Article link")
+    snippet: Optional[str] = Field(default=None, description="Article snippet")
+    publication_info: Optional[str] = Field(default=None, description="Publication info") # e.g., "Nature, 2021"
+    authors: Optional[str] = Field(default=None, description="Authors") # SerpApi often returns this as a single string or list of dicts
+    source: str = Field(default="Google Scholar", description="Source")
 
     # Links often found in SerpApi results
-    related_articles_link: Optional[str] = None
-    versions_link: Optional[str] = None
-    citation_link: Optional[str] = None # Link to generate citation (e.g., SerpApi's cite link)
+    related_articles_link: Optional[str] = Field(default=None, description="Related articles link")
+    versions_link: Optional[str] = Field(default=None, description="Versions link")
+    citation_link: Optional[str] = Field(default=None, description="Citation link") # Link to generate citation (e.g., SerpApi's cite link)
 
-    cited_by_count: Optional[int] = None
-    cited_by_link: Optional[str] = None
+    cited_by_count: Optional[int] = Field(default=None, description="Citation count")
+    cited_by_link: Optional[str] = Field(default=None, description="Cited by link")
 
     # Raw result for further processing if needed
-    raw_result: Optional[Dict[str, Any]] = None
+    raw_result: Optional[Dict[str, Any]] = Field(default=None, description="Raw result")
 
 
 class GoogleScholarClientError(BaseAPIClientError):
@@ -30,7 +30,7 @@ class GoogleScholarClientError(BaseAPIClientError):
     pass
 
 class GoogleScholarClient:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         if not settings.google_scholar or \
            not settings.google_scholar.base_url or \
            not settings.google_scholar.api_key:

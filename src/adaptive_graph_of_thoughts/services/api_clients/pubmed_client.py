@@ -3,25 +3,25 @@ from loguru import logger
 from pydantic import BaseModel, Field
 import xml.etree.ElementTree as ET
 
-from adaptive_graph_of_thoughts.config import Settings, PubMedConfig
+from adaptive_graph_of_thoughts.config import Config, PubMedConfig
 from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPIClientError
 
 class PubMedArticle(BaseModel):
-    pmid: str
-    title: str
-    abstract: Optional[str] = None
-    authors: List[str] = Field(default_factory=list)
-    journal: Optional[str] = None
-    publication_date: Optional[str] = None # Consider using datetime internally
-    doi: Optional[str] = None
-    url: str # e.g., https://pubmed.ncbi.nlm.nih.gov/PMID/
+    pmid: str = Field(description="PubMed ID")
+    title: str = Field(description="Article title")
+    abstract: Optional[str] = Field(default=None, description="Article abstract")
+    authors: List[str] = Field(default_factory=list, description="List of authors")
+    journal: Optional[str] = Field(default=None, description="Journal name")
+    publication_date: Optional[str] = Field(default=None, description="Publication date") # Consider using datetime internally
+    doi: Optional[str] = Field(default=None, description="DOI")
+    url: str = Field(description="PubMed URL")  # e.g., https://pubmed.ncbi.nlm.nih.gov/PMID/
 
 class PubMedClientError(BaseAPIClientError):
     """Custom error for PubMedClient."""
     pass
 
 class PubMedClient:
-    def __init__(self, settings: Settings):
+    def __init__(self, settings: Config):
         if not settings.pubmed or not settings.pubmed.base_url:
             logger.error("PubMed configuration is missing in settings.")
             raise PubMedClientError("PubMed configuration (base_url) is not set.")
