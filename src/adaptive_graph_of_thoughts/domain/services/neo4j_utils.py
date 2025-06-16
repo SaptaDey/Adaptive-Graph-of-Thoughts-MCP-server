@@ -1,10 +1,4 @@
-from neo4j import GraphDatabase, Driver, Record, Result, Transaction, unit_of_work
-from neo4j.exceptions import Neo4jError, ServiceUnavailable
-from typing import Optional, Any, List, Dict
-import asyncio
-import os
-from loguru import logger
-
+from __future__ import annotations
 
 # --- Simple Configuration ---
 class Neo4jSettings:
@@ -83,14 +77,12 @@ def get_neo4j_driver() -> Driver:
 
 
 def close_neo4j_driver() -> None:
-    """Closes the Neo4j driver instance if it's open."""
+    """Close the global Neo4j driver if it exists."""
     global _driver
-    if _driver is not None and not _driver.closed:
-        logger.info("Closing Neo4j driver.")
+    if _driver is not None:
         _driver.close()
         _driver = None
-    else:
-        logger.info("Neo4j driver is already closed or not initialized.")
+
 
 
 # --- Query Execution ---
@@ -211,27 +203,5 @@ if __name__ == "__main__":
         if read_results:
             logger.info(f"Read query results: Found {read_results[0]['node_count']} nodes in database.")
         else:
-            logger.info("Read query returned no results or failed.")
-        
-        # Example Write Query (use with caution on your database)
-        # logger.info("Attempting to execute a sample WRITE query...")
-        # write_query = "CREATE (a:Greeting {message: $msg})"
-        # write_params = {"msg": "Hello from neo4j_utils"}
-        # await execute_query(write_query, parameters=write_params, tx_type="write")
-        # logger.info("Write query executed (if no errors).")
-        
-        # logger.info("Attempting to read the written data...")
-        # verify_query = "MATCH (g:Greeting) WHERE g.message = $msg RETURN g.message AS message"
-        # verify_results = await execute_query(verify_query, parameters={"msg": "Hello from neo4j_utils"}, tx_type="read")
-        # if verify_results:
-        #     logger.info(f"Verification query results: Found message '{verify_results[0]['message']}'")
-        # else:
-        #     logger.warning("Verification query did not find the written data or failed.")
-    except ServiceUnavailable:
-        logger.error("Could not connect to Neo4j. Ensure Neo4j is running and accessible.")
-    except Exception as e:
-        logger.error(f"An error occurred during the example usage: {e}")
-    finally:
-        close_neo4j_driver()
-        logger.info("Neo4j utils example finished.")
-    """
+            raise ValueError("tx_type must be 'read' or 'write'")
+    return result
