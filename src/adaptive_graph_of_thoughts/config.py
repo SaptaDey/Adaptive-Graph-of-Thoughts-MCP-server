@@ -29,12 +29,25 @@ def validate_config_schema(config_data: dict) -> bool:
 
 # Simple data classes for configuration
 class AppConfig:
-    def __init__(self, name="Adaptive Graph of Thoughts", version="0.1.0", host="0.0.0.0", port=8000, reload=True):
+    def __init__(
+        self,
+        name: str = "Adaptive Graph of Thoughts",
+        version: str = "0.1.0",
+        host: str = "0.0.0.0",
+        port: int = 8000,
+        reload: bool = True,
+        log_level: str = "INFO",
+        cors_allowed_origins_str: str = "*",
+        auth_token: str | None = None,
+    ) -> None:
         self.name = name
         self.version = version
         self.host = host
         self.port = port
         self.reload = reload
+        self.log_level = log_level
+        self.cors_allowed_origins_str = cors_allowed_origins_str
+        self.auth_token = auth_token
 
 class ASRGoTDefaultParams:
     def __init__(self, initial_confidence=0.8, confidence_threshold=0.75, max_iterations=10, convergence_threshold=0.05):
