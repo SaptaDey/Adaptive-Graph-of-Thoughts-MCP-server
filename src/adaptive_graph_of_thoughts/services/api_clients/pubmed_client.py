@@ -9,8 +9,8 @@ from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPI
 class PubMedArticle(BaseModel):
     pmid: str = Field(default="", description="PubMed ID")
     title: str = Field(default="", description="Article title")
-    abstract: str = Field(default="", description="Article abstract")
-    authors: str = Field(default="", description="Authors as string")  # Simplified for pydantic v1
+    authors: List[str] = Field(default_factory=list, description="Authors")
+    abstract: Optional[str] = Field(default=None, description="Article abstract")
     journal: str = Field(default="", description="Journal name")
     publication_date: str = Field(default="", description="Publication date")
     doi: str = Field(default="", description="DOI")

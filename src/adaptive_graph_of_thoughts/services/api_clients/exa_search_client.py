@@ -4,11 +4,11 @@ from pydantic import BaseModel, Field
 
 from ...config import Config, ExaSearchConfig # Changed Settings to Config
 from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPIClientError
-
 class ExaArticleResult(BaseModel):
-    id: str = Field(default="")  # Exa's result ID
-    url: str = Field(default="")
-    title: str = Field(default="")
+    highlights: List[str] = Field(default_factory=list)
+    raw_result: Dict[str, Any] = Field(default_factory=dict)
+     # keep alias so camelCase is accepted
+    published_date: str = Field(default="", alias="publishedDate")
     author: str = Field(default="")
     published_date: str = Field(default="")  # Removed alias for pydantic v1 compatibility
     score: float = Field(default=0.0)  # Relevance score from Exa
