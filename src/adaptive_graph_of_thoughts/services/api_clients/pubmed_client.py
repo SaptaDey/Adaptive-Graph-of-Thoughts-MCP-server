@@ -52,6 +52,9 @@ class PubMedClient:
         params = {}
         if self.api_key:
             params["api_key"] = self.api_key
+        if hasattr(self.config, 'email') and self.config.email: # Check if email is configured
+            params["email"] = self.config.email
+        return params
         return params
 
     def _parse_esummary_response(self, xml_text: str) -> List[PubMedArticle]:
