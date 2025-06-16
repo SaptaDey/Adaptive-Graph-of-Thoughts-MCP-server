@@ -41,6 +41,7 @@ logs/
 # Cache
 .cache/
 .pytest_cache/
+.hypothesis/
 
 # Node.js
 node_modules/

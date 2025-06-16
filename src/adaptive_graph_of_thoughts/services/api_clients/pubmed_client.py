@@ -3,37 +3,41 @@ from loguru import logger
 from pydantic import BaseModel, Field
 import xml.etree.ElementTree as ET
 
-from adaptive_graph_of_thoughts.config import Config, PubMedConfig
+from ...config import Config, PubMedConfig
 from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPIClientError
 
 class PubMedArticle(BaseModel):
-    pmid: str = Field(description="PubMed ID")
-    title: str = Field(description="Article title")
-    abstract: Optional[str] = Field(default=None, description="Article abstract")
-    authors: List[str] = Field(default_factory=list, description="List of authors")
-    journal: Optional[str] = Field(default=None, description="Journal name")
-    publication_date: Optional[str] = Field(default=None, description="Publication date") # Consider using datetime internally
-    doi: Optional[str] = Field(default=None, description="DOI")
-    url: str = Field(description="PubMed URL")  # e.g., https://pubmed.ncbi.nlm.nih.gov/PMID/
+    pmid: str = Field(default="", description="PubMed ID")
+    title: str = Field(default="", description="Article title")
+    abstract: str = Field(default="", description="Article abstract")
+-   authors: str = Field(default="", description="Authors as string")  # Simplified for pydantic v1
++   authors: List[str] = Field(default_factory=list, description="Authors")
+    journal: str = Field(default="", description="Journal name")
+    publication_date: str = Field(default="", description="Publication date")
+    doi: str = Field(default="", description="DOI")
+    url: str = Field(default="", description="PubMed URL")
 
 class PubMedClientError(BaseAPIClientError):
     """Custom error for PubMedClient."""
     pass
 
+# Alias for backwards compatibility with tests
+PublicationAPIError = PubMedClientError
+
 class PubMedClient:
+    DEFAULT_RETMAX = 20  # Default maximum number of results to return
+    
     def __init__(self, settings: Config):
-        if not settings.pubmed or not settings.pubmed.base_url:
+        if not settings.pubmed:
             logger.error("PubMed configuration is missing in settings.")
-            raise PubMedClientError("PubMed configuration (base_url) is not set.")
+            raise PubMedClientError("PubMed configuration is not set.")
 
         self.config: PubMedConfig = settings.pubmed
         self.http_client = AsyncHTTPClient(
-            base_url=self.config.base_url,
-            # settings=settings # Pass settings if base_client needs it
+            base_url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
         )
-        self.email = self.config.email
         self.api_key = self.config.api_key
-        logger.info(f"PubMedClient initialized for base URL: {self.config.base_url}")
+        logger.info(f"PubMedClient initialized with max_results: {self.config.max_results}")
 
     async def close(self):
         await self.http_client.close()
@@ -49,8 +53,9 @@ class PubMedClient:
         params = {}
         if self.api_key:
             params["api_key"] = self.api_key
-        if self.email:
-            params["email"] = self.email
+        if hasattr(self.config, 'email') and self.config.email: # Check if email is configured
+            params["email"] = self.config.email
+        return params
         return params
 
     def _parse_esummary_response(self, xml_text: str) -> List[PubMedArticle]:
@@ -227,21 +232,17 @@ class PubMedClient:
 
 # Example Usage (for testing)
 async def main_pubmed_test():
-    from adaptive_graph_of_thoughts.config import Settings, PubMedConfig # Ensure PubMedConfig is imported
-
-    # Attempt to load settings, fallback to a default mock if issues occur
+    from adaptive_graph_of_thoughts.config import Settings, PubMedConfig # Ensure PubMedConfig is imported    # Attempt to load settings, fallback to a default mock if issues occur
     try:
         settings = Settings()
-        if not settings.pubmed or not settings.pubmed.base_url:
-            logger.warning("PubMed config not fully set in settings.yaml or env vars; using mock for testing.")
-            # Provide a default email, as NCBI recommends it.
-            settings.pubmed = PubMedConfig(base_url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", email="test.user@example.com")
+        if not settings.pubmed:
+            logger.warning("PubMed config not set in settings.yaml or env vars; using mock for testing.")
+            settings.pubmed = PubMedConfig(api_key=None, max_results=20)
     except Exception as e:
         logger.warning(f"Could not load global settings ({e}), using mock PubMed config for testing.")
         # Manually create a Settings object with a default PubMedConfig
         settings = Settings(
-            pubmed=PubMedConfig(base_url="https://eutils.ncbi.nlm.nih.gov/entrez/eutils/", email="test.user@example.com")
-            # app, asr_got, etc., would use their defaults or be None if not specified
+            pubmed=PubMedConfig(api_key=None, max_results=20)
         )
 
     async with PubMedClient(settings=settings) as client:
@@ -266,14 +267,13 @@ async def main_pubmed_test():
             logger.error(f"An unexpected error occurred during PubMed client test: {e}", exc_info=True)
 
 if __name__ == "__main__":
-    import asyncio
     # To run this test:
     # 1. Ensure you have a config/settings.yaml or relevant environment variables for pubmed.
     #    Example minimal settings.yaml:
     #    pubmed:
-    #      base_url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-    #      email: "your.email@example.com" # NCBI strongly recommends providing an email
-    #      # api_key: "YOUR_NCBI_API_KEY" # Optional, but good for higher rate limits
+    #      api_key: "YOUR_NCBI_API_KEY" # Optional, but good for higher rate limits
+    #      max_results: 20
+    #      rate_limit_delay: 0.5
     # 2. Uncomment the line below.
     # asyncio.run(main_pubmed_test())
     pass

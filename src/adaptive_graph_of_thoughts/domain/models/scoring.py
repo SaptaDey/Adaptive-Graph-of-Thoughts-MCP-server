@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
-from adaptive_graph_of_thoughts.domain.models.common import ConfidenceVector
+from .common import ConfidenceVector
 
 
 class ScoreResult(BaseModel):
@@ -15,19 +15,11 @@ class ScoreResult(BaseModel):
     This model is used to represent scoring results from the GoTProcessor,
     including confidence scores, metrics, and other evaluation data.
     """
-    score: float = Field(default=0.0, ge=0.0, le=1.0, description="Overall score value between 0 and 1")
-    confidence_vector: Optional[ConfidenceVector] = Field(
-        default=None, description="Confidence vector components if applicable"
-    )
-    metrics: Dict[str, Any] = Field(
-        default_factory=dict, description="Additional metrics and measurements"
-    )
-    details: Dict[str, Any] = Field(
-        default_factory=dict, description="Detailed scoring information"
-    )
-    category_scores: Dict[str, float] = Field(
-        default_factory=dict, description="Scores broken down by category"
-    )
+    score: float = Field(default=0.0, description="Overall score value between 0 and 1")
+    confidence_vector: float = Field(default=0.0, description="Simplified confidence value")
+    metrics: str = Field(default="", description="Additional metrics as string")
+    details: str = Field(default="", description="Additional details as string")
+    category_scores: str = Field(default="", description="Scores broken down by category")
     
     @property
     def is_high_confidence(self) -> bool:

@@ -5,14 +5,14 @@ from typing import Any, Optional, Dict
 
 from loguru import logger
 
-from adaptive_graph_of_thoughts.domain.models.common_types import (
+from ..models.common_types import (
     ComposedOutput,
     GoTProcessorSessionData,
 )
-from adaptive_graph_of_thoughts.domain.stages.base_stage import BaseStage, StageOutput
+from ..stages.base_stage import BaseStage, StageOutput
 
 # Import the import_stages function for lazy loading
-from adaptive_graph_of_thoughts.domain.stages import import_stages
+from ..stages import import_stages
 
 class GoTProcessor:
     def __init__(self, settings):
