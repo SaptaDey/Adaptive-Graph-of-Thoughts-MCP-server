@@ -174,14 +174,16 @@ class NodeMetadata(TimestampedModel):  # Aligns with P1.12 for nodes
     is_knowledge_gap: bool = Field(default=False)
     
     # Bibliometric fields
-    url: str = Field(default="")
+from uuid import uuid4
+id: str = Field(default_factory=lambda: str(uuid4()))
     doi: str = Field(default="")
     authors: str = Field(default="")  # Simplified from List[str]
     publication_date: str = Field(default="")  # e.g., "YYYY-MM-DD" or "YYYY MMM"
 
 
 class Node(TimestampedModel):
-    id: str = Field(default="node-default")  # Simplified for pydantic v1 compatibility
+    from uuid import uuid4
+id: str = Field(default_factory=lambda: str(uuid4()))  # Simplified for pydantic v1 compatibility
     label: str = Field(default="")  # Removed min_length constraint for pydantic v1
     type: NodeType = NodeType.HYPOTHESIS  # Provide a default
     confidence: float = Field(default=0.5)  # Simplified from ConfidenceVector
@@ -277,8 +279,8 @@ class Hyperedge(TimestampedModel):  # P1.9
 # Simple classes for backward compatibility with tests
 class GraphElement(BaseModel):
     """Simple graph element for test compatibility."""
-    
-    node_id: str = Field(default="")
+from pydantic import Field
+node_ids: set[str] = Field(default_factory=set)
     label: str = Field(default="")
     weight: float = Field(default=1.0)
 

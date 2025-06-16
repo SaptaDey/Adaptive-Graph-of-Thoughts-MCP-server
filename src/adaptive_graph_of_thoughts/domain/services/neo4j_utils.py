@@ -57,8 +57,13 @@ def get_neo4j_driver() -> Driver:
 
         logger.info(f"Initializing Neo4j driver for URI: {uri}")
 
-        try:
-            _driver = GraphDatabase.driver(uri, auth=(username, password))
+username = settings.neo4j.user
+password = settings.neo4j.password
+username = settings.neo4j.user
+password = settings.neo4j.password
+uri = settings.neo4j.uri
+_driver = GraphDatabase.driver(uri, auth=(username, password))
+
             # Verify connectivity
             _driver.verify_connectivity()
             logger.info("Neo4j driver initialized and connectivity verified.")
