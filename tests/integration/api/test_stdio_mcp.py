@@ -2,6 +2,7 @@ import json
 import os
 import time
 import subprocess
+import select
 import pytest
 from pathlib import Path
 
@@ -49,8 +50,12 @@ def test_stdio_initialize(stdio_process):
     try:
         stdio_process.stdin.write(line)
         stdio_process.stdin.flush()
-        # Read and parse one line of response
-        response_line = stdio_process.stdout.readline()
+        # Wait up to 5 seconds for a response line
+        ready, _, _ = select.select([stdio_process.stdout], [], [], 5)
+        if ready:
+            response_line = stdio_process.stdout.readline()
+        else:
+            pytest.fail("Timed out waiting for STDIO response")
         if not response_line: # Handle empty readline if process exited
             stderr_output = stdio_process.stderr.read()
             pytest.fail(f"STDIO process exited prematurely. stderr:\n{stderr_output}")
@@ -90,7 +95,11 @@ def test_stdio_call_tool(stdio_process, query):
     try:
         stdio_process.stdin.write(json.dumps(request) + "\n")
         stdio_process.stdin.flush()
-        response_line = stdio_process.stdout.readline()
+        ready, _, _ = select.select([stdio_process.stdout], [], [], 5)
+        if ready:
+            response_line = stdio_process.stdout.readline()
+        else:
+            pytest.fail("Timed out waiting for STDIO response")
         if not response_line: # Handle empty readline if process exited
             stderr_output = stdio_process.stderr.read()
             pytest.fail(f"STDIO process exited prematurely. stderr:\n{stderr_output}")
