@@ -43,7 +43,7 @@ async def execute_query(
     parameters: Optional[Dict[str, Any]] = None,
     database: Optional[str] = None,
     tx_type: str = "read",
-) -> List[Any]:
+) -> List[Dict[str, Any]]:
     """Execute a Cypher query asynchronously."""
     driver = get_neo4j_driver()
     session_kwargs = {"database": database} if database else {}
