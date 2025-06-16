@@ -18,7 +18,7 @@ def test_inspector_http():
         timeout=60,
     )
     assert result.returncode == 0, f"HTTP test failed: {result.stderr}"
-    assert "HTTP transport test passed" in result.stdout
+    assert "MCP Inspector test for http transport passed." in result.stdout
 
 @pytest.mark.skip(reason="STDIO transport requires interactive Inspector UI")
 def test_inspector_stdio():
