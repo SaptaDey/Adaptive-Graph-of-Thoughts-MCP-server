@@ -99,8 +99,8 @@ Before running Adaptive Graph of Thoughts (either locally or via Docker if not u
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/SaptaDey/Adaptive Graph of Thoughts.git
-   cd Adaptive Graph of Thoughts
+   git clone https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server.git
+   cd Adaptive-Graph-of-Thoughts-MCP-server
    ```
 
 2. **Install dependencies using Poetry**:

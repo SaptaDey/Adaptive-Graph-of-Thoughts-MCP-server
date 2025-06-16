@@ -7,8 +7,8 @@ We welcome contributions to Adaptive Graph of Thoughts! Please follow these gene
 *   **Fork the Repository:** Start by forking the main Adaptive Graph of Thoughts repository to your own GitHub account.
 *   **Clone your fork:**
     ```bash
-    git clone https://github.com/YOUR_USERNAME/Adaptive Graph of Thoughts.git
-    cd Adaptive Graph of Thoughts
+    git clone https://github.com/YOUR_USERNAME/Adaptive-Graph-of-Thoughts-MCP-server.git
+    cd Adaptive-Graph-of-Thoughts-MCP-server
     ```
 *   **Install Dependencies:** Ensure you have [Poetry](https://python-poetry.org/) (version 1.2+) installed and run:
     ```bash
