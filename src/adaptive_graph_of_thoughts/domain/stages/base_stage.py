@@ -15,10 +15,9 @@ class StageOutput(BaseModel):
     """Standard output structure for each stage."""
 
     summary: str = ""
-    metrics: str = ""  # Simplified as JSON string for pydantic v1 compatibility
-    error_message: str = ""
-    next_stage_context_update: str = ""  # Simplified as JSON string for pydantic v1 compatibility
-
+    metrics: dict[str, Any] = Field(default_factory=dict)
+    error_message: Optional[str] = None
+    next_stage_context_update: dict[str, Any] = Field(default_factory=dict)
 
 class BaseStage(ABC):
     """Abstract Base Class for all stages in the ASR-GoT pipeline."""

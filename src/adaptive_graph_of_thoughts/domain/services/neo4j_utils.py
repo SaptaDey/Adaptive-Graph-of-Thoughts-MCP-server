@@ -63,6 +63,7 @@ username = settings.neo4j.user
 password = settings.neo4j.password
 uri = settings.neo4j.uri
 _driver = GraphDatabase.driver(uri, auth=(username, password))
+
             # Verify connectivity
             _driver.verify_connectivity()
             logger.info("Neo4j driver initialized and connectivity verified.")
