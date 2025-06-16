@@ -10,7 +10,8 @@ class PubMedArticle(BaseModel):
     pmid: str = Field(default="", description="PubMed ID")
     title: str = Field(default="", description="Article title")
     abstract: str = Field(default="", description="Article abstract")
-    authors: str = Field(default="", description="Authors as string")  # Simplified for pydantic v1
+-   authors: str = Field(default="", description="Authors as string")  # Simplified for pydantic v1
++   authors: List[str] = Field(default_factory=list, description="Authors")
     journal: str = Field(default="", description="Journal name")
     publication_date: str = Field(default="", description="Publication date")
     doi: str = Field(default="", description="DOI")
