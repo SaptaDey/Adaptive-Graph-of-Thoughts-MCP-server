@@ -2,18 +2,18 @@ from typing import Optional, List, Dict, Any
 from loguru import logger
 from pydantic import BaseModel, Field
 
-from adaptive_graph_of_thoughts.config import Config, ExaSearchConfig # Changed Settings to Config
+from ...config import Config, ExaSearchConfig # Changed Settings to Config
 from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPIClientError
 
 class ExaArticleResult(BaseModel):
-    id: str  # Exa's result ID - required field
-    url: Optional[str] = None
-    title: Optional[str] = None
-    author: Optional[str] = None
-    published_date: Optional[str] = Field(default=None, alias="publishedDate") # Note alias for 'publishedDate'
-    score: Optional[float] = None # Relevance score from Exa
-    highlights: List[str] = Field(default_factory=list) # Exa can return highlights
-    raw_result: Optional[Dict[str, Any]] = None # Store the raw result
+    id: str = Field(default="")  # Exa's result ID
+    url: str = Field(default="")
+    title: str = Field(default="")
+    author: str = Field(default="")
+    published_date: str = Field(default="")  # Removed alias for pydantic v1 compatibility
+    score: float = Field(default=0.0)  # Relevance score from Exa
+    highlights: str = Field(default="")  # Simplified from List[str] for pydantic v1 compatibility
+    raw_result: str = Field(default="")  # Simplified from Optional[Dict[str, Any]]
 
 class ExaSearchClientError(BaseAPIClientError):
     """Custom error for ExaSearchClient."""

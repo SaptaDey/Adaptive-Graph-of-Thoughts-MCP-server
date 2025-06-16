@@ -1,28 +1,23 @@
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 from loguru import logger
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from adaptive_graph_of_thoughts.config import Config, GoogleScholarConfig
+from ...config import Config, GoogleScholarConfig
 from .base_client import AsyncHTTPClient, APIRequestError, APIHTTPError, BaseAPIClientError
 
 class GoogleScholarArticle(BaseModel):
-    title: str = Field(description="Article title")
-    link: Optional[str] = Field(default=None, description="Article link")
-    snippet: Optional[str] = Field(default=None, description="Article snippet")
-    publication_info: Optional[str] = Field(default=None, description="Publication info") # e.g., "Nature, 2021"
-    authors: Optional[str] = Field(default=None, description="Authors") # SerpApi often returns this as a single string or list of dicts
-    source: str = Field(default="Google Scholar", description="Source")
-
-    # Links often found in SerpApi results
-    related_articles_link: Optional[str] = Field(default=None, description="Related articles link")
-    versions_link: Optional[str] = Field(default=None, description="Versions link")
-    citation_link: Optional[str] = Field(default=None, description="Citation link") # Link to generate citation (e.g., SerpApi's cite link)
-
-    cited_by_count: Optional[int] = Field(default=None, description="Citation count")
-    cited_by_link: Optional[str] = Field(default=None, description="Cited by link")
-
-    # Raw result for further processing if needed
-    raw_result: Optional[Dict[str, Any]] = Field(default=None, description="Raw result")
+    title: str = ""
+    link: str = ""
+    snippet: str = ""
+    publication_info: str = ""
+    authors: str = ""
+    source: str = "Google Scholar"
+    related_articles_link: str = ""
+    versions_link: str = ""
+    citation_link: str = ""
+    cited_by_count: int = 0
+    cited_by_link: str = ""
+    raw_result: str = ""
 
 
 class GoogleScholarClientError(BaseAPIClientError):
@@ -31,25 +26,18 @@ class GoogleScholarClientError(BaseAPIClientError):
 
 class GoogleScholarClient:
     def __init__(self, settings: Config):
-        if not settings.google_scholar or \
-           not settings.google_scholar.base_url or \
-           not settings.google_scholar.api_key:
-            logger.error("Google Scholar configuration (base_url, api_key) is missing in settings.")
+        if not settings.google_scholar:
+            logger.error("Google Scholar configuration is missing in settings.")
             raise GoogleScholarClientError("Google Scholar configuration is not properly set.")
 
         self.config: GoogleScholarConfig = settings.google_scholar
-        # Assuming base_url in config is the full base path, e.g., "https://serpapi.com/search"
-        # or "https://serpapi.com" and the endpoint "/search" will be specified in GET requests.
-        # For consistency with how base_client is used, base_url should be up to the domain or common path.
-        # If config.base_url is "https://serpapi.com/search", AsyncHTTPClient will append to it.
-        # It's generally better if base_url = "https://serpapi.com" and endpoint = "/search"
-        # The provided code seems to assume base_url might or might not include "/search"
-
+        
+        # Use a default base URL for Google Scholar scraping
         self.http_client = AsyncHTTPClient(
-            base_url=self.config.base_url.rstrip('/')
+            base_url="https://scholar.google.com"
         )
-        self.api_key = self.config.api_key
-        logger.info(f"GoogleScholarClient initialized. Configured base URL: {self.config.base_url}")
+        
+        logger.info(f"GoogleScholarClient initialized with max_results: {self.config.max_results}")
 
     async def close(self):
         await self.http_client.close()
@@ -170,33 +158,20 @@ async def main_google_scholar_test():
 
     try:
         settings = Settings() # Load from settings.yaml or environment variables
-        # Check if google_scholar config exists and has essential fields
-        if not settings.google_scholar or not settings.google_scholar.api_key or not settings.google_scholar.base_url:
-            logger.warning("Google Scholar config (api_key, base_url) not fully set in settings; test may use placeholders or fail.")
-            # Fallback to a default mock if critical parts are missing, for structural testing.
-            # However, an API key is essential for any real test against SerpApi.
-            if not settings.google_scholar:
-                 settings.google_scholar = GoogleScholarConfig(api_key="test_api_key_placeholder", base_url="https://serpapi.com/search")
-            elif not settings.google_scholar.api_key:
-                 settings.google_scholar.api_key = "test_api_key_placeholder"
-            if not settings.google_scholar.base_url: # Ensure base_url is also set
-                 settings.google_scholar.base_url="https://serpapi.com/search"
+        # Check if google_scholar config exists
+        if not settings.google_scholar:
+            logger.warning("Google Scholar config not set in settings; using defaults for testing.")
+            settings.google_scholar = GoogleScholarConfig(max_results=10)
 
     except Exception as e: # Broad exception for issues loading settings
         logger.warning(f"Could not load global settings ({e}), using default mock Google Scholar config for testing.")
         settings = Settings( # Create a new Settings object with a default GoogleScholarConfig
-            google_scholar=GoogleScholarConfig(api_key="YOUR_SERPAPI_KEY_HERE", base_url="https://serpapi.com/search")
+            google_scholar=GoogleScholarConfig(max_results=10)
         )
 
-    # Critical check: Actual API key is needed to run a meaningful test.
+    # Test configuration
     gs_config = settings.google_scholar
-    if not gs_config or not gs_config.api_key or \
-       "YOUR_SERPAPI_KEY_HERE" in gs_config.api_key or \
-       "placeholder" in gs_config.api_key:
-        logger.error("An actual SerpApi API key for Google Scholar is required to run this test. Please configure it in settings.yaml or environment variables (GOOGLE_SCHOLAR__API_KEY). Skipping test.")
-        return
-
-    logger.info(f"Attempting test with Google Scholar API Key: ...{gs_config.api_key[-4:] if gs_config.api_key else 'N/A'}")
+    logger.info(f"Testing with Google Scholar config - max_results: {gs_config.max_results}")
 
     async with GoogleScholarClient(settings=settings) as client:
         try:
@@ -221,13 +196,12 @@ async def main_google_scholar_test():
             logger.error(f"An unexpected error occurred during Google Scholar client test: {e}", exc_info=True)
 
 if __name__ == "__main__":
-    import asyncio
     # To run this test:
     # 1. Ensure you have a config/settings.yaml or relevant environment variables for google_scholar.
     #    Example minimal settings.yaml:
     #    google_scholar:
-    #      base_url: "https://serpapi.com/search" # Or "https://serpapi.com"
-    #      api_key: "YOUR_SERPAPI_API_KEY"
+    #      max_results: 10
+    #      rate_limit_delay: 1.0
     # 2. Uncomment the line below.
     # asyncio.run(main_google_scholar_test())
     pass

@@ -1,25 +1,23 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
+from typing import Optional
 
 from loguru import logger  # type: ignore
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
-from adaptive_graph_of_thoughts.config import (
+from ...config import (
     Settings,  # To access ASRGoTDefaultParams if needed by stages
 )
-from adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
+from ..models.common_types import GoTProcessorSessionData
 # ASRGoTGraph has been removed as part of refactoring
 
 
 class StageOutput(BaseModel):
     """Standard output structure for each stage."""
 
-    summary: str
-    metrics: dict[str, Any] = Field(default_factory=dict)
-    error_message: Optional[str] = None
-    # Optional: Data to be passed to the next stage or stored in the session context
-    # This can be more specific in subclasses if needed.
-    next_stage_context_update: dict[str, Any] = Field(default_factory=dict)
+    summary: str = ""
+    metrics: str = ""  # Simplified as JSON string for pydantic v1 compatibility
+    error_message: str = ""
+    next_stage_context_update: str = ""  # Simplified as JSON string for pydantic v1 compatibility
 
 
 class BaseStage(ABC):

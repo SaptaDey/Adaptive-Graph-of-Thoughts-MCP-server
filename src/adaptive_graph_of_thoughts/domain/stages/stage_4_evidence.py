@@ -5,13 +5,13 @@ from typing import Any, Optional, List, Dict, Set, Union, Tuple
 
 from loguru import logger # type: ignore
 
-from adaptive_graph_of_thoughts.config import Config # Changed Settings to Config
-from adaptive_graph_of_thoughts.domain.models.common import (
+from ...config import Config # Changed Settings to Config
+from ..models.common import (
     ConfidenceVector,
     EpistemicStatus,
 )
-from adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
-from adaptive_graph_of_thoughts.domain.models.graph_elements import (
+from ..models.common_types import GoTProcessorSessionData
+from ..models.graph_elements import (
     Edge,
     EdgeMetadata,
     EdgeType,
@@ -21,28 +21,27 @@ from adaptive_graph_of_thoughts.domain.models.graph_elements import (
     InterdisciplinaryInfo,
     Node,
     NodeMetadata,
-    NodeType,
-    StatisticalPower,
+    NodeType,    StatisticalPower,
 )
-from adaptive_graph_of_thoughts.domain.services.neo4j_utils import execute_query, Neo4jError
-from adaptive_graph_of_thoughts.domain.utils.math_helpers import (
+from ..services.neo4j_utils import execute_query, Neo4jError
+from ..utils.math_helpers import (
     bayesian_update_confidence,
     calculate_information_gain,
 )
-from adaptive_graph_of_thoughts.domain.utils.metadata_helpers import (
+from ..utils.metadata_helpers import (
     calculate_semantic_similarity,
 )
 
-from adaptive_graph_of_thoughts.domain.stages.base_stage import BaseStage, StageOutput
+from .base_stage import BaseStage, StageOutput
 from .stage_3_hypothesis import HypothesisStage # To access hypothesis_node_ids
 
 from datetime import datetime as dt # Alias dt for datetime.datetime
 from enum import Enum # For property preparation
 
 # Import API Clients and their data models
-from adaptive_graph_of_thoughts.services.api_clients.pubmed_client import PubMedClient, PubMedArticle
-from adaptive_graph_of_thoughts.services.api_clients.google_scholar_client import GoogleScholarClient, GoogleScholarArticle
-from adaptive_graph_of_thoughts.services.api_clients.exa_search_client import ExaSearchClient, ExaArticleResult
+from ...services.api_clients.pubmed_client import PubMedClient, PubMedArticle
+from ...services.api_clients.google_scholar_client import GoogleScholarClient, GoogleScholarArticle
+from ...services.api_clients.exa_search_client import ExaSearchClient, ExaArticleResult
 
 class EvidenceStage(BaseStage):
     stage_name: str = "EvidenceStage"
@@ -214,6 +213,7 @@ class EvidenceStage(BaseStage):
         Executes an evidence search plan for a given hypothesis and gathers supporting evidence.
         
         Uses the hypothesis label or a specified query plan to search external sources (PubMed, Google Scholar, Exa Search) for relevant articles or results. For each source, retrieves up to two results, extracts key information, and constructs evidence data dictionaries with content, source details, authors, publication date, confidence placeholders, disciplinary tags, timestamps, and raw data. Returns a list of evidence items found for the hypothesis.
+        """
         hypo_label = hypothesis_data_from_neo4j.get("label", "")
         hypo_id = hypothesis_data_from_neo4j.get("id", "unknown_hypo")
 
@@ -402,13 +402,12 @@ class EvidenceStage(BaseStage):
         if "timestamp" in evidence_data and isinstance(evidence_data["timestamp"], dt):
              ev_props_for_neo4j["metadata_timestamp_iso"] = evidence_data["timestamp"].isoformat()
         else:
-            ev_props_for_neo4j["metadata_timestamp_iso"] = dt.now().isoformat() # Fallback timestamp
-
-        # Ensuring the multiline string is correctly formatted.
-        # The content of the query itself remains unchanged.
-        create_ev_node_query = """MERGE (e:Node {id: $props.id}) SET e += $props
-        WITH e, $type_label AS typeLabel CALL apoc.create.addLabels(e, [typeLabel]) YIELD node
-        RETURN node.id AS evidence_id, properties(node) as evidence_props"""
+            ev_props_for_neo4j["metadata_timestamp_iso"] = dt.now().isoformat() # Fallback timestamp        # Create evidence node query
+        create_ev_node_query = (
+            "MERGE (e:Node {id: $props.id}) SET e += $props "
+            "WITH e, $type_label AS typeLabel CALL apoc.create.addLabels(e, [typeLabel]) YIELD node "
+            "RETURN node.id AS evidence_id, properties(node) as evidence_props"
+        )
         try:
             result_ev_node = await execute_query(create_ev_node_query, {"props": ev_props_for_neo4j, "type_label": NodeType.EVIDENCE.value}, tx_type='write')
             if not result_ev_node or not result_ev_node[0].get("evidence_id"):
@@ -425,13 +424,13 @@ class EvidenceStage(BaseStage):
                 metadata=EdgeMetadata(description=f"Evidence '{evidence_node_pydantic.label[:20]}...' {'supports' if evidence_data['supports_hypothesis'] else 'contradicts'} hypothesis.")
             )
             edge_props_for_neo4j = self._prepare_edge_properties_for_neo4j(edge_pydantic)
-            create_rel_query = f"""
-             MATCH (ev:Node {{id: $evidence_id}})
-             MATCH (hyp:Node {{id: $hypothesis_id}})
-            MERGE (ev)-[r:`{edge_type.value}` {{id: $props.id}}]->(hyp)
-             SET r += $props
-             RETURN r.id as rel_id
-            """
+            create_rel_query = (
+                "MATCH (ev:Node {id: $evidence_id}) "
+                "MATCH (hyp:Node {id: $hypothesis_id}) "
+                f"MERGE (ev)-[r:`{edge_type.value}` {{id: $props.id}}]->(hyp) "
+                "SET r += $props "
+                "RETURN r.id as rel_id"
+            )
             params_rel = {"evidence_id": created_evidence_id, "hypothesis_id": hypothesis_id, "props": edge_props_for_neo4j}
             result_rel = await execute_query(create_rel_query, params_rel, tx_type="write")
             if not result_rel or not result_rel[0].get("rel_id"):
@@ -736,11 +735,8 @@ class EvidenceStage(BaseStage):
             "iterations_completed": iterations_run, # Use the counter
             "evidence_nodes_created_in_neo4j": evidence_created_count,
             "hypotheses_updated_in_neo4j": hypotheses_updated_count,
-            "ibns_created_in_neo4j": ibns_created_count,
-            "hyperedges_created_in_neo4j": hyperedges_created_count,
+            "ibns_created_in_neo4j": ibns_created_count,            "hyperedges_created_in_neo4j": hyperedges_created_count,
         }
         context_update = {"evidence_integration_completed": True, "evidence_nodes_added_count": evidence_created_count}
         
         return StageOutput(summary=summary, metrics=metrics, next_stage_context_update={self.stage_name: context_update})
-
-```

@@ -1,7 +1,7 @@
 import httpx
 from typing import Optional, Dict, Any
 from loguru import logger
-from adaptive_graph_of_thoughts.config import Config # May not be used initially but good for future config
+from ...config import Config # May not be used initially but good for future config
 
 class BaseAPIClientError(Exception):
     """Base exception for API client errors."""
