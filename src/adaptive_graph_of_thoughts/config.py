@@ -1,9 +1,12 @@
-from pathlib import Path
-from typing import Optional, List, Union, Dict, Any
-import yaml
 import json
+import logging
 import os
+from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from threading import Lock
+from typing import Any, Dict, Optional, Union
+
+import yaml
 
 # Thread safety lock
 _config_lock = Lock()
@@ -27,7 +30,7 @@ def validate_max_steps(max_steps: int) -> None:
         raise ValueError(f"Max steps must be a positive integer, got {max_steps}")
 
 
-def validate_config_schema(config_data: dict) -> bool:
+def validate_config_schema(_config_data: dict) -> bool:
     """Simple validation for now."""
     return True
 
@@ -182,15 +185,17 @@ class LegacyConfig:
     def merge(self, other: "LegacyConfig") -> "LegacyConfig":
         """Merge with another config, other takes precedence."""
         return LegacyConfig(
-            learning_rate=other.learning_rate
-            if hasattr(other, "learning_rate")
-            else self.learning_rate,
-            batch_size=other.batch_size
-            if hasattr(other, "batch_size")
-            else self.batch_size,
-            max_steps=other.max_steps
-            if hasattr(other, "max_steps")
-            else self.max_steps,
+            learning_rate=(
+                other.learning_rate
+                if hasattr(other, "learning_rate")
+                else self.learning_rate
+            ),
+            batch_size=(
+                other.batch_size if hasattr(other, "batch_size") else self.batch_size
+            ),
+            max_steps=(
+                other.max_steps if hasattr(other, "max_steps") else self.max_steps
+            ),
         )
 
     @classmethod
@@ -210,10 +215,10 @@ class LegacyConfig:
                 data = json.loads(content)
             else:
                 raise ValueError(f"Unsupported file format: {path.suffix}")
-        except yaml.YAMLError as e:
-            raise yaml.YAMLError(f"Invalid YAML: {e}")
-        except json.JSONDecodeError as e:
-            raise json.JSONDecodeError(f"Invalid JSON: {e}", "", 0)
+        except yaml.YAMLError as err:
+            raise yaml.YAMLError(f"Invalid YAML: {err}") from err
+        except json.JSONDecodeError as err:
+            raise json.JSONDecodeError(err.msg, err.doc, err.pos) from err
 
         if not data:
             raise ValueError("Empty configuration file")
@@ -248,8 +253,8 @@ class LegacyConfig:
         try:
             with open(file_path, "w") as f:
                 f.write(content)
-        except PermissionError:
-            raise PermissionError(f"Permission denied writing to: {file_path}")
+        except PermissionError as err:
+            raise PermissionError(f"Permission denied writing to: {file_path}") from err
 
     @classmethod
     def from_env(cls) -> "LegacyConfig":
@@ -295,10 +300,10 @@ class LegacyConfig:
                 override_data = json.loads(content)
             else:
                 raise ValueError(f"Unsupported file format: {path.suffix}")
-        except yaml.YAMLError as e:
-            raise yaml.YAMLError(f"Invalid YAML: {e}")
-        except json.JSONDecodeError as e:
-            raise json.JSONDecodeError(f"Invalid JSON: {e}", "", 0)
+        except yaml.YAMLError as err:
+            raise yaml.YAMLError(f"Invalid YAML: {err}") from err
+        except json.JSONDecodeError as err:
+            raise json.JSONDecodeError(err.msg, err.doc, err.pos) from err
 
         if not override_data:
             return base_config  # No overrides, return base
@@ -321,9 +326,6 @@ settings = config  # For backward compatibility
 # ---------------------------------------------------------------------------
 # Simplified configuration used in tests
 # ---------------------------------------------------------------------------
-
-from dataclasses import dataclass, asdict, field
-import logging
 
 
 @dataclass
