@@ -41,6 +41,9 @@ jobs:
         # but is not strictly necessary. --strict can be added to fail on warnings.
         run: poetry run mkdocs build --clean --site-dir _site --config-file mkdocs.yml
 
+      - name: Create .nojekyll file to disable Jekyll processing
+        run: touch _site/.nojekyll
+
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
