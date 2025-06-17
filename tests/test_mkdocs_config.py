@@ -3,12 +3,9 @@ import os
 import tempfile
 import shutil
 import yaml
-import json
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock, mock_open
-from typing import Dict, Any, List, Union
+from unittest.mock import Mock, patch, mock_open
+from typing import Any
 import time
-
 # Mock mkdocs imports since they may not be available in test environment
 try:
     from mkdocs.config import config_options
