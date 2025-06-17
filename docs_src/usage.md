@@ -8,7 +8,7 @@ Adaptive Graph of Thoughts exposes its functionalities via a FastAPI backend. Th
 
 ### MCP Protocol Endpoint
 
-*   **Endpoint:** `POST /mcp`
+*   **Endpoint:** `/mcp` (supports `GET`, `POST`, and `DELETE`)
 *   **Description:** This is the main endpoint for communication with Model Context Protocol (MCP) clients like Claude Desktop. It handles JSON-RPC requests for various methods defined by the ASR-GoT framework.
 *   **Example Request (`asr_got.query` method):**
     ```json

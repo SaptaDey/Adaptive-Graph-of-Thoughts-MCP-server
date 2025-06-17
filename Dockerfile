@@ -45,7 +45,8 @@ ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH="/app" \
     APP_HOME=/app \
     PYTHONHASHSEED=random \
-    MCP_TRANSPORT_TYPE=http
+    MCP_TRANSPORT_TYPE=http \
+    PORT=8000
 
 WORKDIR ${APP_HOME}
 
@@ -75,7 +76,7 @@ EXPOSE 8000
 
 # Add a health check for the application
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health || exit 1
+    CMD curl -f http://localhost:${PORT}/health || exit 1
 
 # Use entrypoint for flexible transport startup
 ENTRYPOINT ["/entrypoint.sh"]

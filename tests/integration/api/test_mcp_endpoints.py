@@ -139,3 +139,18 @@ def test_shutdown(client: TestClient) -> None:
     assert result["jsonrpc"] == "2.0"
     assert result["id"] == "test-shutdown-1"
     assert result["result"] is None
+
+
+def test_get_endpoint(client: TestClient) -> None:
+    response = client.get("/mcp?server.host=localhost&server.port=1234")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["config"]["server"]["host"] == "localhost"
+    assert data["config"]["server"]["port"] == "1234"
+
+
+def test_delete_endpoint(client: TestClient) -> None:
+    response = client.delete("/mcp?cleanup=true")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["config"]["cleanup"] == "true"

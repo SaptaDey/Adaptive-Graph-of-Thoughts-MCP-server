@@ -6,6 +6,8 @@ This section provides details about the Model Context Protocol (MCP) API endpoin
 
 Adaptive Graph of Thoughts implements an MCP server to allow integration with MCP clients such as Claude Desktop. The primary endpoint for MCP communication is `/mcp`.
 
+This endpoint accepts `GET`, `POST`, and `DELETE` requests. Configuration values passed by Smithery are supplied as query parameters using dot notation, for example `GET /mcp?server.host=localhost&server.port=8080`.
+
 ## Methods
 
 The following JSON-RPC methods are supported via the `/mcp` endpoint:

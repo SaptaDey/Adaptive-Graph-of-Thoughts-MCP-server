@@ -208,11 +208,11 @@ graph TB
 
 ### Notes on Specific Deployment Platforms
 
--   **Smithery.ai**: Deployment to the Smithery.ai platform typically involves using the provided Docker image directly.
-    *   Consult Smithery.ai's specific documentation for instructions on deploying custom Docker images.
-    *   **Port Configuration**: Ensure that the platform is configured to expose port 8000 (or the port configured via `APP_PORT` if overridden) for the Adaptive Graph of Thoughts container, as this is the default port used by the FastAPI application.
-    *   **Health Checks**: Smithery.ai may use health checks to monitor container status. The Adaptive Graph of Thoughts Docker image includes a `HEALTHCHECK` instruction that verifies the `/health` endpoint (e.g., `http://localhost:8000/health`). Ensure Smithery.ai is configured to use this endpoint if it requires a specific health check path.
-    *   The provided `Dockerfile` and `docker-compose.prod.yml` serve as a baseline for understanding the container setup. Adapt as per Smithery.ai's requirements.
+-   **Smithery.ai**: Deploy using the included `smithery.yaml`.
+    *   Connect your GitHub repository on Smithery and click **Deploy**.
+    *   The container listens on the `PORT` environment variable (default `8000`).
+    *   **Health Checks** rely on the `/health` endpoint.
+    *   The `Dockerfile` and `docker-compose.prod.yml` illustrate the container setup.
 
 4. **Access the Services**:
    - **API Documentation**: `http://localhost:8000/docs`
