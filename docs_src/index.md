@@ -12,19 +12,18 @@ title: Home
 [Explore Features](#key-features){ .md-button }
 [View on GitHub](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server){ .md-button }
 
-<div align="center">
 
-#### **Intelligent Scientific Reasoning through Graph-of-Thoughts**
+<h4 align="center"><strong>Intelligent Scientific Reasoning through Graph-of-Thoughts</strong></h4>
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/releases)
-[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/blob/main/LICENSE)
-[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/blob/main/Dockerfile)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-009688.svg)](https://fastapi.tiangolo.com)
-[![NetworkX](https://img.shields.io/badge/NetworkX-3.3-orange.svg)](https://networkx.org)
-[![Last Updated](https://img.shields.io/badge/last_updated-May_2024-lightgrey.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/blob/main/.md/CHANGELOG.md)
-
-</div>
+<p align="center">
+  <a href="https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/"><img src="https://img.shields.io/badge/version-0.1.0-blue.svg" alt="Version"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python"></a>
+  <a href="https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green.svg" alt="License"></a>
+  <a href="https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/blob/main/Dockerfile"><img src="https://img.shields.io/badge/docker-ready-brightgreen.svg" alt="Docker"></a>
+  <a href="https://fastapi.tiangolo.com"><img src="https://img.shields.io/badge/FastAPI-0.111.0-009688.svg" alt="FastAPI"></a>
+  <a href="https://networkx.org"><img src="https://img.shields.io/badge/NetworkX-3.3-orange.svg" alt="NetworkX"></a>
+  <a href="https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/blob/main/.md/CHANGELOG.md"><img src="https://img.shields.io/badge/last_updated-May_2024-lightgrey.svg" alt="Last Updated"></a>
+</p>
 
 <div align="center">
   <p><strong>🚀 Next-Generation AI Reasoning Framework for Scientific Research</strong></p>

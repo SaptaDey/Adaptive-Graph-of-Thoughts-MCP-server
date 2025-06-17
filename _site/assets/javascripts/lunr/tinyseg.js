@@ -15,11 +15,8 @@
         module.exports = factory()
     } else {
         // Browser globals (root is window)
-        if (!root.lunr) {
-            console.error('TinySegmenter: lunr global not found – load lunr.js first.');
-            return;
-        }
         factory()(root.lunr);
+    }
 }(this, function () {
     /**
      * Just return a value to define the module export.
@@ -116,7 +113,7 @@
           var seg = ["B3","B2","B1"];
           var ctype = ["O","O","O"];
           var o = input.split("");
-          for (let i = 0; i < o.length; ++i) {
+          for (i = 0; i < o.length; ++i) {
             seg.push(o[i]);
             ctype.push(this.ctype_(o[i]))
           }

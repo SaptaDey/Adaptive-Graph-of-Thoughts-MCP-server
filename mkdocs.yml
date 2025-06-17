@@ -1,5 +1,6 @@
 site_name: Adaptive Graph of Thoughts Documentation
 docs_dir: docs_src
+site_dir: _site
 site_url: https://SaptaDey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/
 repo_url: https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server
 repo_name: Adaptive-Graph-of-Thoughts-MCP-server
