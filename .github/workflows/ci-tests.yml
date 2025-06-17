@@ -44,19 +44,19 @@ jobs:
         run: echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
 
       - name: Ruff Lint
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.13'
         run: poetry run ruff check .
 
       - name: Ruff Format Check
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.13'
         run: poetry run ruff format --check .
 
       - name: MyPy Type Check
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.13'
         run: poetry run mypy src/
 
       - name: Pyright Type Check
-        if: matrix.python-version == '3.11'
+        if: matrix.python-version == '3.13'
         run: poetry run pyright src/
 
       - name: Run tests
