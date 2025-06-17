@@ -10,19 +10,19 @@ title: Home
 
 [Get Started](getting_started.md){ .md-button .md-button--primary }
 [Explore Features](#key-features){ .md-button }
-[View on GitHub]({{ repo_url }}){ .md-button }
+[View on GitHub](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server){ .md-button }
 
 <div align="center">
 
 #### **Intelligent Scientific Reasoning through Graph-of-Thoughts**
 
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/SaptaDey/Adaptive Graph of Thoughts/releases) <!-- Adjust link if repo changes -->
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/releases)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE.md) <!-- Link to license in docs_src -->
-[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](../Dockerfile) <!-- Link to Dockerfile in root -->
+[![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/blob/main/LICENSE)
+[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/blob/main/Dockerfile)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-009688.svg)](https://fastapi.tiangolo.com)
 [![NetworkX](https://img.shields.io/badge/NetworkX-3.3-orange.svg)](https://networkx.org)
-[![Last Updated](https://img.shields.io/badge/last_updated-May_2024-lightgrey.svg)](../.md/CHANGELOG.md) <!-- Link to changelog in root/.md -->
+[![Last Updated](https://img.shields.io/badge/last_updated-May_2024-lightgrey.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/blob/main/.md/CHANGELOG.md)
 
 </div>
 
