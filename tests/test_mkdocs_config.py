@@ -116,12 +116,12 @@ def minimal_config_file(temp_dir, minimal_mkdocs_config):
     return config_path
 
 # Configuration validation functions that would typically exist in the module
-def load_config(config_file_path: str) -> Dict[str, Any]:
+def load_config(config_file_path: str) -> dict[str, Any]:
     """Load mkdocs configuration from YAML file."""
     if not os.path.exists(config_file_path):
         raise FileNotFoundError(f"Configuration file not found: {config_file_path}")
 
-    with open(config_file_path, 'r', encoding='utf-8') as f:
+    with open(config_file_path, encoding='utf-8') as f:
         content = f.read().strip()
         if not content:
             raise ValueError("Configuration file is empty")
@@ -132,8 +132,7 @@ def load_config(config_file_path: str) -> Dict[str, Any]:
                 raise ValueError("Configuration file contains no valid data")
             return config
         except yaml.YAMLError as e:
-            raise yaml.YAMLError(f"Invalid YAML in configuration file: {e}")
-
+            raise yaml.YAMLError(f"Invalid YAML in configuration file: {e}") from e
 def validate_site_name(site_name: Any) -> bool:
     """Validate site_name field."""
     if not isinstance(site_name, str):
