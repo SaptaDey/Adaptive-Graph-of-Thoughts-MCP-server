@@ -1,8 +1,6 @@
 import json
 import os
-import tempfile
-from pathlib import Path
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -12,7 +10,6 @@ from adaptive_graph_of_thoughts.config import (
     GraphConfig,
     LoggingConfig,
     ModelConfig,
-    _config,
     get_config,
     load_config,
     set_config,
@@ -462,7 +459,7 @@ class TestConfigFileSaving:
         config_file = tmp_path / "output.json"
         config.save_to_file(config_file)
         assert config_file.exists()
-        with open(config_file, "r") as f:
+        with open(config_file) as f:
             saved_data = json.load(f)
         assert saved_data["model"]["name"] == "gpt-4"
 
@@ -471,7 +468,7 @@ class TestConfigFileSaving:
         config_file = tmp_path / "output.yaml"
         config.save_to_file(config_file)
         assert config_file.exists()
-        with open(config_file, "r") as f:
+        with open(config_file) as f:
             saved_data = yaml.safe_load(f)
         assert saved_data["model"]["name"] == "gpt-4"
 
@@ -482,7 +479,7 @@ class TestConfigFileSaving:
             config.save_to_file(config_file)
 
     @patch("builtins.open", side_effect=PermissionError("Permission denied"))
-    def test_save_to_file_permission_error(self, mock_open):
+    def test_save_to_file_permission_error(self, _mock_open):
         config = Config()
         with pytest.raises(RuntimeError, match="Failed to save configuration"):
             config.save_to_file("test.json")
@@ -714,7 +711,7 @@ class TestLoadConfig:
         assert "Failed to load config from environment" in caplog.text
         assert isinstance(cfg, Config)
 
-    def test_load_config_custom_env_prefix(self, tmp_path):
+    def test_load_config_custom_env_prefix(self):
         with patch.dict(
             os.environ, {"CUSTOM_MODEL_NAME": "custom", "CUSTOM_GRAPH_MAX_DEPTH": "12"}
         ):
