@@ -13,19 +13,20 @@
                     ║                                      ║
                     ╚══════════════════════════════════════╝
 ```
-
-#### **Intelligent Scientific Reasoning through Graph-of-Thoughts**
-
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/)
-[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
-[![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](Dockerfile)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.111.1-009688.svg)](https://fastapi.tiangolo.com)
-[![NetworkX](https://img.shields.io/badge/NetworkX-3.3-orange.svg)](https://networkx.org)
-[![Last Updated](https://img.shields.io/badge/last_updated-Jun_2025-lightgrey.svg)](CHANGELOG.md)
-[![smithery badge](https://smithery.ai/badge/@SaptaDey/graph-of-thought-mcp)](https://smithery.ai/server/@SaptaDey/graph-of-thought-mcp)
-
 </div>
+
+<h4 align="center"><strong>Intelligent Scientific Reasoning through Graph-of-Thoughts</strong></h4>
+
+<p align="center">
+  <a href="https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/"><img src="https://img.shields.io/badge/version-0.1.0-blue.svg" alt="Version"></a>
+  <a href="https://www.python.org/downloads/"><img src="https://img.shields.io/badge/python-3.11+-blue.svg" alt="Python"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache_2.0-green.svg" alt="License"></a>
+  <a href="Dockerfile"><img src="https://img.shields.io/badge/docker-ready-brightgreen.svg" alt="Docker"></a>
+  <a href="https://fastapi.tiangolo.com"><img src="https://img.shields.io/badge/FastAPI-0.111.1-009688.svg" alt="FastAPI"></a>
+  <a href="https://networkx.org"><img src="https://img.shields.io/badge/NetworkX-3.3-orange.svg" alt="NetworkX"></a>
+  <a href="CHANGELOG.md"><img src="https://img.shields.io/badge/last_updated-Jun_2025-lightgrey.svg" alt="Last Updated"></a>
+  <a href="https://smithery.ai/server/@SaptaDey/graph-of-thought-mcp"><img src="https://smithery.ai/badge/@SaptaDey/graph-of-thought-mcp" alt="smithery badge"></a>
+</p>
 
 <div align="center">
   <p><strong>🚀 Next-Generation AI Reasoning Framework for Scientific Research</strong></p>
