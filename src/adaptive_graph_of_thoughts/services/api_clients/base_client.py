@@ -1,6 +1,8 @@
+from typing import Any, Optional
+
 import httpx
-from typing import Optional, Dict, Any
 from loguru import logger
+
 from ...config import LegacyConfig
 
 
@@ -41,7 +43,7 @@ class AsyncHTTPClient:
         api_key: Optional[
             str
         ] = None,  # Specific clients might handle API keys differently
-        default_headers: Optional[Dict[str, str]] = None,
+        default_headers: Optional[dict[str, str]] = None,
     ):
         if not isinstance(base_url, str):
             raise TypeError(f"base_url must be a string, got {type(base_url)}")
@@ -70,8 +72,8 @@ class AsyncHTTPClient:
     async def get(
         self,
         endpoint: str,
-        params: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        params: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
     ) -> httpx.Response:
         endpoint = endpoint.lstrip("/")
         logger.debug(f"GET request to {self.base_url}/{endpoint} with params: {params}")
@@ -94,15 +96,15 @@ class AsyncHTTPClient:
                 message=str(e),
             ) from e
         except httpx.RequestError as e:
-            logger.error(f"Request error for {e.request.url}: {str(e)}")
-            raise APIRequestError(f"Request error for {e.request.url}: {str(e)}") from e
+            logger.error(f"Request error for {e.request.url}: {e!s}")
+            raise APIRequestError(f"Request error for {e.request.url}: {e!s}") from e
 
     async def post(
         self,
         endpoint: str,
-        json_data: Optional[Dict[str, Any]] = None,
-        data: Optional[Dict[str, Any]] = None,
-        headers: Optional[Dict[str, str]] = None,
+        json_data: Optional[dict[str, Any]] = None,
+        data: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
     ) -> httpx.Response:
         endpoint = endpoint.lstrip("/")
         logger.debug(f"POST request to {self.base_url}/{endpoint}")
@@ -125,8 +127,8 @@ class AsyncHTTPClient:
                 message=str(e),
             ) from e
         except httpx.RequestError as e:
-            logger.error(f"Request error for {e.request.url}: {str(e)}")
-            raise APIRequestError(f"Request error for {e.request.url}: {str(e)}") from e
+            logger.error(f"Request error for {e.request.url}: {e!s}")
+            raise APIRequestError(f"Request error for {e.request.url}: {e!s}") from e
 
     async def close(self):
         logger.debug(f"Closing AsyncHTTPClient for base URL: {self.base_url}")
@@ -141,7 +143,6 @@ class AsyncHTTPClient:
 
 if __name__ == "__main__":
     # Example Usage (for testing the base client directly if needed)
-    import asyncio
 
     async def main():
         # This example won't run without a live server, it's for structure.

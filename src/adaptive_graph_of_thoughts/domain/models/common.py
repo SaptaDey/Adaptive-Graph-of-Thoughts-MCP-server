@@ -3,9 +3,10 @@ from enum import Enum
 from typing import Annotated
 
 try:
-    from pydantic import BaseModel, Field, BeforeValidator
+    from pydantic import BaseModel, BeforeValidator, Field
 except ImportError:
     from pydantic import BaseModel, Field
+
     # For pydantic v1 compatibility, create dummy BeforeValidator
     def BeforeValidator(func):
         return func
@@ -15,15 +16,15 @@ except ImportError:
 def _validate_probability_distribution(v: list[float]) -> list[float]:
     """
     Validates that a list of floats represents a probability distribution.
-    
+
     Checks that all values are between 0.0 and 1.0. Allows empty lists and does not enforce that the sum equals 1.0, assuming normalization may occur elsewhere.
-    
+
     Args:
         v: List of floats to validate.
-    
+
     Returns:
         The validated list of floats if all values are within the valid range.
-    
+
     Raises:
         ValueError: If any value is outside the range [0.0, 1.0].
     """
@@ -47,10 +48,18 @@ ProbabilityDistribution = Annotated[
 # Confidence Vector based on P1.5
 # Using a class for better type hinting and potential methods later
 class ConfidenceVector(BaseModel):
-    empirical_support: float = Field(default=0.5, description="Must be between 0.0 and 1.0")
-    theoretical_basis: float = Field(default=0.5, description="Must be between 0.0 and 1.0")
-    methodological_rigor: float = Field(default=0.5, description="Must be between 0.0 and 1.0")
-    consensus_alignment: float = Field(default=0.5, description="Must be between 0.0 and 1.0")
+    empirical_support: float = Field(
+        default=0.5, description="Must be between 0.0 and 1.0"
+    )
+    theoretical_basis: float = Field(
+        default=0.5, description="Must be between 0.0 and 1.0"
+    )
+    methodological_rigor: float = Field(
+        default=0.5, description="Must be between 0.0 and 1.0"
+    )
+    consensus_alignment: float = Field(
+        default=0.5, description="Must be between 0.0 and 1.0"
+    )
 
     def to_list(self) -> list[float]:
         """
@@ -67,13 +76,13 @@ class ConfidenceVector(BaseModel):
     def from_list(cls, values: list[float]) -> "ConfidenceVector":
         """
         Creates a ConfidenceVector instance from a list of four float values.
-        
+
         Args:
             values: A list of four floats representing empirical support, theoretical basis, methodological rigor, and consensus alignment, in that order.
-        
+
         Returns:
             A ConfidenceVector initialized with the provided values.
-        
+
         Raises:
             ValueError: If the input list does not contain exactly four elements.
         """
@@ -95,7 +104,9 @@ class ConfidenceVector(BaseModel):
 CertaintyScore = Annotated[float, Field(description="Value between 0.0 and 1.0")]
 
 # Impact Score (P1.28)
-ImpactScore = Annotated[float, Field(description="Value between 0.0 and 1.0")]  # Assuming normalized impact
+ImpactScore = Annotated[
+    float, Field(description="Value between 0.0 and 1.0")
+]  # Assuming normalized impact
 
 
 class TimestampedModel(BaseModel):
@@ -104,10 +115,10 @@ class TimestampedModel(BaseModel):
 
     def __init__(self, **data):
         now = datetime.datetime.now()
-        if 'created_at' not in data:
-            data['created_at'] = now
-        if 'updated_at' not in data:
-            data['updated_at'] = now
+        if "created_at" not in data:
+            data["created_at"] = now
+        if "updated_at" not in data:
+            data["updated_at"] = now
         super().__init__(**data)
 
     def touch(self):

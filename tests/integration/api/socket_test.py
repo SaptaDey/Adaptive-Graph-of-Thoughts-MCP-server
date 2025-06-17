@@ -1,11 +1,12 @@
 """
 Very simple test script using low-level socket connections to test the MCP server.
 """
+
 import json
 import socket
 
 
-def send_tcp_request(host='localhost', port=8000, path='/health', method='GET'):
+def send_tcp_request(host="localhost", port=8000, path="/health", method="GET"):
     """Send a raw TCP request to a server and print the response."""
     try:
         # Create socket
@@ -17,15 +18,17 @@ def send_tcp_request(host='localhost', port=8000, path='/health', method='GET'):
         sock.connect((host, port))
 
         # Create HTTP request
-        request = f"{method} {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n"
+        request = (
+            f"{method} {path} HTTP/1.1\r\nHost: {host}\r\nConnection: close\r\n\r\n"
+        )
 
         # Send request
         print(f"Sending request: {request.strip()}")
-        sock.sendall(request.encode('utf-8'))
+        sock.sendall(request.encode("utf-8"))
 
         # Receive all data
         print("Waiting for response...")
-        response = b''
+        response = b""
         while True:
             data = sock.recv(4096)
             if not data:
@@ -36,7 +39,7 @@ def send_tcp_request(host='localhost', port=8000, path='/health', method='GET'):
         sock.close()
 
         # Decode and print response
-        response_str = response.decode('utf-8')
+        response_str = response.decode("utf-8")
         print("\n--- Response received ---")
         print(response_str)
         print("------------------------\n")
@@ -52,7 +55,8 @@ def send_tcp_request(host='localhost', port=8000, path='/health', method='GET'):
         print(f"Error: {e}")
         return None
 
-def send_jsonrpc_request(host='localhost', port=8000, path='/mcp', method='initialize'):
+
+def send_jsonrpc_request(host="localhost", port=8000, path="/mcp", method="initialize"):
     """Send a JSON-RPC request to the MCP server."""
     try:
         # Create socket
@@ -71,10 +75,10 @@ def send_jsonrpc_request(host='localhost', port=8000, path='/mcp', method='initi
             "params": {
                 "client_info": {
                     "client_name": "Socket Test Client",
-                    "client_version": "1.0.0"
+                    "client_version": "1.0.0",
                 },
-                "process_id": 12345
-            }
+                "process_id": 12345,
+            },
         }
 
         payload_json = json.dumps(payload)
@@ -93,11 +97,11 @@ def send_jsonrpc_request(host='localhost', port=8000, path='/mcp', method='initi
         # Send request
         print(f"Sending request to {path}...")
         print(f"Payload: {payload_json}")
-        sock.sendall(request.encode('utf-8'))
+        sock.sendall(request.encode("utf-8"))
 
         # Receive all data
         print("Waiting for response...")
-        response = b''
+        response = b""
         while True:
             data = sock.recv(4096)
             if not data:
@@ -108,7 +112,7 @@ def send_jsonrpc_request(host='localhost', port=8000, path='/mcp', method='initi
         sock.close()
 
         # Decode and print response
-        response_str = response.decode('utf-8')
+        response_str = response.decode("utf-8")
         print("\n--- Response received ---")
         print(response_str)
         print("------------------------\n")
@@ -116,7 +120,7 @@ def send_jsonrpc_request(host='localhost', port=8000, path='/mcp', method='initi
         # Try to extract and parse JSON from the HTTP response
         if "Content-Type: application/json" in response_str:
             try:
-                body_start = response_str.find('\r\n\r\n') + 4
+                body_start = response_str.find("\r\n\r\n") + 4
                 json_str = response_str[body_start:]
                 json_data = json.loads(json_str)
                 print("Parsed JSON response:")
@@ -137,17 +141,18 @@ def send_jsonrpc_request(host='localhost', port=8000, path='/mcp', method='initi
         print(f"Error: {e}")
         return None
 
+
 if __name__ == "__main__":
     # Test the health endpoint
     print("=== Testing Health Endpoint ===")
-    health_response = send_tcp_request(path='/health')
+    health_response = send_tcp_request(path="/health")
 
     if health_response and "200 OK" in health_response:
         print("Health check successful!")
 
         # Test the MCP endpoint
         print("\n=== Testing MCP Initialize Endpoint ===")
-        mcp_response = send_jsonrpc_request(path='/mcp', method='initialize')
+        mcp_response = send_jsonrpc_request(path="/mcp", method="initialize")
 
         if mcp_response and "200 OK" in mcp_response:
             print("MCP initialize request successful!")

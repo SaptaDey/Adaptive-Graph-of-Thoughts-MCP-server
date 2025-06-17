@@ -1,9 +1,10 @@
-import pytest
-import yaml
 import json
 import os
-from pathlib import Path
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
+
+import pytest
+import yaml
+
 from adaptive_graph_of_thoughts.config import LegacyConfig as Config
 
 
@@ -194,7 +195,7 @@ class TestConfig:
         assert loaded_data["max_steps"] == 1000
 
     @patch("builtins.open", side_effect=PermissionError("Permission denied"))
-    def test_config_save_permission_error(self, mock_open):
+    def test_config_save_permission_error(self, _mock_open):
         """Test Config saving with permission error raises exception."""
         config = Config(learning_rate=0.01, batch_size=32, max_steps=1000)
         with pytest.raises(PermissionError):
@@ -433,17 +434,15 @@ class TestConfigProperties:
 
     def test_config_validation_chain(self):
         """Test Config validation is called in proper order."""
-        with patch(
-            "adaptive_graph_of_thoughts.config.validate_learning_rate"
-        ) as mock_lr:
-            with patch(
-                "adaptive_graph_of_thoughts.config.validate_batch_size"
-            ) as mock_bs:
-                with patch(
-                    "adaptive_graph_of_thoughts.config.validate_max_steps"
-                ) as mock_ms:
-                    Config(learning_rate=0.01, batch_size=32, max_steps=1000)
+        with (
+            patch(
+                "adaptive_graph_of_thoughts.config.validate_learning_rate"
+            ) as mock_lr,
+            patch("adaptive_graph_of_thoughts.config.validate_batch_size") as mock_bs,
+            patch("adaptive_graph_of_thoughts.config.validate_max_steps") as mock_ms,
+        ):
+            Config(learning_rate=0.01, batch_size=32, max_steps=1000)
 
-                    mock_lr.assert_called_once_with(0.01)
-                    mock_bs.assert_called_once_with(32)
-                    mock_ms.assert_called_once_with(1000)
+            mock_lr.assert_called_once_with(0.01)
+            mock_bs.assert_called_once_with(32)
+            mock_ms.assert_called_once_with(1000)

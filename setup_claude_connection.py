@@ -17,11 +17,16 @@ import requests
 SERVER_URL = "http://localhost:8000"
 MCP_ENDPOINT = f"{SERVER_URL}/mcp"
 HEALTH_ENDPOINT = f"{SERVER_URL}/health"
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config", "claude_mcp_config.json")
+CONFIG_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "config", "claude_mcp_config.json"
+)
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def check_health():
     """Check if the Adaptive Graph of Thoughts server is running by testing the health endpoint."""
@@ -29,19 +34,24 @@ def check_health():
         response = requests.get(HEALTH_ENDPOINT)
         if response.status_code == 200:
             health_data = response.json()
-            logger.info(f"✅ Server is running: Status {health_data['status']}, Version {health_data['version']}")
+            logger.info(
+                f"✅ Server is running: Status {health_data['status']}, Version {health_data['version']}"
+            )
             return True
         else:
-            logger.error(f"❌ Server returned non-200 status code: {response.status_code}")
+            logger.error(
+                f"❌ Server returned non-200 status code: {response.status_code}"
+            )
             return False
     except Exception as e:
         logger.error(f"❌ Error connecting to server: {e}")
         return False
 
+
 def test_mcp_initialize():
     """
     Sends an initialize request to the MCP endpoint to verify its availability.
-    
+
     Returns:
         True if the MCP endpoint responds successfully with a result; False otherwise.
     """
@@ -50,18 +60,16 @@ def test_mcp_initialize():
         "id": "setup-script-1",
         "method": "initialize",
         "params": {
-            "client_info": {
-                "client_name": "Adaptive Graph of Thoughts Setup Script"
-            },
-            "process_id": 12345
-        }
+            "client_info": {"client_name": "Adaptive Graph of Thoughts Setup Script"},
+            "process_id": 12345,
+        },
     }
 
     try:
         response = requests.post(
             MCP_ENDPOINT,
             json=init_payload,
-            headers={"Content-Type": "application/json"}
+            headers={"Content-Type": "application/json"},
         )
 
         if response.status_code == 200:
@@ -73,23 +81,28 @@ def test_mcp_initialize():
                 logger.info("   MCP version: 2024-11-05")
                 return True
             else:
-                logger.error(f"❌ MCP endpoint returned an error: {json.dumps(result.get('error', {}), indent=2)}")
+                logger.error(
+                    f"❌ MCP endpoint returned an error: {json.dumps(result.get('error', {}), indent=2)}"
+                )
                 return False
         else:
-            logger.error(f"❌ MCP endpoint returned status code: {response.status_code}")
+            logger.error(
+                f"❌ MCP endpoint returned status code: {response.status_code}"
+            )
             logger.error(f"   Response: {response.text}")
             return False
     except Exception as e:
         logger.error(f"❌ Error testing MCP endpoint: {e}")
         return False
 
+
 def check_config_file():
     """
     Validates the existence and structure of the MCP configuration file.
-    
+
     Checks if the configuration file exists, is valid JSON, and contains the required
     'connection' and 'endpoint' fields with the expected endpoint value.
-    
+
     Returns:
         True if the configuration file is present and valid; False otherwise.
     """
@@ -103,9 +116,9 @@ def check_config_file():
 
         # Validate essential fields
         if (
-            "connection" in config and
-            "endpoint" in config["connection"] and
-            config["connection"]["endpoint"] == MCP_ENDPOINT
+            "connection" in config
+            and "endpoint" in config["connection"]
+            and config["connection"]["endpoint"] == MCP_ENDPOINT
         ):
             logger.info("✅ MCP configuration file is valid")
             return True
@@ -116,7 +129,9 @@ def check_config_file():
             elif "endpoint" not in config["connection"]:
                 logger.warning("   Missing 'endpoint' field in connection")
             elif config["connection"]["endpoint"] != MCP_ENDPOINT:
-                logger.warning(f"   Endpoint mismatch: {config['connection']['endpoint']} vs {MCP_ENDPOINT}")
+                logger.warning(
+                    f"   Endpoint mismatch: {config['connection']['endpoint']} vs {MCP_ENDPOINT}"
+                )
             return False
     except json.JSONDecodeError:
         logger.error("❌ MCP configuration file is not valid JSON")
@@ -124,6 +139,7 @@ def check_config_file():
     except Exception as e:
         logger.error(f"❌ Error checking MCP configuration: {e}")
         return False
+
 
 def display_instructions():
     """Display instructions for connecting with Claude Desktop."""
@@ -146,10 +162,11 @@ def display_instructions():
     logger.info("docs/claude_desktop_integration.md")
     logger.info("\n" + "=" * 60)
 
+
 def main():
     """
     Runs the Adaptive Graph of Thoughts MCP setup process, performing server checks, configuration validation, and displaying connection instructions.
-    
+
     Executes a sequence of steps to verify server health, test the MCP endpoint, validate the MCP configuration file, and provide instructions for connecting Claude Desktop to the Adaptive Graph of Thoughts server. Exits the program if the server is not running.
     """
     logger.info("\n=== Adaptive Graph of Thoughts MCP Setup ===\n")
@@ -157,7 +174,9 @@ def main():
     # Step 1: Check if server is running
     logger.info("Step 1: Checking if Adaptive Graph of Thoughts server is running...")
     if not check_health():
-        logger.warning("\n⚠️  WARNING: Server not running. Please start the server and try again.")
+        logger.warning(
+            "\n⚠️  WARNING: Server not running. Please start the server and try again."
+        )
         logger.warning("   Docker command: docker-compose up -d")
         sys.exit(1)
 
@@ -175,8 +194,11 @@ def main():
     logger.info("\nStep 4: Connection instructions...")
     display_instructions()
 
-    logger.info("\nSetup complete! You can now connect Claude Desktop to the Adaptive Graph of Thoughts server.")
+    logger.info(
+        "\nSetup complete! You can now connect Claude Desktop to the Adaptive Graph of Thoughts server."
+    )
     logger.info("Test the integration by asking a scientific reasoning question.")
+
 
 if __name__ == "__main__":
     main()

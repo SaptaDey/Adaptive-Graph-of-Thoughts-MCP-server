@@ -1,5 +1,5 @@
-import sys
 import subprocess
+import sys
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -12,14 +12,24 @@ if __name__ == "__main__":
     if mode == "http":
         command = ["mcp-inspector", "-v", "validate", "http://localhost:8000/mcp"]
     elif mode == "stdio":
-        command = ["mcp-inspector", "-v", "validate", "stdio", "--program", "python3", "src/adaptive_graph_of_thoughts/main_stdio.py"]
+        command = [
+            "mcp-inspector",
+            "-v",
+            "validate",
+            "stdio",
+            "--program",
+            "python3",
+            "src/adaptive_graph_of_thoughts/main_stdio.py",
+        ]
     else:
         print(f"Unknown mode: {mode}. Supported modes are http, stdio.")
         sys.exit(1)
 
     try:
         print(f"Running command: {' '.join(command)}")
-        result = subprocess.run(command, capture_output=True, text=True, check=True, timeout=480) # e.g., 480 seconds, or make configurable
+        result = subprocess.run(
+            command, capture_output=True, text=True, check=True, timeout=480
+        )  # e.g., 480 seconds, or make configurable
         print("MCP Inspector output:")
         print(result.stdout)
         if result.stderr:
@@ -36,7 +46,9 @@ if __name__ == "__main__":
         print(f"MCP Inspector test for {mode} transport failed.")
         sys.exit(e.returncode)
     except FileNotFoundError:
-        print(f"Error: mcp-inspector command not found. Make sure it is installed and in your PATH.")
+        print(
+            "Error: mcp-inspector command not found. Make sure it is installed and in your PATH."
+        )
         sys.exit(1)
     except Exception as e:
         print(f"An unexpected error occurred: {e}")

@@ -2,7 +2,10 @@ from typing import Optional
 
 from loguru import logger
 
-from adaptive_graph_of_thoughts.domain.models.common import CertaintyScore, ConfidenceVector
+from adaptive_graph_of_thoughts.domain.models.common import (
+    CertaintyScore,
+    ConfidenceVector,
+)
 from adaptive_graph_of_thoughts.domain.models.graph_elements import (
     EdgeType,
     StatisticalPower,
@@ -18,7 +21,7 @@ def bayesian_update_confidence(
 ) -> ConfidenceVector:
     """
     Performs a simplified Bayesian-inspired update on a confidence vector based on new evidence.
-    
+
     The update adjusts each component of the confidence vector toward 1.0 if the evidence supports the hypothesis, or toward 0.0 if it contradicts, scaled by a weight derived from evidence strength, statistical power, and edge type. Returns a new confidence vector reflecting the updated values.
     """
     # This is a highly simplified placeholder. True Bayesian updates involve likelihoods, priors, etc.
@@ -71,7 +74,7 @@ def calculate_information_gain(
 ) -> float:
     """
     Calculates a simplified information gain between prior and posterior probability distributions.
-    
+
     Returns the average absolute difference between corresponding elements of the two distributions. If the distributions differ in length, returns 0.0.
     """
     # Simplified: sum of absolute changes in probability for now

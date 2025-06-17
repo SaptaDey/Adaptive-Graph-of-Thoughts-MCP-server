@@ -1,12 +1,13 @@
-from typing import List, Dict, Any
+from typing import Any
+
 from loguru import logger
 from pydantic import BaseModel
 
-from ...config import LegacyConfig, GoogleScholarConfig
+from ...config import GoogleScholarConfig, LegacyConfig
 from .base_client import (
-    AsyncHTTPClient,
-    APIRequestError,
     APIHTTPError,
+    APIRequestError,
+    AsyncHTTPClient,
     BaseAPIClientError,
 )
 
@@ -62,9 +63,9 @@ class GoogleScholarClient:
         await self.http_client.client.__aexit__(exc_type, exc_val, exc_tb)
 
     def _parse_serpapi_response(
-        self, response_json: Dict[str, Any]
-    ) -> List[GoogleScholarArticle]:
-        articles: List[GoogleScholarArticle] = []
+        self, response_json: dict[str, Any]
+    ) -> list[GoogleScholarArticle]:
+        articles: list[GoogleScholarArticle] = []
         if "organic_results" not in response_json:
             search_parameters = response_json.get("search_parameters", {})
             query = search_parameters.get("q", "N/A")
@@ -137,7 +138,7 @@ class GoogleScholarClient:
 
     async def search(
         self, query: str, num_results: int = 10, lang: str = "en", region: str = "us"
-    ) -> List[GoogleScholarArticle]:
+    ) -> list[GoogleScholarArticle]:
         logger.debug(
             f"Searching Google Scholar (via SerpApi) for query: '{query}', num_results: {num_results}"
         )
@@ -196,7 +197,7 @@ class GoogleScholarClient:
 
 # Example Usage (for testing)
 async def main_google_scholar_test():
-    from adaptive_graph_of_thoughts.config import Settings, GoogleScholarConfig
+    from adaptive_graph_of_thoughts.config import GoogleScholarConfig, Settings
 
     try:
         settings = Settings()  # Load from settings.yaml or environment variables
@@ -232,7 +233,7 @@ async def main_google_scholar_test():
             if articles:
                 logger.info(f"Found {len(articles)} articles for '{query}':")
                 for i, article in enumerate(articles):
-                    logger.info(f"  Article #{i+1}:")
+                    logger.info(f"  Article #{i + 1}:")
                     logger.info(f"    Title: {article.title}")
                     logger.info(f"    Link: {article.link}")
                     logger.info(f"    Authors: {article.authors}")

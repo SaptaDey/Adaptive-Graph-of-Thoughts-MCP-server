@@ -10,7 +10,7 @@ def assess_falsifiability_score(
 ) -> float:  # criteria: Optional[FalsificationCriteria]
     """
     Returns a placeholder falsifiability score based on the presence of criteria.
-    
+
     If criteria is provided, returns 0.5; otherwise, returns 0.0. This function does not perform a full assessment and serves as a stub for future implementation.
     """
     logger.warning(
@@ -24,7 +24,7 @@ def detect_potential_biases() -> list[
 ]:  # node_data: Dict[str, Any] removed (unused), List[BiasFlag]
     """
     Returns a placeholder list of detected biases.
-    
+
     Currently, this function does not perform any bias detection and always returns an empty list.
     """
     logger.warning(

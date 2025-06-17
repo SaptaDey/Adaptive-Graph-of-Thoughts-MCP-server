@@ -16,8 +16,10 @@ class GoTProcessorSessionData(BaseModel):
     accumulated_context: str = ""  # Simplified as JSON string
     stage_outputs_trace: str = ""  # Simplified as JSON string
 
+
 # ASRGoTGraph import is not present in this file, so no removal needed here for that.
 # If ASRGoTGraph was imported for typing graph_state, that line would also be removed.
+
 
 class ComposedOutput(BaseModel):
     """Model for the output structure from the Composition Stage."""

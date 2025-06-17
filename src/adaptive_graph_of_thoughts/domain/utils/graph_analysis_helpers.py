@@ -6,7 +6,7 @@ from loguru import logger
 def detect_communities() -> dict[str, int]:  # graph_nx: Any removed (unused)
     """
     Returns a placeholder result for community detection in a graph.
-    
+
     This function does not perform actual community detection and always returns an empty dictionary.
     """
     logger.warning(
@@ -23,7 +23,7 @@ def calculate_node_centrality() -> dict[
 ]:  # graph_nx: Any, node_id: str removed (unused)
     """
     Returns placeholder centrality metrics for a graph node.
-    
+
     This function is not fully implemented and currently returns zero values for
     degree and betweenness centrality.
     """
