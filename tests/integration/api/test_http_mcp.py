@@ -4,15 +4,11 @@ Test script specifically designed for HTTP-based MCP server verification
 import json
 
 import requests
+import pytest
 
 
-def test_mcp_server():
-    """
-    Sends a test "initialize" request to the local MCP server and verifies its response.
-    
-    Returns:
-        True if the server responds with the expected MCP initialization fields; False otherwise.
-    """
+def test_mcp_server() -> None:
+    """Send a test "initialize" request to the local MCP server and verify the response."""
     print("Testing Adaptive Graph of Thoughts MCP Server...")
 
     # The initialize request payload
@@ -34,30 +30,18 @@ def test_mcp_server():
 
     try:
         print(f"Sending initialize request to {url}...")
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.post(url, json=payload, headers=headers, timeout=5)
+        response.raise_for_status()
+    except requests.RequestException as e:  # pragma: no cover - network issues
+        pytest.skip(f"HTTP server not available: {e}")
 
-        if response.status_code == 200:
-            result = response.json()
-            print("\nSuccess! Server responded:")
-            print(json.dumps(result, indent=2))
+    result = response.json()
+    print("\nSuccess! Server responded:")
+    print(json.dumps(result, indent=2))
 
-            # Check if the response is a valid MCP response
-            if "result" in result and "server_name" in result["result"]:
-                print("\n✅ MCP server is working correctly!")
-                print(f"Server Name: {result['result']['server_name']}")
-                print(f"Server Version: {result['result']['server_version']}")
-                print(f"MCP Version: {result['result']['mcp_version']}")
-                return True
-            else:
-                print("\n❌ Response doesn't contain expected MCP initialize fields")
-                return False
-        else:
-            print(f"\n❌ Error: HTTP Status {response.status_code}")
-            print(f"Response: {response.text}")
-            return False
-    except requests.RequestException as e:
-        print(f"\n❌ Connection error: {e}")
-        return False
+    assert "result" in result and "server_name" in result["result"]
+    assert "server_version" in result["result"]
+    assert "mcp_version" in result["result"]
 
 if __name__ == "__main__":
     test_mcp_server()
