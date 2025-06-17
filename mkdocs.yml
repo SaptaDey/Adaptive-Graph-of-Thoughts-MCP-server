@@ -1,8 +1,8 @@
 site_name: Adaptive Graph of Thoughts Documentation
 docs_dir: docs_src
-site_url: https://SaptaDey.github.io/Adaptive-Graph-of-Thoughts-MCP/
-repo_url: https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP
-repo_name: Adaptive-Graph-of-Thoughts-MCP
+site_url: https://SaptaDey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/
+repo_url: https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server
+repo_name: Adaptive-Graph-of-Thoughts-MCP-server
 
 theme:
   name: material
@@ -45,7 +45,11 @@ markdown_extensions:
   - pymdownx.snippets
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - attr_list
   - md_in_html
 
@@ -66,3 +70,5 @@ nav:
 
 extra_css:
   - assets/stylesheets/custom.css
+extra_javascript:
+  - https://unpkg.com/mermaid@10.4.0/dist/mermaid.min.js
