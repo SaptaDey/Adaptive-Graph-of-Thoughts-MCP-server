@@ -24,6 +24,10 @@
 [![NetworkX](https://img.shields.io/badge/NetworkX-3.3-orange.svg)](https://networkx.org)
 [![Last Updated](https://img.shields.io/badge/last_updated-Jun_2025-lightgrey.svg)](CHANGELOG.md)
 [![smithery badge](https://smithery.ai/badge/@SaptaDey/graph-of-thought-mcp)](https://smithery.ai/server/@SaptaDey/graph-of-thought-mcp)
+[![Codacy Security Scan](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/codacy.yml/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/codacy.yml)
+[![CodeQL Advanced](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/codeql.yml/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/codeql.yml)
+[![Dependabot Updates](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/dependabot/dependabot-updates)
+[![Deploy Documentation to GitHub Pages](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/gh-pages.yml/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/gh-pages.yml)
 
 </div>
 
