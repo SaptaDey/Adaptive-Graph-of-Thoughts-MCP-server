@@ -1,6 +1,15 @@
-version: 1
-setup:
-  - "pip install -r requirements.txt"
-start:
-  command: ["python", "src/adaptive_graph_of_thoughts/main.py"]
-  port: 8000
+runtime: "container"
+build:
+  dockerfile: "Dockerfile"
+  dockerBuildPath: "."
+startCommand:
+  type: "http"
+  configSchema:
+    type: "object"
+    properties:
+      apiKey:
+        type: "string"
+        description: "Your API key"
+    required: ["apiKey"]
+  exampleConfig:
+    apiKey: "sk-example123"

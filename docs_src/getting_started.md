@@ -128,11 +128,11 @@ For production, use the `docker-compose.prod.yml` file:
 
 ### Notes on Specific Deployment Platforms
 
--   **Smithery.ai**: Deployment to the Smithery.ai platform typically involves using the provided Docker image directly.
-    *   Consult Smithery.ai's specific documentation for instructions on deploying custom Docker images.
-    *   **Port Configuration**: Ensure that the platform is configured to expose port 8000 (or the port configured via `APP_PORT` if overridden) for the Adaptive Graph of Thoughts container.
-    *   **Health Checks**: The Adaptive Graph of Thoughts Docker image includes a `HEALTHCHECK` instruction verifying `/health`. Ensure Smithery.ai is configured to use this endpoint.
-    *   **Environment Variables**: Configure all necessary environment variables (especially `NEO4J_PASSWORD` and other Neo4j connection details) through the Smithery.ai platform.
+-   **Smithery.ai**: Deploy using the provided `smithery.yaml`.
+    *   Connect your repository on Smithery and click **Deploy**.
+    *   The container listens on the `PORT` environment variable (default `8000`).
+    *   **Health Checks** use the `/health` endpoint.
+    *   Configure required environment variables (e.g. `NEO4J_PASSWORD`) through the Smithery dashboard.
 
 ### Accessing the Services (after deployment)
 

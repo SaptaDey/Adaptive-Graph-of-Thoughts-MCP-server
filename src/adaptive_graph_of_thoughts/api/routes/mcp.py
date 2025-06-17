@@ -26,6 +26,18 @@ from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
 mcp_router = APIRouter()
 
 
+def _parse_dot_notation(params: dict[str, str]) -> dict[str, Any]:
+    """Parse dot-notation query parameters into a nested dict."""
+    config: dict[str, Any] = {}
+    for key, value in params.items():
+        target = config
+        parts = key.split(".")
+        for part in parts[:-1]:
+            target = target.setdefault(part, {})
+        target[parts[-1]] = value
+    return config
+
+
 # Dependency for authentication
 async def verify_token(http_request: Request):
     if settings.app.auth_token:
@@ -314,3 +326,17 @@ async def mcp_endpoint_handler(
             message=f"Internal error processing request for method '{method}'.",
             data={"details": str(e), "method": method},
         )
+
+
+@mcp_router.get("", dependencies=[Depends(verify_token)])
+async def mcp_get(http_request: Request) -> dict[str, Any]:
+    """Handle GET requests for MCP configuration."""
+    config = _parse_dot_notation(dict(http_request.query_params))
+    return {"status": "ok", "config": config}
+
+
+@mcp_router.delete("", dependencies=[Depends(verify_token)])
+async def mcp_delete(http_request: Request) -> dict[str, Any]:
+    """Handle DELETE requests for MCP shutdown acknowledgment."""
+    config = _parse_dot_notation(dict(http_request.query_params))
+    return {"status": "deleted", "config": config}
