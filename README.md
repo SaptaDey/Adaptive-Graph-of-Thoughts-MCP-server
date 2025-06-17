@@ -18,14 +18,12 @@
 
 [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE) <!-- Assuming LICENSE file will be added -->
+[![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
 [![Docker](https://img.shields.io/badge/docker-ready-brightgreen.svg)](Dockerfile)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.111.0-009688.svg)](https://fastapi.tiangolo.com)
-[![neo4j](https://img.shields.io/badge/NetworkX-3.3-orange.svg)](https://neo4j.com)
-[![Last Updated](https://img.shields.io/badge/last_updated-May_2024-lightgrey.svg)](CHANGELOG.md)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.111.1-009688.svg)](https://fastapi.tiangolo.com)
+[![NetworkX](https://img.shields.io/badge/NetworkX-3.3-orange.svg)](https://networkx.org)
+[![Last Updated](https://img.shields.io/badge/last_updated-Jun_2025-lightgrey.svg)](CHANGELOG.md)
 [![smithery badge](https://smithery.ai/badge/@SaptaDey/graph-of-thought-mcp)](https://smithery.ai/server/@SaptaDey/graph-of-thought-mcp)
-<!-- Add a GitHub Actions badge for documentation build once active -->
-<!-- [![Docs](https://github.com/sapta-dey/Adaptive Graph of Thoughts-2.0/actions/workflows/gh-pages.yml/badge.svg)](https://github.com/sapta-dey/Adaptive Graph of Thoughts-2.0/actions/workflows/gh-pages.yml) -->
 
 </div>
 
@@ -38,8 +36,9 @@
 
 **For comprehensive information on Adaptive Graph of Thoughts, including detailed installation instructions, usage guides, configuration options, API references, contribution guidelines, and the project roadmap, please visit our full documentation site:**
 
-**[➡️ Adaptive Graph of Thoughts Documentation Site](https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/)** 
-*(Note: This link will be active once the GitHub Pages site is deployed via the new workflow.)*
+**[➡️ Adaptive Graph of Thoughts Documentation Site](https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/)**
+
+The site now includes interactive Mermaid diagrams and an improved layout. 
 
 ## 🔍 Overview
 
@@ -327,6 +326,9 @@ While the current sequential execution ensures a clear and manageable data flow,
 
 ### Development Commands
 
+Continuous integration pipelines on GitHub Actions run tests, CodeQL analysis, and Microsoft Defender for DevOps security scans.
+
+
 ```bash
 # Run full test suite with coverage using Poetry
 poetry run pytest --cov=src --cov-report=html --cov-report=term
@@ -364,6 +366,10 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 ## 📄 License
 
 This project is licensed under the Apache License 2.0. [License](LICENSE).
+
+## 🔒 Security
+
+Please see our [Security Policy](SECURITY.md) for reporting vulnerabilities and details on supported versions.
 
 ## 🙏 Acknowledgments
 
