@@ -1,9 +1,10 @@
-from neo4j import GraphDatabase, Driver, Record, Result, Transaction, unit_of_work
-from neo4j.exceptions import Neo4jError, ServiceUnavailable
-from typing import Optional, Any, List, Dict
 import asyncio
 import os
+from typing import Any, Optional
+
 from loguru import logger
+from neo4j import Driver, GraphDatabase, Record, Result, Transaction, unit_of_work
+from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
 
 # --- Simple Configuration ---
@@ -96,10 +97,10 @@ def close_neo4j_driver() -> None:
 # --- Query Execution ---
 async def execute_query(
     query: str,
-    parameters: Optional[Dict[str, Any]] = None,
+    parameters: Optional[dict[str, Any]] = None,
     database: Optional[str] = None,
     tx_type: str = "read",  # 'read' or 'write'
-) -> List[Record]:
+) -> list[Record]:
     """
     Executes a Cypher query asynchronously against the Neo4j database.
 
@@ -127,18 +128,18 @@ async def execute_query(
     settings = get_neo4j_settings()
     db_name = database if database else settings.database
 
-    records: List[Record] = []
+    records: list[Record] = []
 
-    def _execute_sync_query() -> List[Record]:
+    def _execute_sync_query() -> list[Record]:
         with driver.session(database=db_name) as session:
             logger.debug(
                 f"Executing query on database '{db_name}' with type '{tx_type}': {query[:100]}..."
             )
 
             @unit_of_work(timeout=30)  # Example timeout, adjust as needed
-            def _transaction_work(tx: Transaction) -> List[Record]:
+            def _transaction_work(tx: Transaction) -> list[Record]:
                 result: Result = tx.run(query, parameters)
-                return [record for record in result]
+                return list(result)
 
             if tx_type == "read":
                 sync_records = session.execute_read(_transaction_work)
@@ -192,7 +193,7 @@ async def main():
         # Example Read Query
         logger.info("Attempting to execute a sample READ query...")
         read_query = "MATCH (n) RETURN count(n) AS node_count"
-        read_results = await execute_query(read_query, tx_type="read")
+        await execute_query(read_query, tx_type="read")
         # ... rest of example code with await ...
     # ... exception handling ...
     finally:
@@ -212,14 +213,14 @@ if __name__ == "__main__":
             logger.info(f"Read query results: Found {read_results[0]['node_count']} nodes in database.")
         else:
             logger.info("Read query returned no results or failed.")
-        
+
         # Example Write Query (use with caution on your database)
         # logger.info("Attempting to execute a sample WRITE query...")
         # write_query = "CREATE (a:Greeting {message: $msg})"
         # write_params = {"msg": "Hello from neo4j_utils"}
         # await execute_query(write_query, parameters=write_params, tx_type="write")
         # logger.info("Write query executed (if no errors).")
-        
+
         # logger.info("Attempting to read the written data...")
         # verify_query = "MATCH (g:Greeting) WHERE g.message = $msg RETURN g.message AS message"
         # verify_results = await execute_query(verify_query, parameters={"msg": "Hello from neo4j_utils"}, tx_type="read")

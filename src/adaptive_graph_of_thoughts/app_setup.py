@@ -6,17 +6,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from loguru import logger  # type: ignore
 
+from src.adaptive_graph_of_thoughts.api.routes.mcp import mcp_router
+from src.adaptive_graph_of_thoughts.config import settings
+from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
+    GoTProcessor,
+)
+
 # Add src directory to Python path if not already there
 # This must be done before other project imports
 src_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
-
-from src.adaptive_graph_of_thoughts.api.routes.mcp import mcp_router  # noqa: E402
-from src.adaptive_graph_of_thoughts.config import settings  # noqa: E402
-from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
-    GoTProcessor,
-)  # noqa: E402
 
 
 @asynccontextmanager

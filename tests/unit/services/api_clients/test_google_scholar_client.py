@@ -1,17 +1,18 @@
+import json  # For converting string to dict for httpx_mock.add_response json parameter
+
+import httpx  # For specific exceptions like httpx.ConnectError
 import pytest
 from pytest_httpx import HTTPXMock
-import json # For converting string to dict for httpx_mock.add_response json parameter
-import httpx # For specific exceptions like httpx.ConnectError
 
-from adaptive_graph_of_thoughts.config import Settings, GoogleScholarConfig
-from adaptive_graph_of_thoughts.services.api_clients.google_scholar_client import (
-    GoogleScholarClient,
-    GoogleScholarArticle,
-    GoogleScholarClientError,
-)
+from adaptive_graph_of_thoughts.config import GoogleScholarConfig, Settings
 from adaptive_graph_of_thoughts.services.api_clients.base_client import (
     APIHTTPError,
     APIRequestError,
+)
+from adaptive_graph_of_thoughts.services.api_clients.google_scholar_client import (
+    GoogleScholarArticle,
+    GoogleScholarClient,
+    GoogleScholarClientError,
 )
 
 # --- Sample Data ---
@@ -74,16 +75,17 @@ SAMPLE_GS_CITED_BY_VARIATIONS_JSON_STR = """{
 def mock_gs_settings() -> Settings:
     """
     Creates a Settings instance with a minimal GoogleScholarConfig for testing purposes.
-    
+
     Returns:
         A Settings object configured with a base URL and API key for Google Scholar.
     """
     return Settings(
         google_scholar=GoogleScholarConfig(
             base_url="https://serpapi.com/search",  # Example base URL
-            api_key="test_gs_api_key"
+            api_key="test_gs_api_key",
         )
     )
+
 
 @pytest.fixture
 async def gs_client_fixture(mock_gs_settings: Settings) -> GoogleScholarClient:
@@ -93,7 +95,9 @@ async def gs_client_fixture(mock_gs_settings: Settings) -> GoogleScholarClient:
     async with GoogleScholarClient(settings=mock_gs_settings) as client:
         yield client
 
+
 # --- Test Cases ---
+
 
 def test_gs_client_initialization(mock_gs_settings: Settings):
     """Test successful initialization of GoogleScholarClient."""
@@ -102,31 +106,53 @@ def test_gs_client_initialization(mock_gs_settings: Settings):
     assert client.config == mock_gs_settings.google_scholar
     assert client.api_key == "test_gs_api_key"
 
+
 def test_gs_client_initialization_missing_config():
     """
     Verifies that GoogleScholarClient raises GoogleScholarClientError when required configuration (API key or base URL) is missing.
     """
-    with pytest.raises(GoogleScholarClientError, match="Google Scholar configuration is not properly set"):
+    with pytest.raises(
+        GoogleScholarClientError,
+        match="Google Scholar configuration is not properly set",
+    ):
         GoogleScholarClient(settings=Settings(google_scholar=None))
 
-    with pytest.raises(GoogleScholarClientError, match="Google Scholar configuration is not properly set"):
-        GoogleScholarClient(settings=Settings(google_scholar=GoogleScholarConfig(api_key=None, base_url="https://base.url"))) # type: ignore
+    with pytest.raises(
+        GoogleScholarClientError,
+        match="Google Scholar configuration is not properly set",
+    ):
+        GoogleScholarClient(
+            settings=Settings(
+                google_scholar=GoogleScholarConfig(
+                    api_key=None, base_url="https://base.url"
+                )
+            )
+        )  # type: ignore
 
-    with pytest.raises(GoogleScholarClientError, match="Google Scholar configuration is not properly set"):
-        GoogleScholarClient(settings=Settings(google_scholar=GoogleScholarConfig(api_key="key", base_url=None))) # type: ignore
+    with pytest.raises(
+        GoogleScholarClientError,
+        match="Google Scholar configuration is not properly set",
+    ):
+        GoogleScholarClient(
+            settings=Settings(
+                google_scholar=GoogleScholarConfig(api_key="key", base_url=None)
+            )
+        )  # type: ignore
 
 
-async def test_search_success(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+async def test_search_success(
+    gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock
+):
     """
     Tests that the GoogleScholarClient.search method returns correctly parsed articles on a successful API response.
-    
+
     Verifies that all article fields are extracted as expected and that the API request includes the correct parameters.
     """
     client = gs_client_fixture
     httpx_mock.add_response(
-        url=client.config.base_url, # As base_url itself is the full endpoint for SerpApi usually
+        url=client.config.base_url,  # As base_url itself is the full endpoint for SerpApi usually
         method="GET",
-        json=json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)
+        json=json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR),
     )
 
     articles = await client.search("sample query")
@@ -147,7 +173,10 @@ async def test_search_success(gs_client_fixture: GoogleScholarClient, httpx_mock
     assert request.url.params["engine"] == "google_scholar"
     assert request.url.params["q"] == "sample query"
 
-async def test_search_empty_results(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+
+async def test_search_empty_results(
+    gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock
+):
     """
     Tests that the search method returns an empty list when the API response contains no articles.
     """
@@ -157,22 +186,32 @@ async def test_search_empty_results(gs_client_fixture: GoogleScholarClient, http
     articles = await client.search("query yields empty")
     assert len(articles) == 0
 
-async def test_search_missing_organic_results_key(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock, caplog):
+
+async def test_search_missing_organic_results_key(
+    gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock, caplog
+):
     """
     Tests that the search method returns an empty list and logs a warning when the API response lacks the 'organic_results' key.
     """
     client = gs_client_fixture
-    httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_MISSING_ORGANIC_RESULTS_KEY_JSON_STR))
+    httpx_mock.add_response(
+        json=json.loads(SAMPLE_GS_SEARCH_MISSING_ORGANIC_RESULTS_KEY_JSON_STR)
+    )
 
     articles = await client.search("query missing key")
     assert len(articles) == 0
-    assert "No 'organic_results' in SerpApi response for query 'missing key query' on engine 'google_scholar'" in caplog.text
+    assert (
+        "No 'organic_results' in SerpApi response for query 'missing key query' on engine 'google_scholar'"
+        in caplog.text
+    )
 
 
-async def test_search_http_error(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+async def test_search_http_error(
+    gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock
+):
     """
     Tests that the search method raises GoogleScholarClientError when an HTTP error occurs.
-    
+
     Asserts that the underlying cause of the exception is an APIHTTPError.
     """
     client = gs_client_fixture
@@ -182,7 +221,10 @@ async def test_search_http_error(gs_client_fixture: GoogleScholarClient, httpx_m
         await client.search("query http error")
     assert isinstance(exc_info.value.__cause__, APIHTTPError)
 
-async def test_search_request_error(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+
+async def test_search_request_error(
+    gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock
+):
     """
     Tests that a connection error during a search raises GoogleScholarClientError with APIRequestError as the cause.
     """
@@ -194,15 +236,20 @@ async def test_search_request_error(gs_client_fixture: GoogleScholarClient, http
     assert isinstance(exc_info.value.__cause__, APIRequestError)
 
 
-async def test_search_invalid_json_response(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+async def test_search_invalid_json_response(
+    gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock
+):
     """
     Tests that the search method raises a GoogleScholarClientError when the API returns invalid JSON.
     """
     client = gs_client_fixture
     httpx_mock.add_response(text=SAMPLE_GS_SEARCH_INVALID_JSON_STR)
 
-    with pytest.raises(GoogleScholarClientError, match="Google Scholar API JSON decode error"):
+    with pytest.raises(
+        GoogleScholarClientError, match="Google Scholar API JSON decode error"
+    ):
         await client.search("query invalid json")
+
 
 async def test_correct_api_key_usage(httpx_mock: HTTPXMock):
     """
@@ -215,13 +262,18 @@ async def test_correct_api_key_usage(httpx_mock: HTTPXMock):
         )
     )
     async with GoogleScholarClient(settings=settings) as client:
-        httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR)) # Return empty to simplify
+        httpx_mock.add_response(
+            json=json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR)
+        )  # Return empty to simplify
         await client.search("test_api_key_query")
 
     request = httpx_mock.get_requests()[0]
     assert request.url.params["api_key"] == specific_api_key
 
-async def test_parsing_various_author_formats(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock):
+
+async def test_parsing_various_author_formats(
+    gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock
+):
     """
     Tests that the GoogleScholarClient correctly parses author information from various formats in the API response, including lists of dictionaries, strings, and missing values.
     """
@@ -234,10 +286,13 @@ async def test_parsing_various_author_formats(gs_client_fixture: GoogleScholarCl
     assert articles[2].authors is None
     assert articles[3].authors is None
 
-async def test_parsing_cited_by_count(gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock, caplog):
+
+async def test_parsing_cited_by_count(
+    gs_client_fixture: GoogleScholarClient, httpx_mock: HTTPXMock, caplog
+):
     """
     Tests that the client correctly parses the cited-by count from various formats in the API response.
-    
+
     Verifies that valid integer values are parsed, invalid or missing values result in None, and appropriate log messages are generated for parsing failures.
     """
     client = gs_client_fixture
@@ -245,21 +300,23 @@ async def test_parsing_cited_by_count(gs_client_fixture: GoogleScholarClient, ht
     articles = await client.search("cited_by format query")
 
     assert articles[0].cited_by_count == 123
-    assert articles[1].cited_by_count is None # Invalid string "onetwothree"
+    assert articles[1].cited_by_count is None  # Invalid string "onetwothree"
     assert "Could not parse cited_by_count 'onetwothree' as int" in caplog.text
-    assert articles[2].cited_by_count is None # Missing 'total' key
-    assert articles[3].cited_by_count is None # No 'cited_by' or 'inline_links'
+    assert articles[2].cited_by_count is None  # Missing 'total' key
+    assert articles[3].cited_by_count is None  # No 'cited_by' or 'inline_links'
+
 
 # Fixture for timeout exception
 @pytest.fixture
 def timeout_exc() -> httpx.ReadTimeout:
     """
     Creates an httpx.ReadTimeout exception instance for simulating read timeouts in tests.
-    
+
     Returns:
         An httpx.ReadTimeout exception with a preset message.
     """
     return httpx.ReadTimeout("read timeout")
+
 
 async def test_search_pagination(gs_client_fixture, httpx_mock):
     """
@@ -275,6 +332,7 @@ async def test_search_pagination(gs_client_fixture, httpx_mock):
     assert len(httpx_mock.get_requests()) == 2
     assert len(articles) >= 2
 
+
 async def test_search_timeout(gs_client_fixture, httpx_mock, timeout_exc):
     """
     Tests that a read timeout during a search request raises a GoogleScholarClientError caused by APIRequestError.
@@ -284,6 +342,7 @@ async def test_search_timeout(gs_client_fixture, httpx_mock, timeout_exc):
     with pytest.raises(GoogleScholarClientError) as exc:
         await client.search("timeout query")
     assert isinstance(exc.value.__cause__, APIRequestError)
+
 
 async def test_search_ignores_unexpected_keys(gs_client_fixture, httpx_mock):
     """
@@ -295,8 +354,11 @@ async def test_search_ignores_unexpected_keys(gs_client_fixture, httpx_mock):
     httpx_mock.add_response(json=page)
     articles = await client.search("query with extra keys")
     # Unexpected keys should be ignored and parsing succeed
-    expected_count = len(json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)["organic_results"])
+    expected_count = len(
+        json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR)["organic_results"]
+    )
     assert len(articles) == expected_count
+
 
 async def test_search_parameter_propagation(gs_client_fixture, httpx_mock):
     client = gs_client_fixture
@@ -306,10 +368,16 @@ async def test_search_parameter_propagation(gs_client_fixture, httpx_mock):
     assert request.url.params["num"] == "50"
     assert request.url.params["hl"] == "es"
 
+
 def test_article_repr():
     article = GoogleScholarArticle(
-        title="T", link="L", snippet="S", authors="A",
-        publication_info="P", cited_by_count=1, citation_link="C"
+        title="T",
+        link="L",
+        snippet="S",
+        authors="A",
+        publication_info="P",
+        cited_by_count=1,
+        citation_link="C",
     )
     r = repr(article)
     assert "GoogleScholarArticle" in r and "T" in r

@@ -1,11 +1,19 @@
-import datetime
-import random
 import json
-from typing import Any, Optional, List, Dict, Set, Union, Tuple
+import random
+from datetime import datetime as dt  # Alias dt for datetime.datetime
+from enum import Enum  # For property preparation
+from typing import Any, Optional
 
 from loguru import logger  # type: ignore
 
 from ...config import LegacyConfig
+from ...services.api_clients.exa_search_client import ExaSearchClient
+from ...services.api_clients.google_scholar_client import (
+    GoogleScholarClient,
+)
+
+# Import API Clients and their data models
+from ...services.api_clients.pubmed_client import PubMedClient
 from ..models.common import (
     ConfidenceVector,
     EpistemicStatus,
@@ -15,16 +23,13 @@ from ..models.graph_elements import (
     Edge,
     EdgeMetadata,
     EdgeType,
-    Hyperedge,  # Assuming Hyperedge model might be used later, keep import
-    HyperedgeMetadata,
-    InformationTheoreticMetrics,  # Assuming this might be used, keep import
     InterdisciplinaryInfo,
     Node,
     NodeMetadata,
     NodeType,
     StatisticalPower,
 )
-from ..services.neo4j_utils import execute_query, Neo4jError
+from ..services.neo4j_utils import Neo4jError, execute_query
 from ..utils.math_helpers import (
     bayesian_update_confidence,
     calculate_information_gain,
@@ -32,20 +37,8 @@ from ..utils.math_helpers import (
 from ..utils.metadata_helpers import (
     calculate_semantic_similarity,
 )
-
 from .base_stage import BaseStage, StageOutput
 from .stage_3_hypothesis import HypothesisStage  # To access hypothesis_node_ids
-
-from datetime import datetime as dt  # Alias dt for datetime.datetime
-from enum import Enum  # For property preparation
-
-# Import API Clients and their data models
-from ...services.api_clients.pubmed_client import PubMedClient, PubMedArticle
-from ...services.api_clients.google_scholar_client import (
-    GoogleScholarClient,
-    GoogleScholarArticle,
-)
-from ...services.api_clients.exa_search_client import ExaSearchClient, ExaArticleResult
 
 
 class EvidenceStage(BaseStage):
@@ -130,7 +123,7 @@ class EvidenceStage(BaseStage):
             except Exception as e:
                 logger.error(f"Error closing Exa Search client: {e}")
 
-    def _deserialize_tags(self, raw) -> Set[str]:
+    def _deserialize_tags(self, raw) -> set[str]:
         if raw is None:
             return set()
         if isinstance(raw, (set, list)):
@@ -141,7 +134,7 @@ class EvidenceStage(BaseStage):
             logger.warning("Could not deserialize tags payload '%s'", raw)
             return set()
 
-    def _prepare_node_properties_for_neo4j(self, node_pydantic: Node) -> Dict[str, Any]:
+    def _prepare_node_properties_for_neo4j(self, node_pydantic: Node) -> dict[str, Any]:
         if node_pydantic is None:
             return {}
         props = {"id": node_pydantic.id, "label": node_pydantic.label}
@@ -192,7 +185,7 @@ class EvidenceStage(BaseStage):
                     props[f"metadata_{meta_field}"] = meta_val
         return {k: v for k, v in props.items() if v is not None}
 
-    def _prepare_edge_properties_for_neo4j(self, edge_pydantic: Edge) -> Dict[str, Any]:
+    def _prepare_edge_properties_for_neo4j(self, edge_pydantic: Edge) -> dict[str, Any]:
         if edge_pydantic is None:
             return {}
         props = {"id": edge_pydantic.id}
@@ -230,14 +223,14 @@ class EvidenceStage(BaseStage):
         return {k: v for k, v in props.items() if v is not None}
 
     async def _select_hypothesis_to_evaluate_from_neo4j(
-        self, hypothesis_node_ids: List[str]
-    ) -> Optional[Dict[str, Any]]:
+        self, hypothesis_node_ids: list[str]
+    ) -> Optional[dict[str, Any]]:
         if not hypothesis_node_ids:
             return None
         query = """
         UNWIND $hypothesis_ids AS hypo_id
         MATCH (h:Node:HYPOTHESIS {id: hypo_id})
-        RETURN 
+        RETURN
             h.id AS id, h.label AS label, h.metadata_impact_score AS impact_score,
             h.confidence_empirical_support AS conf_empirical,
             h.confidence_theoretical_basis AS conf_theoretical,
@@ -247,7 +240,7 @@ class EvidenceStage(BaseStage):
             h.metadata_layer_id AS layer_id,
             h.metadata_disciplinary_tags AS metadata_disciplinary_tags
         ORDER BY impact_score DESC, conf_empirical ASC
-        LIMIT 10 
+        LIMIT 10
         """
         try:
             results = await execute_query(
@@ -269,7 +262,7 @@ class EvidenceStage(BaseStage):
             if not eligible_hypotheses_data:
                 return None
 
-            def score_hypothesis_data(h_data: Dict[str, Any]):
+            def score_hypothesis_data(h_data: dict[str, Any]):
                 impact = h_data.get("impact_score", 0.1)
                 conf_list = h_data.get("confidence_vector_list", [0.5] * 4)
                 conf_variance = sum([(c - 0.5) ** 2 for c in conf_list]) / 4.0
@@ -286,8 +279,8 @@ class EvidenceStage(BaseStage):
             return None
 
     async def _execute_hypothesis_plan(
-        self, hypothesis_data_from_neo4j: Dict[str, Any]
-    ) -> List[Dict[str, Any]]:
+        self, hypothesis_data_from_neo4j: dict[str, Any]
+    ) -> list[dict[str, Any]]:
         """
         Executes an evidence search plan for a given hypothesis and gathers supporting evidence.
 
@@ -322,7 +315,7 @@ class EvidenceStage(BaseStage):
             f"Executing evidence plan for hypothesis '{hypo_label}' (ID: {hypo_id}): {plan_details}"
         )
 
-        found_evidence_list: List[Dict[str, Any]] = []
+        found_evidence_list: list[dict[str, Any]] = []
 
         # Default disciplinary tags from hypothesis or system defaults
         default_tags = self._deserialize_tags(
@@ -480,11 +473,11 @@ class EvidenceStage(BaseStage):
 
     async def _create_evidence_in_neo4j(
         self,
-        hypothesis_data_from_neo4j: Dict[str, Any],
-        evidence_data: Dict[str, Any],
+        hypothesis_data_from_neo4j: dict[str, Any],
+        evidence_data: dict[str, Any],
         iteration: int,
         evidence_index: int,
-    ) -> Optional[Dict[str, Any]]:
+    ) -> Optional[dict[str, Any]]:
         hypothesis_id = hypothesis_data_from_neo4j["id"]
         hypothesis_label = hypothesis_data_from_neo4j.get("label", "N/A")
         hypothesis_layer_id = hypothesis_data_from_neo4j.get(
@@ -548,7 +541,7 @@ class EvidenceStage(BaseStage):
         )
         evidence_node_pydantic = Node(
             id=evidence_id,
-            label=f"Evidence {evidence_index+1} for H: {hypothesis_label[:20]}...",
+            label=f"Evidence {evidence_index + 1} for H: {hypothesis_label[:20]}...",
             type=NodeType.EVIDENCE,
             confidence=evidence_confidence_vec,
             metadata=evidence_metadata,
@@ -682,7 +675,7 @@ class EvidenceStage(BaseStage):
             return False
 
     async def _create_ibn_in_neo4j(
-        self, evidence_node_data: Dict[str, Any], hypothesis_node_data: Dict[str, Any]
+        self, evidence_node_data: dict[str, Any], hypothesis_node_data: dict[str, Any]
     ) -> Optional[str]:
         hypo_tags_raw = hypothesis_node_data.get("metadata_disciplinary_tags")
         # evidence_node_data comes from _create_evidence_in_neo4j, which returns Neo4j properties
@@ -813,10 +806,10 @@ class EvidenceStage(BaseStage):
 
     async def _create_hyperedges_in_neo4j(
         self,
-        hypothesis_data: Dict[str, Any],
-        related_evidence_data_list: List[Dict[str, Any]],
-    ) -> List[str]:
-        created_hyperedge_ids: List[str] = []
+        hypothesis_data: dict[str, Any],
+        related_evidence_data_list: list[dict[str, Any]],
+    ) -> list[str]:
+        created_hyperedge_ids: list[str] = []
         min_nodes_for_hyperedge = (
             self.min_nodes_for_hyperedge_consideration
             if hasattr(self, "min_nodes_for_hyperedge_consideration")
@@ -826,7 +819,7 @@ class EvidenceStage(BaseStage):
             return created_hyperedge_ids
 
         hyperedge_center_id = (
-            f"hyper_{hypothesis_data['id']}_{random.randint(1000,9999)}"
+            f"hyper_{hypothesis_data['id']}_{random.randint(1000, 9999)}"
         )
         hyperedge_node_ids_for_pydantic = {hypothesis_data["id"]} | {
             ev_data["id"] for ev_data in related_evidence_data_list
@@ -968,7 +961,7 @@ class EvidenceStage(BaseStage):
         hypothesis_data = current_session_data.accumulated_context.get(
             HypothesisStage.stage_name, {}
         )
-        hypothesis_node_ids: List[str] = hypothesis_data.get("hypothesis_node_ids", [])
+        hypothesis_node_ids: list[str] = hypothesis_data.get("hypothesis_node_ids", [])
 
         evidence_created_count = 0
         hypotheses_updated_count = 0
@@ -998,7 +991,7 @@ class EvidenceStage(BaseStage):
                     next_stage_context_update={self.stage_name: context_update},
                 )
 
-            processed_hypotheses_this_run: Set[str] = set()
+            processed_hypotheses_this_run: set[str] = set()
             for iteration_num in range(self.max_iterations):
                 iterations_run = iteration_num + 1  # Correctly increment iterations_run
                 logger.info(
@@ -1040,7 +1033,7 @@ class EvidenceStage(BaseStage):
                     )
                     continue
 
-                related_evidence_data_for_hyperedge: List[Dict[str, Any]] = []
+                related_evidence_data_for_hyperedge: list[dict[str, Any]] = []
                 for ev_idx, ev_conceptual_data in enumerate(
                     found_evidence_conceptual_list
                 ):

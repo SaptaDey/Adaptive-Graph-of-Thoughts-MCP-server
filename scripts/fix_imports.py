@@ -6,10 +6,8 @@ Usage:
   python3 scripts/fix_imports.py [--root /path/to/project] [--src /path/to/src] [--dry-run]
 """
 
-import os
-import re
-from typing import List
 import argparse
+import re
 from pathlib import Path
 
 # Determine paths relative to this script
@@ -20,21 +18,17 @@ parser = argparse.ArgumentParser(
     description="Fix Python imports by prefixing 'src.' to 'asr_got_reimagined'"
 )
 parser.add_argument(
-    "--root", "-r",
-    type=Path,
-    default=PROJECT_ROOT,
-    help="Project root directory"
+    "--root", "-r", type=Path, default=PROJECT_ROOT, help="Project root directory"
 )
 parser.add_argument(
-    "--src", "-s",
+    "--src",
+    "-s",
     type=Path,
     default=PROJECT_ROOT / "src",
-    help="Source directory to scan"
+    help="Source directory to scan",
 )
 parser.add_argument(
-    "--dry-run",
-    action="store_true",
-    help="Show changes without writing files"
+    "--dry-run", action="store_true", help="Show changes without writing files"
 )
 args = parser.parse_args()
 SRC_DIR = args.src
@@ -42,9 +36,11 @@ SRC_DIR = args.src
 # Precompiled pattern for fixing imports
 IMPORT_PATTERN = re.compile(r"(from|import)\s+(?!src\.)asr_got_reimagined")
 
-def find_python_files(directory: Path) -> List[Path]:
+
+def find_python_files(directory: Path) -> list[Path]:
     """Find all Python files recursively in a directory using pathlib."""
     return list(directory.rglob("*.py"))
+
 
 def fix_imports_in_file(file_path: Path) -> int:
     """
@@ -53,12 +49,15 @@ def fix_imports_in_file(file_path: Path) -> int:
     Scans the specified file for import statements that reference 'asr_got_reimagined' without the 'src.' prefix and updates them in place. Returns the number of import statements modified.
     """
     content = file_path.read_text(encoding="utf-8")
-    new_content, num_replacements = IMPORT_PATTERN.subn(r"\1 src.asr_got_reimagined", content)
+    new_content, num_replacements = IMPORT_PATTERN.subn(
+        r"\1 src.asr_got_reimagined", content
+    )
     if num_replacements > 0:
         print(f"Fixing {num_replacements} imports in {file_path}")
         if not args.dry_run:
             file_path.write_text(new_content, encoding="utf-8")
     return num_replacements
+
 
 def main() -> None:
     """
@@ -73,6 +72,7 @@ def main() -> None:
         total_fixes += fix_imports_in_file(file_path)
 
     print(f"Fixed {total_fixes} imports across all Python files.")
+
 
 if __name__ == "__main__":
     main()

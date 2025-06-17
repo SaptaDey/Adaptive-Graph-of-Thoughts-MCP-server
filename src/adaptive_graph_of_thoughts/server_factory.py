@@ -1,22 +1,25 @@
 import json
 import sys
-from typing import Any, Dict, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
 # Only for type hints, not actual imports
 if TYPE_CHECKING:
-    from src.adaptive_graph_of_thoughts.domain.services.got_processor import GoTProcessor
+    from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
+        GoTProcessor,
+    )
 
 from loguru import logger
 
-from src.adaptive_graph_of_thoughts.config import settings
 from src.adaptive_graph_of_thoughts.api.schemas import (
     JSONRPCResponse,
-    MCPInitializeParams,
-    MCPInitializeResult,
     MCPASRGoTQueryParams,
     MCPASRGoTQueryResult,
+    MCPInitializeParams,
+    MCPInitializeResult,
     create_jsonrpc_error,
 )
+from src.adaptive_graph_of_thoughts.config import settings
+
 # Using lazy imports to avoid circular dependencies
 
 
@@ -33,7 +36,7 @@ class MCPServerFactory:
         """
         # Check if we're running in a STDIO environment
         # This typically means stdin/stdout are connected to pipes
-        if hasattr(sys.stdin, 'isatty') and not sys.stdin.isatty():
+        if hasattr(sys.stdin, "isatty") and not sys.stdin.isatty():
             return "stdio"
         return "http"
 
@@ -46,10 +49,7 @@ class MCPServerFactory:
             True if HTTP transport should be enabled
         """
         transport_type = settings.app.mcp_transport_type.lower()
-        return (
-            settings.app.mcp_http_enabled and 
-            transport_type in ["http", "both"]
-        )
+        return settings.app.mcp_http_enabled and transport_type in ["http", "both"]
 
     @staticmethod
     def should_run_stdio() -> bool:
@@ -60,10 +60,7 @@ class MCPServerFactory:
             True if STDIO transport should be enabled
         """
         transport_type = settings.app.mcp_transport_type.lower()
-        return (
-            settings.app.mcp_stdio_enabled and 
-            transport_type in ["stdio", "both"]
-        )
+        return settings.app.mcp_stdio_enabled and transport_type in ["stdio", "both"]
 
     @staticmethod
     async def run_stdio_server():
@@ -75,7 +72,9 @@ class MCPServerFactory:
         logger.info("Starting MCP STDIO server...")
 
         # Import GoTProcessor only when needed to avoid circular dependencies
-        from src.adaptive_graph_of_thoughts.domain.services.got_processor import GoTProcessor
+        from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
+            GoTProcessor,
+        )
 
         # Initialize GoT processor
         got_processor = GoTProcessor(settings=settings)
@@ -88,6 +87,7 @@ class MCPServerFactory:
                 try:
                     # Read a line from stdin without blocking the event loop
                     import asyncio
+
                     line = await asyncio.to_thread(sys.stdin.readline)
                     if not line:
                         logger.info("STDIO input closed, shutting down server.")
@@ -104,9 +104,7 @@ class MCPServerFactory:
                     except json.JSONDecodeError as e:
                         logger.error("Invalid JSON received: {}", e)
                         error_response = create_jsonrpc_error(
-                            request_id=None,
-                            code=-32700,
-                            message="Parse error"
+                            request_id=None, code=-32700, message="Parse error"
                         )
                         print(json.dumps(error_response.model_dump()), flush=True)
                         continue
@@ -123,14 +121,14 @@ class MCPServerFactory:
                         logger.debug("Sent STDIO response: {}", response_json)
 
                 except KeyboardInterrupt:
-                    logger.info("Received interrupt signal, shutting down STDIO server.")
+                    logger.info(
+                        "Received interrupt signal, shutting down STDIO server."
+                    )
                     break
                 except Exception as e:
                     logger.exception("Error in STDIO server loop: {}", e)
                     error_response = create_jsonrpc_error(
-                        request_id=None,
-                        code=-32603,
-                        message="Internal error"
+                        request_id=None, code=-32603, message="Internal error"
                     )
                     print(json.dumps(error_response.model_dump()), flush=True)
 
@@ -145,8 +143,7 @@ class MCPServerFactory:
 
     @staticmethod
     async def _handle_stdio_request(
-        request_data: Dict[str, Any], 
-        got_processor: "GoTProcessor"
+        request_data: dict[str, Any], got_processor: "GoTProcessor"
     ) -> Optional[JSONRPCResponse]:
         """
         Handle a single STDIO JSON-RPC request.
@@ -164,7 +161,7 @@ class MCPServerFactory:
                 return create_jsonrpc_error(
                     request_id=request_data.get("id"),
                     code=-32600,
-                    message="Invalid Request"
+                    message="Invalid Request",
                 )
 
             method = request_data.get("method")
@@ -191,28 +188,27 @@ class MCPServerFactory:
                 return create_jsonrpc_error(
                     request_id=request_id,
                     code=-32601,
-                    message=f"Method '{method}' not found"
+                    message=f"Method '{method}' not found",
                 )
 
         except Exception as e:
             logger.exception("Error handling STDIO request: {}", e)
             return create_jsonrpc_error(
-                request_id=request_data.get("id"),
-                code=-32603,
-                message="Internal error"
+                request_id=request_data.get("id"), code=-32603, message="Internal error"
             )
 
     @staticmethod
     async def _handle_initialize(
-        params: Dict[str, Any], 
-        request_id: Optional[str]
+        params: dict[str, Any], request_id: Optional[str]
     ) -> JSONRPCResponse:
         """Handle MCP initialize request."""
         try:
             parsed_params = MCPInitializeParams(**params)
             logger.info(
                 "MCP Initialize request received via STDIO. Client: {}, Process ID: {}",
-                parsed_params.client_info.client_name if parsed_params.client_info else "Unknown",
+                parsed_params.client_info.client_name
+                if parsed_params.client_info
+                else "Unknown",
                 parsed_params.process_id,
             )
 
@@ -227,16 +223,12 @@ class MCPServerFactory:
         except Exception as e:
             logger.error("Error in initialize handler: {}", e)
             return create_jsonrpc_error(
-                request_id=request_id,
-                code=-32602,
-                message="Invalid parameters"
+                request_id=request_id, code=-32602, message="Invalid parameters"
             )
 
     @staticmethod
     async def _handle_asr_got_query(
-        params: Dict[str, Any], 
-        request_id: Optional[str],
-        got_processor: "GoTProcessor"
+        params: dict[str, Any], request_id: Optional[str], got_processor: "GoTProcessor"
     ) -> JSONRPCResponse:
         """Handle ASR-GoT query request."""
         try:
@@ -247,7 +239,7 @@ class MCPServerFactory:
             result = await got_processor.process_query(
                 query=parsed_params.query,
                 session_id=parsed_params.session_id,
-                operational_params=parsed_params.operational_params
+                operational_params=parsed_params.operational_params,
             )
             result_dict = result.model_dump()
             mcp_result = MCPASRGoTQueryResult(
@@ -265,13 +257,12 @@ class MCPServerFactory:
             return create_jsonrpc_error(
                 request_id=request_id,
                 code=-32603,
-                message="Internal error processing query"
+                message="Internal error processing query",
             )
 
     @staticmethod
     async def _handle_shutdown(
-        params: Dict[str, Any], 
-        request_id: Optional[str]
+        _params: dict[str, Any], _request_id: Optional[str]
     ) -> None:
         """Handle shutdown request."""
         logger.info("MCP Shutdown request received via STDIO.")

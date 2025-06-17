@@ -4,7 +4,7 @@ import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from threading import Lock
-from typing import Any, Dict, Optional, Union
+from typing import Any, Optional, Union
 
 import yaml
 
@@ -153,7 +153,7 @@ class LegacyConfig:
     def __repr__(self):
         return f"Config(learning_rate={self.learning_rate}, batch_size={self.batch_size}, max_steps={self.max_steps})"
 
-    def model_dump(self) -> Dict[str, Any]:
+    def model_dump(self) -> dict[str, Any]:
         """Convert to dictionary for pydantic v2 compatibility."""
         return {
             "learning_rate": self.learning_rate,
@@ -170,7 +170,7 @@ class LegacyConfig:
             frozen=False,
         )
 
-    def update(self, updates: Dict[str, Any]) -> None:
+    def update(self, updates: dict[str, Any]) -> None:
         """Update config with new values."""
         for key, value in updates.items():
             if hasattr(self, key):
@@ -373,14 +373,14 @@ class Config:
     # Factory methods
     # ------------------------------------------------------------------
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "Config":
+    def from_dict(cls, data: dict[str, Any]) -> "Config":
         return cls(
             model=ModelConfig(**data.get("model", {})),
             graph=GraphConfig(**data.get("graph", {})),
             logging=LoggingConfig(**data.get("logging", {})),
         )
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "model": asdict(self.model),
             "graph": asdict(self.graph),
@@ -499,7 +499,7 @@ class Config:
                 "Logging level must be one of DEBUG, INFO, WARNING, ERROR, CRITICAL"
             )
 
-    def update(self, **sections: Dict[str, Any]) -> None:
+    def update(self, **sections: dict[str, Any]) -> None:
         for section, values in sections.items():
             target = getattr(self, section, None)
             if target is None:

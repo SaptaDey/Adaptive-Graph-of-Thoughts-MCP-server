@@ -1,11 +1,10 @@
-import os
 import stat
-from pathlib import Path
 
 import pytest
 import yaml
 
 from adaptive_graph_of_thoughts.config import validate_config_schema
+
 # ConfigValidationError is replaced by ValueError from jsonschema,
 # which is raised by validate_config_schema.
 # No specific import needed for ValueError.
@@ -17,7 +16,7 @@ def valid_config(tmp_path):
         "host": "localhost",
         "port": 8080,
         "debug": True,
-        "databases": ["db1", "db2"]
+        "databases": ["db1", "db2"],
     }
     file_path = tmp_path / "config.yaml"
     file_path.write_text(yaml.safe_dump(cfg))
@@ -27,7 +26,7 @@ def valid_config(tmp_path):
 def test_valid_config(valid_config):
     path, expected_config_data = valid_config
     # Load YAML data first
-    with open(path, 'r') as f:
+    with open(path) as f:
         config_data_to_validate = yaml.safe_load(f)
 
     assert validate_config_schema(config_data_to_validate) is True
@@ -38,10 +37,7 @@ def test_valid_config(valid_config):
 
 @pytest.fixture
 def minimal_config(tmp_path):
-    cfg = {
-        "host": "127.0.0.1",
-        "port": 1
-    }
+    cfg = {"host": "127.0.0.1", "port": 1}
     file_path = tmp_path / "config_min.yaml"
     file_path.write_text(yaml.safe_dump(cfg))
     return file_path, cfg
@@ -50,7 +46,7 @@ def minimal_config(tmp_path):
 def test_minimal_config(minimal_config):
     path, expected_config_data = minimal_config
     # Load YAML data first
-    with open(path, 'r') as f:
+    with open(path) as f:
         config_data_to_validate = yaml.safe_load(f)
 
     assert validate_config_schema(config_data_to_validate) is True
@@ -71,33 +67,36 @@ def test_missing_keys(tmp_path, missing_key):
     cfg.pop(missing_key)
     file_path = tmp_path / "config_missing.yaml"
     file_path.write_text(yaml.safe_dump(cfg))
-    with open(file_path, 'r') as f:
+    with open(file_path) as f:
         config_data_to_validate = yaml.safe_load(f)
-    with pytest.raises(ValueError) as exc: # Changed from ConfigValidationError
+    with pytest.raises(ValueError) as exc:  # Changed from ConfigValidationError
         validate_config_schema(config_data_to_validate)
     # The error message from jsonschema.validate might be more specific
     # Example: "''host' is a required property'"
     # We can check if the missing key is mentioned in the error.
-    assert missing_key in str(exc.value).lower() # Making assert less brittle
+    assert missing_key in str(exc.value).lower()  # Making assert less brittle
 
 
-@pytest.mark.parametrize("field,value", [
-    ("host", 123),
-    ("port", "not_an_int"),
-    ("debug", "yes"),
-    ("databases", "not_a_list"),
-])
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("host", 123),
+        ("port", "not_an_int"),
+        ("debug", "yes"),
+        ("databases", "not_a_list"),
+    ],
+)
 def test_wrong_types(tmp_path, field, value):
     cfg = {"host": "localhost", "port": 8080}
     cfg[field] = value
     file_path = tmp_path / "config_bad_type.yaml"
     file_path.write_text(yaml.safe_dump(cfg))
-    with open(file_path, 'r') as f:
+    with open(file_path) as f:
         config_data_to_validate = yaml.safe_load(f)
-    with pytest.raises(ValueError) as exc: # Changed from ConfigValidationError
+    with pytest.raises(ValueError) as exc:  # Changed from ConfigValidationError
         validate_config_schema(config_data_to_validate)
     # Check if the field causing the type error is mentioned.
-    assert field in str(exc.value).lower() # Making assert less brittle
+    assert field in str(exc.value).lower()  # Making assert less brittle
 
 
 def test_empty_file(tmp_path):
@@ -105,7 +104,7 @@ def test_empty_file(tmp_path):
     file_path.write_text("")
     # yaml.safe_load on an empty file returns None
     config_data_to_validate = None
-    with pytest.raises(ValueError): # Changed from ConfigValidationError
+    with pytest.raises(ValueError):  # Changed from ConfigValidationError
         # jsonschema.validate(None, schema) will raise an error.
         validate_config_schema(config_data_to_validate)
 
@@ -117,9 +116,8 @@ def test_unreadable_file(tmp_path):
     file_path.chmod(0)
     try:
         # Reading the file will cause PermissionError before validation
-        with pytest.raises(PermissionError):
-            with open(file_path, 'r') as f:
-                yaml.safe_load(f)
+        with pytest.raises(PermissionError), open(file_path) as f:
+            yaml.safe_load(f)
         # If we could read it, then validate_config_schema would be called.
         # This part of the test might be redundant if open() already fails.
         # For the sake of argument, if it didn't fail:
@@ -136,7 +134,7 @@ def test_boundary_values(tmp_path, port):
     cfg = {"host": "localhost", "port": port}
     file_path = tmp_path / f"config_port_{port}.yaml"
     file_path.write_text(yaml.safe_dump(cfg))
-    with open(file_path, 'r') as f:
+    with open(file_path) as f:
         config_data_to_validate = yaml.safe_load(f)
     assert validate_config_schema(config_data_to_validate) is True
     assert config_data_to_validate["port"] == port

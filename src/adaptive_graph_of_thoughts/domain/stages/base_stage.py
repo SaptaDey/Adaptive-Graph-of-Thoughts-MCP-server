@@ -8,6 +8,7 @@ from ...config import (
     Settings,  # To access ASRGoTDefaultParams if needed by stages
 )
 from ..models.common_types import GoTProcessorSessionData
+
 # ASRGoTGraph has been removed as part of refactoring
 
 
@@ -18,6 +19,7 @@ class StageOutput(BaseModel):
     metrics: dict[str, Any] = Field(default_factory=dict)
     error_message: Optional[str] = None
     next_stage_context_update: dict[str, Any] = Field(default_factory=dict)
+
 
 class BaseStage(ABC):
     """Abstract Base Class for all stages in the ASR-GoT pipeline."""

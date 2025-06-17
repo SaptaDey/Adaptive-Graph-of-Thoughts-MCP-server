@@ -1,13 +1,14 @@
-from typing import Optional, List, Dict, Any
+import xml.etree.ElementTree as ET
+from typing import Any, Optional
+
 from loguru import logger
 from pydantic import BaseModel, Field
-import xml.etree.ElementTree as ET
 
 from ...config import LegacyConfig, PubMedConfig
 from .base_client import (
-    AsyncHTTPClient,
-    APIRequestError,
     APIHTTPError,
+    APIRequestError,
+    AsyncHTTPClient,
     BaseAPIClientError,
 )
 
@@ -16,7 +17,7 @@ class PubMedArticle(BaseModel):
     pmid: str = Field(default="", description="PubMed ID")
     title: str = Field(default="", description="Article title")
 
-    authors: List[str] = Field(default_factory=list, description="Authors")
+    authors: list[str] = Field(default_factory=list, description="Authors")
     abstract: Optional[str] = Field(default=None, description="Article abstract")
 
     journal: str = Field(default="", description="Journal name")
@@ -64,7 +65,7 @@ class PubMedClient:
             exc_type, exc_val, exc_tb
         )  # Exit the httpx client context
 
-    def _construct_common_params(self) -> Dict[str, Any]:
+    def _construct_common_params(self) -> dict[str, Any]:
         params = {}
         if self.api_key:
             params["api_key"] = self.api_key
@@ -75,8 +76,8 @@ class PubMedClient:
         return params
         return params
 
-    def _parse_esummary_response(self, xml_text: str) -> List[PubMedArticle]:
-        articles: List[PubMedArticle] = []
+    def _parse_esummary_response(self, xml_text: str) -> list[PubMedArticle]:
+        articles: list[PubMedArticle] = []
         try:
             root = ET.fromstring(xml_text)
             for doc_sum in root.findall("DocSum"):
@@ -85,7 +86,7 @@ class PubMedClient:
                     continue
                 pmid = pmid_node.text
 
-                data: Dict[str, Any] = {
+                data: dict[str, Any] = {
                     "pmid": pmid,
                     "url": f"https://pubmed.ncbi.nlm.nih.gov/{pmid}/",
                 }
@@ -135,7 +136,7 @@ class PubMedClient:
 
     async def search_articles(
         self, query: str, max_results: int = 10
-    ) -> List[PubMedArticle]:
+    ) -> list[PubMedArticle]:
         logger.debug(
             f"Searching PubMed for query: '{query}', max_results: {max_results}"
         )
@@ -152,7 +153,7 @@ class PubMedClient:
             }
         )
 
-        pmids: List[str] = []
+        pmids: list[str] = []
         try:
             response_esearch = await self.http_client.get(
                 "esearch.fcgi", params=esearch_params
@@ -245,7 +246,7 @@ class PubMedClient:
             xml_text = response_efetch.text
 
             root = ET.fromstring(xml_text)
-            abstract_texts: List[str] = []
+            abstract_texts: list[str] = []
 
             # Iterate over Article/Abstract/AbstractText and potentially other locations
             # like OtherAbstract or even full text snippets if available and desired.
@@ -305,8 +306,8 @@ class PubMedClient:
 # Example Usage (for testing)
 async def main_pubmed_test():
     from adaptive_graph_of_thoughts.config import (
-        Settings,
         PubMedConfig,
+        Settings,
     )  # Ensure PubMedConfig is imported    # Attempt to load settings, fallback to a default mock if issues occur
 
     try:

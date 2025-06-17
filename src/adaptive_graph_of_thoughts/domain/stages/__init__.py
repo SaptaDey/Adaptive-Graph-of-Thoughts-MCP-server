@@ -1,6 +1,7 @@
 # Makes 'stages' a sub-package.
 from .base_stage import BaseStage, StageOutput
 
+
 # Import stage classes using a function to prevent circular imports
 def import_stages():
     from .stage_1_initialization import InitializationStage
@@ -11,7 +12,7 @@ def import_stages():
     from .stage_6_subgraph_extraction import SubgraphExtractionStage
     from .stage_7_composition import CompositionStage
     from .stage_8_reflection import ReflectionStage
-    
+
     return {
         "InitializationStage": InitializationStage,
         "DecompositionStage": DecompositionStage,
@@ -22,6 +23,7 @@ def import_stages():
         "CompositionStage": CompositionStage,
         "ReflectionStage": ReflectionStage,
     }
+
 
 # Export only the base classes at import time
 __all__ = [

@@ -1,8 +1,8 @@
-import uuid
 import datetime
+import uuid
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, List, Dict, Optional, Set
+from typing import Any, ClassVar, Optional
 
 from pydantic import BaseModel, Field
 
@@ -10,7 +10,6 @@ from .common import (
     CertaintyScore,
     ConfidenceVector,
     EpistemicStatus,
-    ImpactScore,
     TimestampedModel,
 )
 
@@ -64,7 +63,7 @@ class EdgeType(str, Enum):
 # --- Metadata models ---
 class FalsificationCriteria(BaseModel):
     description: str
-    testable_conditions: List[str] = []
+    testable_conditions: list[str] = []
 
 
 class BiasFlag(BaseModel):
@@ -79,7 +78,7 @@ class RevisionRecord(BaseModel):
     timestamp: datetime.datetime = Field(default_factory=datetime.datetime.now)
     user_or_process: str
     action: str
-    changes_made: Dict[str, Any] = {}
+    changes_made: dict[str, Any] = {}
     reason: str = ""
 
 
@@ -88,12 +87,12 @@ class Plan(BaseModel):
     description: str
     estimated_cost: float = 0.0
     estimated_duration: float = 0.0
-    required_resources: List[str] = []
+    required_resources: list[str] = []
 
 
 class InterdisciplinaryInfo(BaseModel):
-    source_disciplines: Set[str] = set()
-    target_disciplines: Set[str] = set()
+    source_disciplines: set[str] = set()
+    target_disciplines: set[str] = set()
     bridging_concept: str = ""
 
 
@@ -149,7 +148,7 @@ class NodeMetadata(TimestampedModel):
     doi: str = ""
     authors: str = ""
     publication_date: str = ""
-    revision_history: List[RevisionRecord] = Field(default_factory=list)
+    revision_history: list[RevisionRecord] = Field(default_factory=list)
 
 
 class Node(TimestampedModel):
@@ -165,14 +164,21 @@ class Node(TimestampedModel):
     def __eq__(self, other: Any) -> bool:
         return isinstance(other, Node) and self.id == other.id
 
-    def update_confidence(self, new_confidence: ConfidenceVector, updated_by: str, reason: Optional[str] = None) -> None:
+    def update_confidence(
+        self,
+        new_confidence: ConfidenceVector,
+        updated_by: str,
+        reason: Optional[str] = None,
+    ) -> None:
         old_conf = self.confidence.model_dump()
         self.confidence = new_confidence
         self.metadata.revision_history.append(
             RevisionRecord(
                 user_or_process=updated_by,
                 action="update_confidence",
-                changes_made={"confidence": {"old": old_conf, "new": new_confidence.model_dump()}},
+                changes_made={
+                    "confidence": {"old": old_conf, "new": new_confidence.model_dump()}
+                },
                 reason=reason,
             )
         )
@@ -214,7 +220,7 @@ class HyperedgeMetadata(TimestampedModel):
 
 class Hyperedge(TimestampedModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    node_ids: Set[str] = set()
+    node_ids: ClassVar[set[str]] = set()
     confidence_vector: float = 0.5
     metadata: HyperedgeMetadata = Field(default_factory=HyperedgeMetadata)
 
@@ -222,7 +228,11 @@ class Hyperedge(TimestampedModel):
         return hash((self.id, tuple(sorted(self.node_ids))))
 
     def __eq__(self, other: Any) -> bool:
-        return isinstance(other, Hyperedge) and self.id == other.id and self.node_ids == other.node_ids
+        return (
+            isinstance(other, Hyperedge)
+            and self.id == other.id
+            and self.node_ids == other.node_ids
+        )
 
 
 @dataclass(frozen=True)
@@ -258,12 +268,20 @@ class GraphElement:
 
     __str__ = __repr__
 
-    def to_dict(self) -> Dict[str, Any]:
-        return {"node_id": str(self.node_id), "label": self.label, "weight": self.weight}
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "node_id": str(self.node_id),
+            "label": self.label,
+            "weight": self.weight,
+        }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "GraphElement":
-        return cls(node_id=uuid.UUID(data["node_id"]), label=data["label"], weight=data["weight"])
+    def from_dict(cls, data: dict[str, Any]) -> "GraphElement":
+        return cls(
+            node_id=uuid.UUID(data["node_id"]),
+            label=data["label"],
+            weight=data["weight"],
+        )
 
     def to_json(self) -> str:
         import json
@@ -278,8 +296,8 @@ class GraphElement:
 
 
 class Graph(BaseModel):
-    nodes: Dict[str, Node] = Field(default_factory=dict)
-    edges: List[Edge] = Field(default_factory=list)
+    nodes: dict[str, Node] = Field(default_factory=dict)
+    edges: list[Edge] = Field(default_factory=list)
 
     def add_node(self, node_id: str, **kwargs) -> None:
         self.nodes[node_id] = Node(id=node_id, **kwargs)

@@ -1,14 +1,14 @@
 import importlib.util
-from pathlib import Path
 import sys
 import types
+from pathlib import Path
 
 neo4j_mock = types.ModuleType("neo4j")
 
 
 class FakeGraphDatabase:
     @staticmethod
-    def driver(uri, auth):
+    def driver(_uri, _auth):
         return DummyDriver()
 
 
@@ -71,7 +71,7 @@ def test_get_neo4j_driver_returns_connected_driver(monkeypatch):
 
     dummy = DummyDriver()
 
-    def fake_driver(uri, auth):
+    def fake_driver(_uri, _auth):
         return dummy
 
     monkeypatch.setattr(neo4j_utils.GraphDatabase, "driver", fake_driver)

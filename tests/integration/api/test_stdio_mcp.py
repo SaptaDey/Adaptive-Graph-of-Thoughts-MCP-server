@@ -1,33 +1,29 @@
 import json
 import os
-import time
-import subprocess
 import select
-import pytest
-from pathlib import Path
+import subprocess
+import time
 
-from adaptive_graph_of_thoughts.config import settings
+import pytest
+
 
 @pytest.fixture(scope="module")
 def stdio_process():
     """Start the MCP STDIO server as a subprocess."""
-    cmd = [
-        "python",
-        "-m",
-        "adaptive_graph_of_thoughts.main_stdio"
-    ]
+    cmd = ["python", "-m", "adaptive_graph_of_thoughts.main_stdio"]
     proc = subprocess.Popen(
         cmd,
         stdin=subprocess.PIPE,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        text=True
+        text=True,
     )
     # Allow server to initialize
     time.sleep(2)
     yield proc
     proc.terminate()
     proc.wait()
+
 
 def test_stdio_initialize(stdio_process):
     """Test MCP initialize via STDIO transport."""
@@ -36,12 +32,9 @@ def test_stdio_initialize(stdio_process):
         "id": "init-1",
         "method": "initialize",
         "params": {
-            "client_info": {
-                "client_name": "pytest-client",
-                "client_version": "1.0.0"
-            },
-            "process_id": os.getpid()
-        }
+            "client_info": {"client_name": "pytest-client", "client_version": "1.0.0"},
+            "process_id": os.getpid(),
+        },
     }
     # Send request
     line = json.dumps(request) + "\n"
@@ -56,17 +49,21 @@ def test_stdio_initialize(stdio_process):
             response_line = stdio_process.stdout.readline()
         else:
             pytest.fail("Timed out waiting for STDIO response")
-        if not response_line: # Handle empty readline if process exited
+        if not response_line:  # Handle empty readline if process exited
             stderr_output = stdio_process.stderr.read()
             pytest.fail(f"STDIO process exited prematurely. stderr:\n{stderr_output}")
         response = json.loads(response_line)
     except BrokenPipeError as e:
         stderr_output = stdio_process.stderr.read()
-        pytest.fail(f"BrokenPipeError encountered. Subprocess stderr:\n{stderr_output}\nOriginal error: {e}")
+        pytest.fail(
+            f"BrokenPipeError encountered. Subprocess stderr:\n{stderr_output}\nOriginal error: {e}"
+        )
     except Exception as e:
         # Catch other potential errors like json.JSONDecodeError if response_line is not valid JSON
         stderr_output = stdio_process.stderr.read()
-        pytest.fail(f"An unexpected error occurred. Subprocess stderr:\n{stderr_output}\nOriginal error: {e}\nResponse line was: '{response_line}'")
+        pytest.fail(
+            f"An unexpected error occurred. Subprocess stderr:\n{stderr_output}\nOriginal error: {e}\nResponse line was: '{response_line}'"
+        )
 
     # Assertions
     assert response is not None, "Response was not successfully parsed."
@@ -74,8 +71,11 @@ def test_stdio_initialize(stdio_process):
     assert "result" in response
     result_data = response.get("result", {})
     assert "server_name" in result_data and isinstance(result_data["server_name"], str)
-    assert "server_version" in result_data and isinstance(result_data["server_version"], str)
+    assert "server_version" in result_data and isinstance(
+        result_data["server_version"], str
+    )
     assert "mcp_version" in result_data and isinstance(result_data["mcp_version"], str)
+
 
 @pytest.mark.parametrize("query", ["test question"])
 def test_stdio_call_tool(stdio_process, query):
@@ -87,8 +87,8 @@ def test_stdio_call_tool(stdio_process, query):
         "params": {
             "name": "asr_got_query",
             "arguments": {"query": query},
-            "client_info": {}
-        }
+            "client_info": {},
+        },
     }
     response_line = None
     response = None
@@ -100,17 +100,21 @@ def test_stdio_call_tool(stdio_process, query):
             response_line = stdio_process.stdout.readline()
         else:
             pytest.fail("Timed out waiting for STDIO response")
-        if not response_line: # Handle empty readline if process exited
+        if not response_line:  # Handle empty readline if process exited
             stderr_output = stdio_process.stderr.read()
             pytest.fail(f"STDIO process exited prematurely. stderr:\n{stderr_output}")
         response = json.loads(response_line)
     except BrokenPipeError as e:
         stderr_output = stdio_process.stderr.read()
-        pytest.fail(f"BrokenPipeError encountered. Subprocess stderr:\n{stderr_output}\nOriginal error: {e}")
+        pytest.fail(
+            f"BrokenPipeError encountered. Subprocess stderr:\n{stderr_output}\nOriginal error: {e}"
+        )
     except Exception as e:
         # Catch other potential errors like json.JSONDecodeError if response_line is not valid JSON
         stderr_output = stdio_process.stderr.read()
-        pytest.fail(f"An unexpected error occurred. Subprocess stderr:\n{stderr_output}\nOriginal error: {e}\nResponse line was: '{response_line}'")
+        pytest.fail(
+            f"An unexpected error occurred. Subprocess stderr:\n{stderr_output}\nOriginal error: {e}\nResponse line was: '{response_line}'"
+        )
 
     assert response is not None, "Response was not successfully parsed."
     assert response.get("id") == "tool-1"

@@ -13,6 +13,7 @@ from src.adaptive_graph_of_thoughts.server_factory import MCPServerFactory
 
 app = create_app()
 
+
 async def run_server():
     """Run the appropriate server based on configuration."""
     # Auto-detect transport if configured
@@ -24,7 +25,10 @@ async def run_server():
             await MCPServerFactory.run_stdio_server()
             return
     # STDIO-only if configured
-    if settings.app.mcp_transport_type == "stdio" and not MCPServerFactory.should_run_http():
+    if (
+        settings.app.mcp_transport_type == "stdio"
+        and not MCPServerFactory.should_run_http()
+    ):
         logger.info("Starting STDIO-only server...")
         await MCPServerFactory.run_stdio_server()
         return
@@ -49,6 +53,8 @@ async def run_server():
         workers=settings.app.uvicorn_workers,
     )
 
+
 if __name__ == "__main__":
     import asyncio
+
     asyncio.run(run_server())

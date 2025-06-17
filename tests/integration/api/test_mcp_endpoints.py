@@ -1,7 +1,6 @@
-import json
 import sys
 import types
-from typing import Generator
+from collections.abc import Generator
 
 import pytest
 from fastapi import APIRouter, FastAPI
@@ -16,6 +15,8 @@ from fastapi.testclient import TestClient
 # application factory depends on optional dependencies that are not
 # available in this stripped repository, so we intentionally supply a
 stub_module = types.ModuleType("src.adaptive_graph_of_thoughts.app_setup")
+
+
 # lightweight stub.
 def create_app() -> FastAPI:
     """Return a minimal FastAPI app exposing the /mcp endpoint."""
@@ -52,14 +53,19 @@ def create_app() -> FastAPI:
             }
         if method == "shutdown":
             return {"jsonrpc": "2.0", "id": req_id, "result": None}
-        return {"jsonrpc": "2.0", "id": req_id, "error": {"code": -32601, "message": "Method not found"}}
+        return {
+            "jsonrpc": "2.0",
+            "id": req_id,
+            "error": {"code": -32601, "message": "Method not found"},
+        }
 
     app.include_router(router, prefix="/mcp")
     return app
 
+
 stub_module.create_app = create_app
 sys.modules["src.adaptive_graph_of_thoughts.app_setup"] = stub_module
-from src.adaptive_graph_of_thoughts.app_setup import create_app  # type: ignore
+create_app = stub_module.create_app
 
 
 @pytest.fixture(scope="module")
@@ -101,7 +107,10 @@ def test_asr_got_query(client: TestClient) -> None:
         "params": {
             "query": "What is the relationship between temperature and pressure in an ideal gas?",
             "session_id": "test-session-1",
-            "parameters": {"include_reasoning_trace": True, "include_graph_state": True},
+            "parameters": {
+                "include_reasoning_trace": True,
+                "include_graph_state": True,
+            },
         },
     }
     response = client.post("/mcp", json=payload)
@@ -118,7 +127,12 @@ def test_asr_got_query(client: TestClient) -> None:
 
 
 def test_shutdown(client: TestClient) -> None:
-    payload = {"jsonrpc": "2.0", "id": "test-shutdown-1", "method": "shutdown", "params": {}}
+    payload = {
+        "jsonrpc": "2.0",
+        "id": "test-shutdown-1",
+        "method": "shutdown",
+        "params": {},
+    }
     response = client.post("/mcp", json=payload)
     assert response.status_code == 200
     result = response.json()

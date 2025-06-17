@@ -47,11 +47,11 @@ class Logger:
     def add(self, sink: Any, **kwargs: Any) -> int:
         """
         Adds a new logging handler to the logger.
-        
+
         Args:
             sink: The destination for log messages, such as a file, stream, or callable.
             **kwargs: Additional configuration options for the handler.
-        
+
         Returns:
             An integer identifier for the added handler.
         """
@@ -63,7 +63,7 @@ class Logger:
     ) -> Callable[..., T]:  # T should be defined now
         """
         Decorator that wraps a callable to automatically catch and log exceptions.
-        
+
         Returns:
             A callable with the same signature as the input, with exception handling added.
         """
@@ -85,7 +85,7 @@ class Logger:
     ]:  # Changed List to list, T should be defined
         """
         Decorator that wraps a function to automatically catch and log specified exceptions.
-        
+
         Args:
             exception: List of exception types to catch. Defaults to all exceptions.
             default: Value to return if an exception is caught.
@@ -94,7 +94,7 @@ class Logger:
             level: Log level to use for the caught exception.
             reraise: If True, re-raises the exception after logging.
             exclude: List of exception types to ignore and not catch.
-        
+
         Returns:
             A decorator that wraps a function, catching and logging specified exceptions.
         """
@@ -103,7 +103,7 @@ class Logger:
     def catch(self, *args: Any, **kwargs: Any) -> Any:
         """
         Decorator that catches exceptions raised by a function and logs them.
-        
+
         Returns:
             The decorated function with exception handling and logging applied.
         """

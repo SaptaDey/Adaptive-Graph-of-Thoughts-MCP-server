@@ -52,10 +52,10 @@ class JSONRPCResponse(BaseModel, Generic[T, E]):
     ) -> Optional[JSONRPCErrorObject[E]]:
         """
         Validates that a JSON-RPC response contains either a result or an error, but not both.
-        
+
         Raises:
             ValueError: If both "result" and "error" are present, or if neither is present.
-        
+
         Returns:
             The error object if present; otherwise, None.
         """
@@ -121,7 +121,9 @@ class MCPQueryContext(BaseModel):
 class MCPQueryOperationalParams(BaseModel):
     include_reasoning_trace: bool = Field(default=True)
     include_graph_state: bool = Field(default=True)
-    max_nodes_in_response_graph: Optional[int] = Field(default=50, description="Max nodes in response graph, must be >= 0")
+    max_nodes_in_response_graph: Optional[int] = Field(
+        default=50, description="Max nodes in response graph, must be >= 0"
+    )
     output_detail_level: Optional[str] = Field(
         default="summary", examples=["summary", "detailed"]
     )
@@ -206,7 +208,9 @@ class GoTQueryProgressParams(BaseModel):
     stage: str
     status: str
     message: Optional[str] = Field(default=None)
-    progress_percentage: Optional[float] = Field(default=None, description="Progress percentage between 0.0 and 100.0")
+    progress_percentage: Optional[float] = Field(
+        default=None, description="Progress percentage between 0.0 and 100.0"
+    )
     intermediate_results: Optional[list[GoTQueryThoughtStep]] = Field(default=None)
 
 
@@ -254,20 +258,20 @@ class ExitParams(BaseModel):
 
 
 def create_jsonrpc_error(
-    request_id: Optional[Union[str, int, None]], 
-    code: int, 
-    message: str, 
-    data: Any = None
+    request_id: Optional[Union[str, int, None]],
+    code: int,
+    message: str,
+    data: Any = None,
 ) -> JSONRPCResponse:
     """
     Create a JSON-RPC error response.
-    
+
     Args:
         request_id: The ID of the request that generated this error
         code: Error code
         message: Error message
         data: Optional additional error data
-        
+
     Returns:
         A JSON-RPC response with the error object
     """

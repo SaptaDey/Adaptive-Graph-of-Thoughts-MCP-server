@@ -1,19 +1,20 @@
-from typing import Optional, List, Dict, Any
+from typing import Any, Optional
+
 from loguru import logger
 from pydantic import BaseModel, Field
 
-from ...config import LegacyConfig, ExaSearchConfig
+from ...config import Config, ExaSearchConfig, LegacyConfig
 from .base_client import (
-    AsyncHTTPClient,
-    APIRequestError,
     APIHTTPError,
+    APIRequestError,
+    AsyncHTTPClient,
     BaseAPIClientError,
 )
 
 
 class ExaArticleResult(BaseModel):
-    highlights: List[str] = Field(default_factory=list)
-    raw_result: Dict[str, Any] = Field(default_factory=dict)
+    highlights: list[str] = Field(default_factory=list)
+    raw_result: dict[str, Any] = Field(default_factory=dict)
     # keep alias so camelCase is accepted
     published_date: str = Field(default="", alias="publishedDate")
     author: str = Field(default="")
@@ -53,7 +54,7 @@ class ExaSearchClient:
             "x-api-key": self.api_key,
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "User-Agent": f"AdaptiveGraphOfThoughtsClient/1.0 (ExaSearchClient)",  # More specific User-Agent
+            "User-Agent": "AdaptiveGraphOfThoughtsClient/1.0 (ExaSearchClient)",  # More specific User-Agent
         }
 
         self.http_client = AsyncHTTPClient(
@@ -75,9 +76,9 @@ class ExaSearchClient:
         await self.http_client.client.__aexit__(exc_type, exc_val, exc_tb)
 
     def _parse_exa_response(
-        self, response_json: Dict[str, Any]
-    ) -> List[ExaArticleResult]:
-        articles: List[ExaArticleResult] = []
+        self, response_json: dict[str, Any]
+    ) -> list[ExaArticleResult]:
+        articles: list[ExaArticleResult] = []
         if "results" not in response_json:
             logger.warning("No 'results' key found in Exa API response.")
             if (
@@ -120,13 +121,13 @@ class ExaSearchClient:
         category: Optional[str] = None,  # e.g. "article"
         start_published_date: Optional[str] = None,  # YYYY-MM-DD
         end_published_date: Optional[str] = None,  # YYYY-MM-DD
-    ) -> List[ExaArticleResult]:
+    ) -> list[ExaArticleResult]:
         logger.debug(
             f"Searching Exa for query: '{query}', type: {type}, num_results: {num_results}, autoprompt: {use_autoprompt}"
         )
 
         stripped_query = query.strip()  # Added strip
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "query": stripped_query,  # Use stripped query
             "num_results": num_results,
             "type": type,
@@ -178,12 +179,12 @@ class ExaSearchClient:
         num_results: int = 10,
         start_published_date: Optional[str] = None,  # YYYY-MM-DD
         end_published_date: Optional[str] = None,  # YYYY-MM-DD
-    ) -> List[ExaArticleResult]:
+    ) -> list[ExaArticleResult]:
         logger.debug(
             f"Finding similar content on Exa for URL: '{url}', num_results: {num_results}"
         )
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "url": url,
             "num_results": num_results,
         }
@@ -228,7 +229,7 @@ class ExaSearchClient:
 
 # Example Usage (for testing)
 async def main_exa_search_test():
-    from adaptive_graph_of_thoughts.config import LegacyConfig, ExaSearchConfig
+    from adaptive_graph_of_thoughts.config import ExaSearchConfig, LegacyConfig
 
     try:
         main_app_config = LegacyConfig()
@@ -294,7 +295,7 @@ async def main_exa_search_test():
                 )
                 for i, res in enumerate(search_results):
                     logger.info(
-                        f"  Result #{i+1}: ID: {res.id}, Title: {res.title}, URL: {res.url}, Score: {res.score}"
+                        f"  Result #{i + 1}: ID: {res.id}, Title: {res.title}, URL: {res.url}, Score: {res.score}"
                     )
                     if res.highlights:
                         logger.info(
@@ -316,7 +317,7 @@ async def main_exa_search_test():
                         )
                         for j, sim_res in enumerate(similar_results):
                             logger.info(
-                                f"  Similar Result #{j+1}: ID: {sim_res.id}, Title: {sim_res.title}, URL: {sim_res.url}, Score: {sim_res.score}"
+                                f"  Similar Result #{j + 1}: ID: {sim_res.id}, Title: {sim_res.title}, URL: {sim_res.url}, Score: {sim_res.score}"
                             )
                     else:
                         logger.info(
@@ -339,8 +340,6 @@ async def main_exa_search_test():
 
 
 if __name__ == "__main__":
-    import asyncio
-
     # To run this test:
     # 1. Ensure you have a config/settings.yaml or relevant environment variables for exa_search.
     #    Example minimal settings.yaml:

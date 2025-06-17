@@ -7,16 +7,15 @@ Covers:
 - Validation of evidence types
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from typing import List, Dict, Any
+from unittest.mock import AsyncMock, MagicMock
 
-from adaptive_graph_of_thoughts.config import LegacyConfig as Config
-from adaptive_graph_of_thoughts.domain.stages.stage_4_evidence import EvidenceStage
+import pytest
+
 from adaptive_graph_of_thoughts.domain.models.common_types import (
     GoTProcessorSessionData,
 )
 from adaptive_graph_of_thoughts.domain.stages.stage_3_hypothesis import HypothesisStage
+from adaptive_graph_of_thoughts.domain.stages.stage_4_evidence import EvidenceStage
 
 # Define a reasonable max evidence for testing
 MAX_EVIDENCE = 100
@@ -111,17 +110,17 @@ async def test_execute_returns_successful_output(
     """Happy path: execute method returns a successful StageOutput."""
 
     # Stub out any external/model calls to ensure deterministic behavior
-    async def _stub_select(self, x):  # pylint: disable=unused-argument
+    async def _stub_select(_self, _x):  # pylint: disable=unused-argument
         return {
             "id": "hypo1",
             "label": "Test Hypothesis",
             "confidence_vector_list": [0.5, 0.5, 0.5, 0.5],
         }
 
-    async def _stub_execute_plan(self, x):  # pylint: disable=unused-argument
+    async def _stub_execute_plan(_self, _x):  # pylint: disable=unused-argument
         return evidence_items
 
-    async def _stub_create_evidence(self, hypo_data, ev_data, iteration, index):  # pylint: disable=unused-argument
+    async def _stub_create_evidence(_self, _hypo_data, _ev_data, _iteration, index):  # pylint: disable=unused-argument
         return {"id": f"ev_{index}", "label": f"Evidence {index}"}
 
     monkeypatch.setattr(
@@ -169,7 +168,7 @@ async def test_execute_returns_successful_output(
 
 
 @pytest.mark.asyncio
-async def test_execute_with_no_hypotheses(mock_config, monkeypatch):
+async def test_execute_with_no_hypotheses(mock_config, _monkeypatch):
     """Test that execute handles the case where there are no hypotheses."""
     # Create a session data with no hypothesis node IDs
     session_data = GoTProcessorSessionData(
@@ -198,17 +197,17 @@ async def test_execute_with_max_iterations(
     """Test that execute respects the max_iterations setting."""
 
     # Stub out any external/model calls to ensure deterministic behavior
-    async def _stub_select(self, x):  # pylint: disable=unused-argument
+    async def _stub_select(_self, _x):  # pylint: disable=unused-argument
         return {
             "id": "hypo1",
             "label": "Test Hypothesis",
             "confidence_vector_list": [0.5, 0.5, 0.5, 0.5],
         }
 
-    async def _stub_execute_plan(self, x):  # pylint: disable=unused-argument
+    async def _stub_execute_plan(_self, _x):  # pylint: disable=unused-argument
         return evidence_items
 
-    async def _stub_create_evidence(self, hypo_data, ev_data, iteration, index):  # pylint: disable=unused-argument
+    async def _stub_create_evidence(_self, _hypo_data, _ev_data, _iteration, index):  # pylint: disable=unused-argument
         return {"id": f"ev_{index}", "label": f"Evidence {index}"}
 
     monkeypatch.setattr(
@@ -252,14 +251,14 @@ async def test_execute_with_client_error(mock_session_data, mock_config, monkeyp
     """Test that execute handles client errors gracefully."""
 
     # Stub out any external/model calls to ensure deterministic behavior
-    async def _stub_select(self, x):  # pylint: disable=unused-argument
+    async def _stub_select(_self, _x):  # pylint: disable=unused-argument
         return {
             "id": "hypo1",
             "label": "Test Hypothesis",
             "confidence_vector_list": [0.5, 0.5, 0.5, 0.5],
         }
 
-    async def _stub_execute_plan(self, x):  # pylint: disable=unused-argument
+    async def _stub_execute_plan(_self, _x):  # pylint: disable=unused-argument
         raise Exception("Test client error")
 
     monkeypatch.setattr(

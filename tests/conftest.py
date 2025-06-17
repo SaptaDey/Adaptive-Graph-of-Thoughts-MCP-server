@@ -1,9 +1,12 @@
 import warnings
+
 import pytest
+
 
 # Register custom markers
 def pytest_configure(config: pytest.Config) -> None:
     config.addinivalue_line("markers", "slow: mark tests as slow")
+
 
 # Ignore PendingDeprecationWarning from Starlette multipart import
 warnings.filterwarnings(

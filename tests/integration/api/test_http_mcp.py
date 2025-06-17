@@ -1,10 +1,11 @@
 """
 Test script specifically designed for HTTP-based MCP server verification
 """
+
 import json
 
-import requests
 import pytest
+import requests
 
 
 def test_mcp_server() -> None:
@@ -19,10 +20,10 @@ def test_mcp_server() -> None:
         "params": {
             "client_info": {
                 "client_name": "Adaptive Graph of Thoughts Test Client",
-                "client_version": "1.0.0"
+                "client_version": "1.0.0",
             },
-            "process_id": 12345
-        }
+            "process_id": 12345,
+        },
     }
 
     url = "http://localhost:8000/mcp"
@@ -42,6 +43,7 @@ def test_mcp_server() -> None:
     assert "result" in result and "server_name" in result["result"]
     assert "server_version" in result["result"]
     assert "mcp_version" in result["result"]
+
 
 if __name__ == "__main__":
     test_mcp_server()

@@ -1,5 +1,5 @@
-import time
 import secrets
+import time
 from typing import Any, Optional, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -17,7 +17,7 @@ from src.adaptive_graph_of_thoughts.api.schemas import (
     MCPInitializeResult,
     ShutdownParams,
 )
-from src.adaptive_graph_of_thoughts.config import settings # Import settings
+from src.adaptive_graph_of_thoughts.config import settings  # Import settings
 from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
     GoTProcessor,
     GoTProcessorSessionData,
@@ -31,13 +31,19 @@ async def verify_token(http_request: Request):
     if settings.app.auth_token:
         auth_header = http_request.headers.get("Authorization")
         if not auth_header:
-            logger.warning("MCP request missing Authorization header when auth_token is configured.")
+            logger.warning(
+                "MCP request missing Authorization header when auth_token is configured."
+            )
             raise HTTPException(status_code=401, detail="Not authenticated")
 
         parts = auth_header.split()
         if len(parts) != 2 or parts[0].lower() != "bearer":
-            logger.warning(f"MCP request with malformed Authorization header: {auth_header}")
-            raise HTTPException(status_code=401, detail="Invalid authentication credentials")
+            logger.warning(
+                f"MCP request with malformed Authorization header: {auth_header}"
+            )
+            raise HTTPException(
+                status_code=401, detail="Invalid authentication credentials"
+            )
 
         token = parts[1]
         if not secrets.compare_digest(token, settings.app.auth_token):
@@ -89,9 +95,9 @@ async def handle_asr_got_query(
 ) -> JSONRPCResponse[MCPASRGoTQueryResult, Any]:
     """
     Processes an "asr_got.query" JSON-RPC request using the GoTProcessor and returns the result or an error response.
-    
+
     Forwards the query and parameters to the GoTProcessor, optionally including the graph state and a reasoning trace summary in the response. Converts and validates returned data, measures execution time, and provides robust error handling with fallback responses if processing fails.
-    
+
     Returns:
         A JSON-RPC response containing the ASR-GoT query result, which may include the answer, reasoning trace summary, graph state, confidence vector, execution time, and session ID. If an error occurs, returns a JSON-RPC error response with diagnostic details.
     """
@@ -253,11 +259,12 @@ async def handle_shutdown(
 
 @mcp_router.post("", dependencies=[Depends(verify_token)])
 async def mcp_endpoint_handler(
-    request_payload: JSONRPCRequest[dict[str, Any]], http_request: Request # http_request is still available here if needed by handlers
+    request_payload: JSONRPCRequest[dict[str, Any]],
+    http_request: Request,  # http_request is still available here if needed by handlers
 ):
     """
     Handles incoming MCP JSON-RPC requests and dispatches them to the appropriate method handler.
-    
+
     Parses the method and parameters from the request payload, invokes the corresponding handler for "initialize", "asr_got.query", or "shutdown" methods, and returns a JSON-RPC response. Returns a JSON-RPC error for unsupported methods or invalid parameters. Exceptions are logged and mapped to appropriate JSON-RPC error responses.
     """
     logger.debug(
