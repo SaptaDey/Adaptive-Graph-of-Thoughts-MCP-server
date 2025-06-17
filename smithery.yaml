@@ -1,4 +1,6 @@
 version: 1
+setup:
+  - "pip install -r requirements.txt"
 start:
   command: ["python", "src/adaptive_graph_of_thoughts/main.py"]
   port: 8000
