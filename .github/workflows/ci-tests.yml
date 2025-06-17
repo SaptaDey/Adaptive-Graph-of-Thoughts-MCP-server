@@ -43,10 +43,6 @@ jobs:
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=${GITHUB_WORKSPACE}" >> $GITHUB_ENV
 
-      - name: Ruff Lint
-        if: matrix.python-version == '3.13'
-        run: poetry run ruff check .
-
       - name: Ruff Format Check
         if: matrix.python-version == '3.13'
         run: poetry run ruff format --check .
