@@ -8,6 +8,8 @@ from neo4j import GraphDatabase
 app = typer.Typer(add_completion=False)
 
 
+from neo4j.exceptions import ServiceUnavailable, AuthError
+
 def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
     try:
         driver = GraphDatabase.driver(uri, auth=(user, password))
@@ -15,7 +17,10 @@ def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
             session.run("MATCH (n) RETURN count(n) LIMIT 1")
         driver.close()
         return True
+    except (ServiceUnavailable, AuthError):
+        return False
     except Exception:
+        # Unexpected error
         return False
 
 
