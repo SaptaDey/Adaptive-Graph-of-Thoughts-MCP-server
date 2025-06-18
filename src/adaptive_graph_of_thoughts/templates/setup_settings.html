@@ -9,8 +9,8 @@
   <form method="post">
     {% for key, value in settings.items() %}
       <div>
-        <label>{{ key }}
-          <input name="{{ key }}" value="{{ value }}">
+        <label>{{ key|e }}
+          <input name="{{ key|e }}" value="{{ value|e }}">
         </label>
       </div>
     {% endfor %}
