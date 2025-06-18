@@ -7,6 +7,8 @@ from threading import Lock
 from typing import Any, Optional, Union
 
 import yaml
+from pydantic import BaseModel
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Thread safety lock
 _config_lock = Lock()
@@ -321,7 +323,68 @@ class Settings(LegacyConfig):
 
 # Global config instance
 config = LegacyConfig()
-settings = config  # For backward compatibility
+legacy_settings = config  # For backward compatibility
+
+# ---------------------------------------------------------------------------
+# New Pydantic-based settings
+# ---------------------------------------------------------------------------
+
+
+class Neo4jSettingsModel(BaseSettings):
+    """Connection details for Neo4j database."""
+
+    uri: str = "neo4j://localhost:7687"
+    user: str = "neo4j"
+    password: str = "password"
+    database: str = "neo4j"
+
+    model_config = SettingsConfigDict(env_prefix="NEO4J_", env_file=".env")
+
+
+class AppSettingsModel(BaseModel):
+    """Application runtime settings loaded from YAML and env vars."""
+
+    name: str = "Adaptive Graph of Thoughts"
+    version: str = "0.1.0"
+    host: str = "0.0.0.0"
+    port: int = 8000
+    uvicorn_reload: bool = True
+    uvicorn_workers: int = 1
+    cors_allowed_origins_str: str = "*"
+    auth_token: str | None = None
+    mcp_transport_type: str = "http"
+    mcp_stdio_enabled: bool = True
+    mcp_http_enabled: bool = True
+    log_level: str = "INFO"
+
+
+class RuntimeSettings(BaseSettings):
+    """Combined settings object used by the application."""
+
+    app: AppSettingsModel = AppSettingsModel()
+    neo4j: Neo4jSettingsModel = Neo4jSettingsModel()
+    asr_got: dict[str, Any] = field(default_factory=dict)
+
+    model_config = SettingsConfigDict(
+        env_file=".env", env_nested_delimiter="__", extra="ignore"
+    )
+
+
+def load_runtime_settings() -> RuntimeSettings:
+    """Load settings from config/settings.yaml and environment."""
+
+    yaml_path = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
+    data: dict[str, Any] = {}
+    if yaml_path.exists():
+        with open(yaml_path) as fh:
+            data = yaml.safe_load(fh) or {}
+    return RuntimeSettings(**data)
+
+
+runtime_settings = load_runtime_settings()
+
+# Re-export runtime settings for application modules
+settings = runtime_settings
 
 # ---------------------------------------------------------------------------
 # Simplified configuration used in tests

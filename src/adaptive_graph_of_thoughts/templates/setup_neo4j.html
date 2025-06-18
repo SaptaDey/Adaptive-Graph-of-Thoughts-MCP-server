@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Setup - Neo4j</title>
+</head>
+<body>
+  <h1>Neo4j Connection</h1>
+  {% if message %}<p style="color:{{ 'green' if success else 'red' }}">{{ message }}</p>{% endif %}
+  <form method="post">
+    <label>URI <input name="uri" value="{{ values.uri }}" required></label><br>
+    <label>User <input name="user" value="{{ values.user }}" required></label><br>
+    <label>Password <input type="password" name="password" value="{{ values.password }}" required></label><br>
+    <label>Database <input name="database" value="{{ values.database }}" required></label><br>
+    <button type="submit">Save & Continue</button>
+  </form>
+</body>
+</html>

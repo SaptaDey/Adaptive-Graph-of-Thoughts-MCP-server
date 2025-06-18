@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Setup - Settings</title>
+</head>
+<body>
+  <h1>Edit Settings</h1>
+  {% if message %}<p style="color:green">{{ message }}</p>{% endif %}
+  <form method="post">
+    {% for key, value in settings.items() %}
+      <div>
+        <label>{{ key }}
+          <input name="{{ key }}" value="{{ value }}">
+        </label>
+      </div>
+    {% endfor %}
+    <button type="submit">Save</button>
+  </form>
+  <form method="post" action="{{ url_for('reset_settings') }}">
+    <button type="submit">Reset to defaults</button>
+  </form>
+</body>
+</html>

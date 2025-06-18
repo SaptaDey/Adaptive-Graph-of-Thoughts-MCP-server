@@ -146,6 +146,18 @@ Before running Adaptive Graph of Thoughts (either locally or via Docker if not u
    
    The API will be available at `http://localhost:8000`.
 
+## ✨ Setup Wizard
+
+An interactive wizard is available to streamline initial configuration.
+
+```bash
+poetry run python -m agt_setup
+```
+
+Then visit `http://localhost:8000/setup` to complete the web-based steps.
+
+![Setup Wizard](docs_src/assets/setup_wizard.gif)
+
 ### Docker Deployment
 
 ```mermaid

@@ -33,6 +33,7 @@ python-dotenv = "^1.0.1"   # For loading .env files
 PyYAML = "^6.0.1"          # For YAML configuration files
 typer = {extras = ["all"], version = "^0.12.3"} # For CLI commands (optional, but good for management scripts)
 loguru = "^0.7.2"          # For enhanced logging
+jinja2 = "^3.1.3"          # For HTML templating in setup wizard
 requests = "^2.32.4"       # For HTTP requests in test scripts
 mcp = "^1.2.0"             # Official MCP Python SDK
 jsonschema = "^4.21.0"     # For configuration schema validation
