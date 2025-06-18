@@ -173,10 +173,18 @@ def create_app() -> FastAPI:
         return dict(data.get("app", {}))
 
     def _write_settings(data: dict[str, str]) -> None:
-        with open(yaml_path) as fh:
+        import fcntl
+        with open(yaml_path, "r+") as fh:
+            # acquire an exclusive lock to prevent concurrent writes
+            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+            # read the existing contents
+            fh.seek(0)
             existing = yaml.safe_load(fh) or {}
-        existing.setdefault("app", {}).update(data)
-        with open(yaml_path, "w") as fh:
+            # merge in the new data
+            existing.setdefault("app", {}).update(data)
+            # overwrite the file with the updated contents
+            fh.seek(0)
+            fh.truncate()
             yaml.safe_dump(existing, fh)
 
     def _test_conn(uri: str, user: str, password: str, database: str) -> bool:
