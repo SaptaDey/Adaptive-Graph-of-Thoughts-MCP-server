@@ -363,7 +363,13 @@ class RuntimeSettings(BaseSettings):
 
     app: AppSettingsModel = AppSettingsModel()
     neo4j: Neo4jSettingsModel = Neo4jSettingsModel()
-    asr_got: dict[str, Any] = field(default_factory=dict)
+# at the top of src/adaptive_graph_of_thoughts/config.py, alongside your other imports
+from pydantic import Field
+
+…
+
+-    asr_got: dict[str, Any] = field(default_factory=dict)
++    asr_got: dict[str, Any] = Field(default_factory=dict)
 
     model_config = SettingsConfigDict(
         env_file=".env", env_nested_delimiter="__", extra="ignore"
