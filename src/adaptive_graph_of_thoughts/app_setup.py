@@ -229,8 +229,8 @@ def create_app() -> FastAPI:
             driver.close()
             payload["neo4j"] = "up"
             return payload
-        except Exception:
             payload["neo4j"] = "down"
+            payload["status"] = "unhealthy" # Or a more descriptive status
             return JSONResponse(status_code=500, content=payload)
 
     # Include routers
