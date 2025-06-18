@@ -143,7 +143,7 @@ def create_app() -> FastAPI:
             values = {
                 "uri": uri,
                 "user": user,
-                "password": password,
+                "password": "",  # Don't expose password on failure
                 "database": database,
             }
             return templates.TemplateResponse(
@@ -155,6 +155,7 @@ def create_app() -> FastAPI:
                     "success": False,
                 },
             )
+
         env_path = Path(".env")
         env_path.touch(mode=0o600, exist_ok=True)
         set_key(str(env_path), "NEO4J_URI", uri)
@@ -163,7 +164,6 @@ def create_app() -> FastAPI:
         set_key(str(env_path), "NEO4J_DATABASE", database)
         env_path.chmod(0o600)
         return RedirectResponse("/setup/settings", status_code=303)
-
     yaml_path = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
     original_settings = yaml.safe_load(yaml_path.read_text()) or {}
 
