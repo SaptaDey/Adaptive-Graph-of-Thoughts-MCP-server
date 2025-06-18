@@ -199,7 +199,9 @@ def create_app() -> FastAPI:
     @app.post("/setup/settings", response_class=HTMLResponse)
     async def save_settings(request: Request):
         form = await request.form()
-        data = {k: form[k] for k in form}
+        # Whitelist allowed configuration keys
+        allowed_keys = {"name", "version", "host", "port", "log_level"}
+        data = {k: form[k] for k in form if k in allowed_keys}
         _write_settings(data)
         return templates.TemplateResponse(
             "setup_settings.html",
