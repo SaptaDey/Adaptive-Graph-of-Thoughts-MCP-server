@@ -8,7 +8,17 @@ explorer_router = APIRouter()
 
 @explorer_router.get("/graph")
 async def graph_explorer_json(limit: int = 50):
-    """Return nodes and edges for dashboard graph explorer."""
+    """
+    Retrieve a list of nodes and edges from the Neo4j database for use in a graph explorer dashboard.
+    
+    Parameters:
+        limit (int): Maximum number of relationships to include in the result. Defaults to 50.
+    
+    Returns:
+        dict: A dictionary with two keys:
+            - "nodes": List of unique node objects, each containing node ID, labels, and properties.
+            - "edges": List of relationship objects, each containing relationship ID, type, source and target node IDs, and properties.
+    """
     query = (
         "MATCH (n)-[r]->(m) RETURN id(n) AS sid, labels(n) AS slabels, "
         "properties(n) AS sprops, id(m) AS tid, labels(m) AS tlabels, "

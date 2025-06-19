@@ -5,6 +5,15 @@ from adaptive_graph_of_thoughts.app_setup import create_app
 def test_graph_explorer(monkeypatch):
 
     async def fake_query(query: str, params=None, database=None, tx_type="read"):
+        """
+        Simulate a database query by returning a fixed list representing a single graph edge between two nodes.
+        
+        Parameters:
+        	query (str): The query string to simulate.
+        
+        Returns:
+        	list: A list containing one dictionary representing an edge with source and target node details.
+        """
         return [
             {
                 "sid": 1,
@@ -20,6 +29,12 @@ def test_graph_explorer(monkeypatch):
         ]
 
     async def fake_execute(*args, **kwargs):
+        """
+        Asynchronously executes a fake query and returns a predefined graph result.
+        
+        Returns:
+            The result of the fake_query function, representing a fixed graph structure.
+        """
         return await fake_query("", {})
 
     monkeypatch.setattr(

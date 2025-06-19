@@ -400,7 +400,14 @@ class RuntimeSettings(BaseSettings):
 
 
 def load_runtime_settings() -> RuntimeSettings:
-    """Load settings from config/settings.yaml and environment."""
+    """
+    Load runtime application settings from a YAML file and environment variables.
+    
+    If `config/settings.yaml` exists, its contents are loaded and used as defaults, with environment variables taking precedence. Returns a `RuntimeSettings` instance containing the merged configuration.
+     
+    Returns:
+        RuntimeSettings: The combined runtime settings loaded from file and environment.
+    """
 
     yaml_path = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
     data: dict[str, Any] = {}

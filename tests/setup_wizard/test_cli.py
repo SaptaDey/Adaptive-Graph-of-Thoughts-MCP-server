@@ -4,6 +4,11 @@ import agt_setup
 
 
 def test_cli_creates_env(tmp_path, monkeypatch):
+    """
+    Test that the CLI creates a `.env` file with correct content and permissions when provided valid input.
+    
+    Simulates user input for Neo4j connection details, mocks a successful connection, and verifies that the `.env` file is created in the temporary directory with the expected URI and file mode 600.
+    """
     env_file = tmp_path / ".env"
     monkeypatch.chdir(tmp_path)
     monkeypatch.setattr(agt_setup, "_test_connection", lambda *_args, **_kw: True)

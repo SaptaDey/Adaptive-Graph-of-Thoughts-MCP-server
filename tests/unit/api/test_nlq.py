@@ -10,6 +10,11 @@ def test_nlq_endpoint(monkeypatch):
     calls = []
 
     def fake_llm(prompt: str) -> str:
+        """
+        Mock implementation of a language model function for testing.
+        
+        Returns a Cypher query string on the first call and "summary" on subsequent calls.
+        """
         calls.append(prompt)
         if len(calls) == 1:
             return "MATCH (n) RETURN n LIMIT 1"

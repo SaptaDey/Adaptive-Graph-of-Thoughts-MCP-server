@@ -12,6 +12,12 @@ app = typer.Typer(add_completion=False)
 from neo4j.exceptions import AuthError, ServiceUnavailable
 
 def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
+    """
+    Attempt to connect to a Neo4j database and verify connectivity by running a simple query.
+    
+    Returns:
+        bool: True if the connection and query succeed, False otherwise.
+    """
     try:
         driver = GraphDatabase.driver(uri, auth=(user, password))
         with driver.session(database=database) as session:
@@ -26,7 +32,11 @@ def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
 
 @app.command()
 def run() -> None:
-    """Interactive setup wizard for Adaptive GoT."""
+    """
+    Launches an interactive CLI wizard to configure Neo4j connection settings and save them to a `.env` file.
+    
+    Prompts the user for Neo4j URI, username, password, and database, verifies the connection, and securely writes the credentials to a `.env` file. Warns if optional LLM-related packages (`openai`, `anthropic`) are missing.
+    """
     if Path(".env").exists():
         if typer.confirm("Import existing .env values?", default=True):
             load_dotenv(".env")
