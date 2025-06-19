@@ -1,19 +1,23 @@
 import asyncio
-import os
 from typing import Any, Optional
 
 from loguru import logger
 from neo4j import Driver, GraphDatabase, Record, Result, Transaction, unit_of_work
 from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
+from src.adaptive_graph_of_thoughts.config import runtime_settings
+
 
 # --- Simple Configuration ---
 class Neo4jSettings:
     def __init__(self):
-        self.uri: str = os.getenv("NEO4J_URI", "neo4j://localhost:7687")
-        self.user: str = os.getenv("NEO4J_USER", "neo4j")
-        self.password: str = os.getenv("NEO4J_PASSWORD", "password")
-        self.database: str = os.getenv("NEO4J_DATABASE", "neo4j")
+        """
+        Initialize Neo4j connection settings from the application's runtime configuration.
+        """
+        self.uri: str = runtime_settings.neo4j.uri
+        self.user: str = runtime_settings.neo4j.user
+        self.password: str = runtime_settings.neo4j.password
+        self.database: str = runtime_settings.neo4j.database
 
 
 # --- Global Configuration ---

@@ -55,5 +55,14 @@ jobs:
         if: matrix.python-version == '3.13'
         run: poetry run pyright src/
 
+      - name: Black Check
+        run: poetry run black --check src tests
+
+      - name: Flake8 Lint
+        run: poetry run flake8 src tests
+
+      - name: Build Docs
+        run: poetry run mkdocs build --strict --config-file mkdocs.yml --site-dir _site
+
       - name: Run tests
         run: poetry run pytest --cov=src

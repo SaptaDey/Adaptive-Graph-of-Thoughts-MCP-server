@@ -1,0 +1,21 @@
+{
+  "name": "vscode-agot",
+  "displayName": "Adaptive Graph of Thoughts",
+  "description": "Query the AGoT server from VS Code",
+  "version": "0.1.0",
+  "engines": { "vscode": "^1.75.0" },
+  "activationEvents": ["onCommand:agot.askGraph"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "agot.askGraph", "title": "AGoT: Ask Graph..." }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npx tsc -p ./"
+  },
+  "devDependencies": {
+    "typescript": "^5.2.0",
+    "@types/node": "^20.0.0"
+  }
+}
