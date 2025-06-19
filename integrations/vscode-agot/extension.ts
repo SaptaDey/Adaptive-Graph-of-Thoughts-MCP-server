@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { parseNdjson } from './utils';
 
 export function activate(context: vscode.ExtensionContext) {
     const disposable = vscode.commands.registerCommand('agot.askGraph', async () => {
@@ -10,8 +11,10 @@ export function activate(context: vscode.ExtensionContext) {
             body: JSON.stringify({ question })
         });
         const text = await res.text();
+        const lines = parseNdjson(text);
+        const pretty = JSON.stringify(lines, null, 2);
         const panel = vscode.window.createWebviewPanel('agotResult', 'AGoT Result', vscode.ViewColumn.One, {});
-        panel.webview.html = `<pre>${text}</pre>`;
+        panel.webview.html = `<pre>${pretty}</pre>`;
     });
 
     context.subscriptions.push(disposable);

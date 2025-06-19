@@ -57,6 +57,18 @@ Adaptive Graph of Thoughts leverages a **Neo4j graph database** to perform sophi
 - Modular design for extensibility and customization
 - Integration with Claude Desktop via MCP protocol
 
+## 🚀 Quick Start
+
+```bash
+git clone https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server.git
+cd Adaptive-Graph-of-Thoughts-MCP-server
+poetry install
+poetry run uvicorn src.adaptive_graph_of_thoughts.main:app --reload
+```
+
+Open [http://localhost:8000/setup](http://localhost:8000/setup) and complete the
+wizard. You'll land on the dashboard when finished.
+
 ## 📂 Project Structure
 
 The project is organized as follows (see the documentation site for more details):
@@ -156,7 +168,8 @@ poetry run python -m agt_setup
 
 Then visit `http://localhost:8000/setup` to complete the web-based steps.
 
-![Setup Wizard](docs_src/assets/setup_wizard.gif)
+*Setup wizard demo GIF will appear here in the full documentation.*
+
 
 ### Docker Deployment
 
@@ -368,6 +381,18 @@ poetry run pre-commit run --all-files       # Run all hooks
 
 # See Makefile for other useful targets like 'make all-checks'.
 ```
+
+## 🖥 Dashboard Tour
+
+*Dashboard demo GIF coming soon.*
+
+## 💻 IDE Integration
+
+Use the `vscode-agot` extension to query the server from VS Code. Run the extension and execute **AGoT: Ask Graph…** from the Command Palette.
+
+## ❓ Troubleshooting
+
+If the server fails to start or setup reports errors, ensure your Neo4j instance is running and the credentials in `.env` are correct. Consult the console output for details.
 
 ## 🗺️ Roadmap and Future Directions
 

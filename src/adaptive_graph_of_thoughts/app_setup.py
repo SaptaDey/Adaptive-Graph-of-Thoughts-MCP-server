@@ -18,6 +18,7 @@ from neo4j import GraphDatabase
 
 from src.adaptive_graph_of_thoughts.api.routes.mcp import mcp_router
 from src.adaptive_graph_of_thoughts.api.routes.nlq import nlq_router
+from src.adaptive_graph_of_thoughts.api.routes.explorer import explorer_router
 from src.adaptive_graph_of_thoughts.config import (
     RuntimeSettings,
     runtime_settings,
@@ -36,13 +37,18 @@ def get_basic_auth(credentials: HTTPBasicCredentials = Depends(security)) -> boo
     password = os.getenv("BASIC_AUTH_PASS")
     if user and password:
         if not (credentials.username == user and credentials.password == password):
-            raise HTTPException(status_code=401, detail="Unauthorized", headers={"WWW-Authenticate": "Basic"})
+            raise HTTPException(
+                status_code=401,
+                detail="Unauthorized",
+                headers={"WWW-Authenticate": "Basic"},
+            )
     return True
 
 
 def _ask_llm(prompt: str) -> str:
     """Proxy to ask_llm service for backward compatibility."""
     return ask_llm(prompt)
+
 
 # Add src directory to Python path if not already there
 # This must be done before other project imports
@@ -153,7 +159,11 @@ def create_app() -> FastAPI:
             "password": os.getenv("NEO4J_PASSWORD", runtime_settings.neo4j.password),
             "database": os.getenv("NEO4J_DATABASE", runtime_settings.neo4j.database),
         }
-        missing = [pkg for pkg in ("openai", "anthropic") if importlib.util.find_spec(pkg) is None]
+        missing = [
+            pkg
+            for pkg in ("openai", "anthropic")
+            if importlib.util.find_spec(pkg) is None
+        ]
         return templates.TemplateResponse(
             "setup_neo4j.html",
             {
@@ -199,6 +209,7 @@ def create_app() -> FastAPI:
         set_key(str(env_path), "NEO4J_DATABASE", database)
         env_path.chmod(0o600)
         return RedirectResponse("/setup/settings", status_code=303)
+
     yaml_path = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
     original_settings = yaml.safe_load(yaml_path.read_text()) or {}
 
@@ -209,18 +220,20 @@ def create_app() -> FastAPI:
 
     def _write_settings(data: dict[str, str]) -> None:
         import fcntl
-        with open(yaml_path, "r+") as fh:
-            # acquire an exclusive lock to prevent concurrent writes
-            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
-            # read the existing contents
-            fh.seek(0)
-            existing = yaml.safe_load(fh) or {}
-            # merge in the new data
-            existing.setdefault("app", {}).update(data)
-            # overwrite the file with the updated contents
-            fh.seek(0)
-            fh.truncate()
-            yaml.safe_dump(existing, fh)
+
+        try:
+            with open(yaml_path, "r+") as fh:
+                # acquire an exclusive lock to prevent concurrent writes
+                fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
+                # read the existing contents
+                fh.seek(0)
+                existing = yaml.safe_load(fh) or {}
+                # merge in the new data
+                existing.setdefault("app", {}).update(data)
+                # overwrite the file with the updated contents
+                fh.seek(0)
+                fh.truncate()
+                yaml.safe_dump(existing, fh)
 
         except neo4j.exceptions.ServiceUnavailable as e:
             logger.warning(f"Neo4j connection failed: Service unavailable. Error: {e}")
@@ -229,7 +242,9 @@ def create_app() -> FastAPI:
             logger.warning(f"Neo4j connection failed: Authentication error. Error: {e}")
             return False
         except Exception as e:
-            logger.error(f"An unexpected error occurred during Neo4j connection test: {e}")
+            logger.error(
+                f"An unexpected error occurred during Neo4j connection test: {e}"
+            )
             return False
 
     @app.get("/setup/settings", response_class=HTMLResponse)
@@ -273,8 +288,13 @@ def create_app() -> FastAPI:
                 yaml.safe_dump(data, fh)
             return {"message": "Saved"}
         except Exception as e:
-            logger.error("Error occurred while saving configuration: {}", e)  # Log the exception
-            return JSONResponse(status_code=400, content={"message": "An error occurred while processing your request."})
+            logger.error(
+                "Error occurred while saving configuration: {}", e
+            )  # Log the exception
+            return JSONResponse(
+                status_code=400,
+                content={"message": "An error occurred while processing your request."},
+            )
 
     @app.post("/chat")
     async def chat_endpoint(
@@ -339,6 +359,7 @@ def create_app() -> FastAPI:
         dependencies=[Depends(get_basic_auth)],
     )
     app.include_router(nlq_router, dependencies=[Depends(get_basic_auth)])
+    app.include_router(explorer_router, dependencies=[Depends(get_basic_auth)])
     logger.info("API routers included. MCP router mounted at /mcp.")
 
     logger.info(
