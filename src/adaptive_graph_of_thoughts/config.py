@@ -379,16 +379,24 @@ class AppSettingsModel(BaseModel):
 
 
 class RuntimeSettings(BaseSettings):
-    """Combined settings object used by the application."""
+    """Central runtime settings loaded from YAML and environment."""
 
-    app: AppSettingsModel = AppSettingsModel()
-    neo4j: Neo4jSettingsModel = Neo4jSettingsModel()
-    asr_got: dict[str, Any] = Field(default_factory=dict)
+    app: AppSettingsModel = Field(
+        default_factory=AppSettingsModel,
+        description="Web application configuration",
+    )
+    neo4j: Neo4jSettingsModel = Field(
+        default_factory=Neo4jSettingsModel,
+        description="Neo4j connection options",
+    )
+    asr_got: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Advanced reasoning parameters",
+    )
 
     model_config = SettingsConfigDict(
         env_file=".env", env_nested_delimiter="__", extra="ignore"
     )
-
 
 
 def load_runtime_settings() -> RuntimeSettings:
