@@ -1,327 +1,352 @@
+"""Comprehensive unit tests for the app_setup module.
+
+This module tests all functionality related to application setup, configuration,
+initialization, and teardown processes.
+"""
 import pytest
-import unittest.mock as mock
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock, call
 import os
 import sys
+from pathlib import Path
 import tempfile
 import shutil
-from pathlib import Path
+from typing import Dict, Any, Optional
+
+# Add the src directory to the path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "git" / "src"))
+
+from adaptive_graph_of_thoughts.app_setup import *
 
 @pytest.fixture
-def temp_dir():
-    """Create a temporary directory for testing."""
-    temp_path = tempfile.mkdtemp()
-    yield temp_path
-    shutil.rmtree(temp_path, ignore_errors=True)
-
-@pytest.fixture
-def mock_config():
-    """Provide a mock configuration object."""
-    config = {
-        'debug': False,
-        'host': 'localhost',
-        'port': 8000,
-        'database_url': 'sqlite:///test.db',
-        'secret_key': 'test-secret-key'
+def mock_config() -> Dict[str, Any]:
+    """Provide a mock configuration object for testing."""
+    return {
+        "database_url": "sqlite:///test.db",
+        "debug": True,
+        "log_level": "INFO",
+        "api_key": "test_api_key",
+        "timeout": 30,
+        "max_retries": 3
     }
-    return config
 
 @pytest.fixture
-def app_instance():
-    """Create a test application instance."""
-    with patch('app_setup.create_app') as mock_create:
-        mock_app = Mock()
-        mock_create.return_value = mock_app
-        yield mock_app
+def invalid_config() -> Dict[str, Any]:
+    """Provide an invalid configuration for error testing."""
+    return {
+        "database_url": "",
+        "debug": "not_a_boolean",
+        "log_level": "INVALID_LEVEL",
+        "timeout": -1,
+        "max_retries": "not_a_number"
+    }
+
+@pytest.fixture
+def temp_directory() -> str:
+    """Create a temporary directory for file-based tests."""
+    temp_dir = tempfile.mkdtemp()
+    yield temp_dir
+    shutil.rmtree(temp_dir)
+
+@pytest.fixture
+def mock_logger():
+    """Provide a mock logger for testing logging functionality."""
+    with patch("adaptive_graph_of_thoughts.app_setup.logger") as mock_log:
+        yield mock_log
 
 class TestAppSetup:
-    """Test suite for application setup functionality."""
+    """Test suite for core application setup functionality."""
 
-    def test_create_app_with_default_config(self, mock_config):
-        """Test application creation with default configuration."""
-        with patch('app_setup.load_config') as mock_load:
-            mock_load.return_value = mock_config
+    def test_initialize_app_with_valid_config_succeeds(self, mock_config, mock_logger):
+        initialize_app(mock_config)
+        mock_logger.info.assert_called()
 
-            with patch('app_setup.Flask') as mock_flask:
-                mock_app = Mock()
-                mock_flask.return_value = mock_app
+    def test_initialize_app_with_invalid_config_raises_error(self, invalid_config, mock_logger):
+        with pytest.raises(ValueError, match="Invalid configuration"):
+            initialize_app(invalid_config)
 
-                from app_setup import create_app
-                result = create_app()
+    def test_initialize_app_with_missing_config_uses_defaults(self, mock_logger):
+        initialize_app({})
+        mock_logger.info.assert_called()
 
-                assert result == mock_app
-                mock_flask.assert_called_once()
-                mock_load.assert_called_once()
+    @pytest.mark.parametrize("config_key,invalid_value,expected_error", [
+        ("database_url", None, "Database URL cannot be None"),
+        ("database_url", "", "Database URL cannot be empty"),
+        ("timeout", -1, "Timeout must be positive"),
+        ("timeout", "invalid", "Timeout must be a number"),
+        ("max_retries", -1, "Max retries must be non-negative"),
+        ("log_level", "INVALID", "Invalid log level"),
+    ])
+    def test_validate_config_with_invalid_values(self, mock_config, config_key, invalid_value, expected_error):
+        config = mock_config.copy()
+        config[config_key] = invalid_value
+        with pytest.raises(ValueError, match=expected_error):
+            validate_config(config)
 
-    def test_create_app_with_custom_config(self):
-        """Test application creation with custom configuration."""
-        custom_config = {
-            'debug': True,
-            'host': '0.0.0.0',
-            'port': 9000,
-            'database_url': 'postgresql://localhost/test'
-        }
+class TestDatabaseSetup:
+    """Test suite for database setup and connection management."""
 
-        with patch('app_setup.Flask') as mock_flask:
-            mock_app = Mock()
-            mock_flask.return_value = mock_app
+    @patch("adaptive_graph_of_thoughts.app_setup.create_engine")
+    def test_setup_database_with_valid_url_creates_engine(self, mock_create_engine, mock_config):
+        mock_engine = Mock()
+        mock_create_engine.return_value = mock_engine
+        engine = setup_database(mock_config["database_url"], mock_config["max_retries"])
+        assert engine is mock_engine
 
-            from app_setup import create_app
-            result = create_app(config=custom_config)
+    @patch("adaptive_graph_of_thoughts.app_setup.create_engine")
+    def test_setup_database_with_invalid_url_raises_error(self, mock_create_engine):
+        mock_create_engine.side_effect = Exception("Invalid database URL")
+        with pytest.raises(Exception, match="Invalid database URL"):
+            setup_database("invalid_url", 1)
 
-            assert result == mock_app
-            mock_app.config.update.assert_called_with(custom_config)
+    def test_database_connection_retry_logic(self, mock_config):
+        with patch("adaptive_graph_of_thoughts.app_setup.create_engine") as mock_create:
+            mock_create.side_effect = [Exception("Connection failed"), Exception("Connection failed"), Mock()]
+            engine = setup_database(mock_config["database_url"], 3)
+            assert engine is not None
 
-    def test_create_app_with_missing_config(self):
-        """Test application creation when configuration is missing."""
-        with patch('app_setup.load_config') as mock_load:
-            mock_load.side_effect = FileNotFoundError("Config file not found")
+    def test_database_connection_max_retries_exceeded(self, mock_config):
+        with patch("adaptive_graph_of_thoughts.app_setup.create_engine") as mock_create:
+            mock_create.side_effect = Exception("Connection failed")
+            with pytest.raises(Exception, match="Max retries exceeded"):
+                setup_database(mock_config["database_url"], mock_config["max_retries"])
 
-            with pytest.raises(FileNotFoundError):
-                from app_setup import create_app
-                create_app()
+class TestLoggingSetup:
+    """Test suite for logging configuration and setup."""
 
-    def test_create_app_with_invalid_config(self):
-        """Test application creation with invalid configuration."""
-        invalid_config = {"invalid": "config"}
+    @patch("adaptive_graph_of_thoughts.app_setup.logging.getLogger")
+    def test_setup_logging_with_valid_config(self, mock_get_logger, mock_config):
+        mock_logger_instance = Mock()
+        mock_get_logger.return_value = mock_logger_instance
+        setup_logging(mock_config)
+        mock_get_logger.assert_called_with("app")
 
-        with patch('app_setup.load_config') as mock_load:
-            mock_load.return_value = invalid_config
+    @pytest.mark.parametrize("log_level", ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"])
+    def test_setup_logging_with_different_levels(self, log_level, mock_config):
+        config = mock_config.copy()
+        config["log_level"] = log_level
+        with patch("adaptive_graph_of_thoughts.app_setup.logging") as mock_logging:
+            setup_logging(config)
+            mock_logging.getLogger.return_value.setLevel.assert_called_with(log_level)
 
-            with patch('app_setup.validate_config') as mock_validate:
-                mock_validate.side_effect = ValueError("Invalid configuration")
+    def test_setup_logging_with_file_handler(self, mock_config, temp_directory):
+        log_file = os.path.join(temp_directory, "test.log")
+        config = mock_config.copy()
+        config["log_file"] = log_file
+        setup_logging(config)
+        assert os.path.exists(log_file)
 
-                with pytest.raises(ValueError):
-                    from app_setup import create_app
-                    create_app()
+    def test_setup_logging_with_invalid_log_file_path_falls_back_to_console(self, mock_config):
+        config = mock_config.copy()
+        config["log_file"] = "/invalid/path/test.log"
+        with patch("adaptive_graph_of_thoughts.app_setup.logging") as mock_logging:
+            setup_logging(config)
+            mock_logging.getLogger.return_value.addHandler.assert_called()
 
-    def test_create_app_with_none_config(self):
-        """Test application creation when config is None."""
-        with patch('app_setup.Flask') as mock_flask:
-            mock_app = Mock()
-            mock_flask.return_value = mock_app
+class TestConfigurationManagement:
+    """Test suite for configuration management and environment handling."""
 
-            from app_setup import create_app
-            result = create_app(config=None)
-
-            assert result == mock_app
-            # Should use default configuration
-            mock_app.config.update.assert_called()
-
-    def test_load_config_from_file(self, temp_dir):
-        """Test loading configuration from file."""
-        config_file = Path(temp_dir) / "config.json"
-        config_data = {
-            "debug": True,
-            "host": "localhost",
-            "port": 5000
-        }
-
-        with open(config_file, 'w') as f:
-            import json
-            json.dump(config_data, f)
-
-        with patch('app_setup.CONFIG_PATH', str(config_file)):
-            from app_setup import load_config
-            result = load_config()
-
-            assert result == config_data
-
-    def test_load_config_from_environment(self):
-        """Test loading configuration from environment variables."""
+    def test_load_config_from_environment_variables(self):
         env_vars = {
-            'APP_DEBUG': 'true',
-            'APP_HOST': '0.0.0.0',
-            'APP_PORT': '8080'
+            "APP_DATABASE_URL": "postgresql://test:test@localhost/testdb",
+            "APP_DEBUG": "true",
+            "APP_LOG_LEVEL": "DEBUG",
+            "APP_TIMEOUT": "60"
         }
-
         with patch.dict(os.environ, env_vars):
-            from app_setup import load_config_from_env
-            result = load_config_from_env()
+            config = load_config()
+            assert config["database_url"] == env_vars["APP_DATABASE_URL"]
+            assert config["debug"] is True
+            assert config["log_level"] == "DEBUG"
+            assert config["timeout"] == 60
 
-            assert result['debug'] is True
-            assert result['host'] == '0.0.0.0'
-            assert result['port'] == 8080
-
-    def test_validate_config_success(self, mock_config):
-        """Test successful configuration validation."""
-        from app_setup import validate_config
-
-        # Should not raise any exceptions
-        validate_config(mock_config)
-
-    def test_validate_config_missing_required_fields(self):
-        """Test configuration validation with missing required fields."""
-        incomplete_config = {"debug": True}
-
-        from app_setup import validate_config
-
-        with pytest.raises(ValueError, match="Missing required configuration"):
-            validate_config(incomplete_config)
-
-    def test_initialize_database_success(self, app_instance):
-        """Test successful database initialization."""
-        with patch('app_setup.db') as mock_db:
-            from app_setup import initialize_database
-
-            initialize_database(app_instance)
-
-            mock_db.create_all.assert_called_once()
-
-    def test_initialize_database_failure(self, app_instance):
-        """Test database initialization failure."""
-        with patch('app_setup.db') as mock_db:
-            mock_db.create_all.side_effect = Exception("Database connection failed")
-
-            from app_setup import initialize_database
-
-            with pytest.raises(Exception, match="Database connection failed"):
-                initialize_database(app_instance)
-
-    def test_setup_database_migrations(self, app_instance):
-        """Test database migration setup."""
-        with patch('app_setup.Migrate') as mock_migrate:
-            from app_setup import setup_migrations
-
-            setup_migrations(app_instance)
-
-            mock_migrate.assert_called_once()
-
-    def test_setup_middleware(self, app_instance):
-        """Test middleware setup."""
-        with patch('app_setup.CORS') as mock_cors:
-            from app_setup import setup_middleware
-
-            setup_middleware(app_instance)
-
-            mock_cors.assert_called_once_with(app_instance)
-
-    def test_setup_extensions(self, app_instance):
-        """Test extensions setup."""
-        with patch('app_setup.db') as mock_db, \
-             patch('app_setup.migrate') as mock_migrate, \
-             patch('app_setup.login_manager') as mock_login:
-
-            from app_setup import setup_extensions
-
-            setup_extensions(app_instance)
-
-            mock_db.init_app.assert_called_once_with(app_instance)
-            mock_migrate.init_app.assert_called_once_with(app_instance, mock_db)
-            mock_login.init_app.assert_called_once_with(app_instance)
-
-    def test_setup_logging(self, app_instance, temp_dir):
-        """Test logging configuration setup."""
-        from app_setup import setup_logging
-        log_file = Path(temp_dir) / "app.log"
-
-        with patch('app_setup.logging') as mock_logging:
-            setup_logging(app_instance, log_file=str(log_file))
-
-            mock_logging.basicConfig.assert_called_once()
-
-    @pytest.mark.parametrize("debug,expected", [
-        (True, True),
-        (False, False),
-        ("true", True),
-        ("false", False),
-        ("1", True),
-        ("0", False),
-    ])
-    def test_parse_debug_flag(self, debug, expected):
-        """Test parsing of debug flag from different formats."""
-        from app_setup import parse_debug_flag
-
-        result = parse_debug_flag(debug)
-        assert result == expected
-
-    @pytest.mark.parametrize("port,expected", [
-        ("8000", 8000),
-        (8000, 8000),
-        ("invalid", ValueError),
-        (-1, ValueError),
-        (70000, ValueError),
-    ])
-    def test_parse_port_number(self, port, expected):
-        """Test parsing of port number with various inputs."""
-        from app_setup import parse_port_number
-
-        if expected == ValueError:
-            with pytest.raises(ValueError):
-                parse_port_number(port)
-        else:
-            result = parse_port_number(port)
-            assert result == expected
-
-    def test_full_app_setup_integration(self, temp_dir, mock_config):
-        """Test complete application setup integration."""
-        config_file = Path(temp_dir) / "config.json"
-
-        with open(config_file, 'w') as f:
+    def test_load_config_from_file(self, temp_directory):
+        config_file = os.path.join(temp_directory, "config.json")
+        data = {"database_url": "sqlite:///file.db", "debug": False, "log_level": "WARNING"}
+        with open(config_file, "w") as f:
             import json
-            json.dump(mock_config, f)
+            json.dump(data, f)
+        config = load_config(config_file)
+        assert config["database_url"] == data["database_url"]
+        assert config["log_level"] == "WARNING"
 
-        with patch('app_setup.CONFIG_PATH', str(config_file)), \
-             patch('app_setup.Flask') as mock_flask, \
-             patch('app_setup.db') as mock_db, \
-             patch('app_setup.CORS') as mock_cors:
+    def test_config_precedence_environment_over_file(self, temp_directory):
+        config_file = os.path.join(temp_directory, "config.json")
+        file_data = {"debug": False, "timeout": 30}
+        with open(config_file, "w") as f:
+            import json
+            json.dump(file_data, f)
+        env_vars = {"APP_DEBUG": "true", "APP_TIMEOUT": "60"}
+        with patch.dict(os.environ, env_vars):
+            config = load_config(config_file)
+            assert config["debug"] is True
+            assert config["timeout"] == 60
 
-            mock_app = Mock()
-            mock_flask.return_value = mock_app
+    @pytest.mark.parametrize("missing_key", ["database_url", "log_level", "timeout"])
+    def test_config_with_missing_required_keys_uses_defaults(self, missing_key, mock_config):
+        config = mock_config.copy()
+        del config[missing_key]
+        result = load_config(config)
+        assert missing_key in result
 
-            from app_setup import create_app
-            result = create_app()
+class TestApplicationLifecycle:
+    """Test suite for application lifecycle management."""
 
-            # Verify all setup steps were called
-            assert result == mock_app
-            mock_flask.assert_called_once()
-            mock_app.config.update.assert_called()
-            mock_db.init_app.assert_called_with(mock_app)
-            mock_cors.assert_called_with(mock_app)
+    def test_app_startup_sequence(self, mock_config):
+        with patch.multiple(
+            "adaptive_graph_of_thoughts.app_setup",
+            setup_database=Mock(),
+            setup_logging=Mock(),
+            setup_monitoring=Mock()
+        ) as mocks:
+            initialize_app(mock_config)
+            mocks["setup_database"].assert_called_once()
+            mocks["setup_logging"].assert_called_once()
+            mocks["setup_monitoring"].assert_called_once()
 
-    def test_app_teardown(self, app_instance):
-        """Test application teardown process."""
-        with patch('app_setup.db') as mock_db:
-            from app_setup import teardown_app
+    def test_app_shutdown_sequence(self, mock_config):
+        with patch.multiple(
+            "adaptive_graph_of_thoughts.app_setup",
+            cleanup_database=Mock(),
+            cleanup_logging=Mock(),
+            cleanup_monitoring=Mock()
+        ) as mocks:
+            shutdown_app()
+            mocks["cleanup_database"].assert_called_once()
+            mocks["cleanup_logging"].assert_called_once()
+            mocks["cleanup_monitoring"].assert_called_once()
 
-            teardown_app(app_instance)
+    def test_graceful_shutdown_on_signal(self, mock_config):
+        with patch("signal.signal") as mock_signal:
+            initialize_app(mock_config)
+            mock_signal.assert_called()
 
-            mock_db.session.remove.assert_called_once()
+    def test_cleanup_on_unexpected_error(self, mock_config):
+        with patch("adaptive_graph_of_thoughts.app_setup.setup_database") as mock_setup:
+            mock_setup.side_effect = Exception("Unexpected error")
+            with pytest.raises(Exception):
+                initialize_app(mock_config)
+            assert_cleanup_completed(mock_logger())
 
-    def test_handle_startup_errors(self):
-        """Test error handling during application startup."""
-        with patch('app_setup.Flask') as mock_flask:
-            mock_flask.side_effect = ImportError("Failed to import Flask")
+    def test_resource_cleanup_idempotent(self, mock_config):
+        shutdown_app()
+        shutdown_app()
 
-            from app_setup import create_app
+class TestConcurrencyAndPerformance:
+    """Test suite for concurrency and performance aspects."""
 
-            with pytest.raises(ImportError):
-                create_app()
+    def test_concurrent_initialization_thread_safety(self, mock_config):
+        import threading
+        results, errors = [], []
+        def target():
+            try:
+                initialize_app(mock_config)
+                results.append(True)
+            except Exception as e:
+                errors.append(e)
+        threads = [threading.Thread(target=target) for _ in range(10)]
+        for t in threads: t.start()
+        for t in threads: t.join()
+        assert not errors
+        assert len(results) == 10
 
-    def test_cleanup_on_failure(self, app_instance):
-        """Test cleanup when application setup fails."""
-        with patch('app_setup.setup_extensions') as mock_setup:
-            mock_setup.side_effect = Exception("Setup failed")
+    def test_initialization_performance_within_limits(self, mock_config):
+        import time
+        start = time.time()
+        initialize_app(mock_config)
+        assert time.time() - start < 5.0
 
-            with patch('app_setup.cleanup_on_error') as mock_cleanup:
-                from app_setup import create_app
+    def test_memory_usage_during_initialization(self, mock_config):
+        import psutil, os
+        proc = psutil.Process(os.getpid())
+        before = proc.memory_info().rss
+        initialize_app(mock_config)
+        after = proc.memory_info().rss
+        assert after - before < 100 * 1024 * 1024
 
-                with pytest.raises(Exception):
-                    create_app()
+class TestComponentIntegration:
+    """Test suite for integration between app_setup components."""
 
-                mock_cleanup.assert_called_once()
+    def test_database_and_logging_integration(self, mock_config, mock_logger):
+        with patch("adaptive_graph_of_thoughts.app_setup.create_engine") as mock_create:
+            mock_create.return_value = Mock()
+            initialize_app(mock_config)
+            mock_logger.info.assert_any_call("Database engine created")
 
-    def test_configuration_validation_edge_cases(self):
-        """Test configuration validation with edge cases."""
-        edge_cases = [
-            {},  # empty config
-            {"debug": "invalid"},  # invalid debug value
-            {"port": "not_a_number"},  # invalid port
-            {"host": ""},  # empty host
-        ]
+    def test_config_validation_and_error_logging_integration(self, invalid_config, mock_logger):
+        with pytest.raises(ValueError):
+            initialize_app(invalid_config)
+        mock_logger.error.assert_called()
 
-        from app_setup import validate_config
+    def test_monitoring_and_database_health_checks_integration(self, mock_config):
+        with patch.multiple(
+            "adaptive_graph_of_thoughts.app_setup",
+            setup_database=Mock(),
+            setup_monitoring=Mock()
+        ) as mocks:
+            initialize_app(mock_config)
+            mocks["setup_monitoring"].assert_called()
 
-        for config in edge_cases:
-            with pytest.raises((ValueError, TypeError)):
-                validate_config(config)
+    def test_configuration_change_propagation(self, mock_config):
+        new_config = mock_config.copy()
+        new_config["debug"] = False
+        update_config(new_config)
+        assert get_current_config()["debug"] is False
+
+class TestEdgeCasesAndErrorHandling:
+    """Test suite for edge cases and comprehensive error handling."""
+
+    def test_setup_with_minimal_config(self):
+        initialize_app({})
+
+    def test_setup_with_malformed_config_file(self, temp_directory):
+        config_file = os.path.join(temp_directory, "malformed.json")
+        with open(config_file, "w") as f:
+            f.write('{"invalid": json}')
+        with pytest.raises(ValueError, match="Malformed configuration"):
+            load_config(config_file)
+
+    def test_setup_with_insufficient_permissions(self, mock_config, temp_directory):
+        restricted = os.path.join(temp_directory, "restricted")
+        os.makedirs(restricted, mode=0o000)
+        try:
+            mock_config["log_file"] = os.path.join(restricted, "app.log")
+            initialize_app(mock_config)
+        finally:
+            os.chmod(restricted, 0o755)
+
+    def test_setup_with_network_unavailable(self, mock_config):
+        mock_config["database_url"] = "postgresql://unreachable:5432/db"
+        with patch("adaptive_graph_of_thoughts.app_setup.create_engine") as mock_create:
+            mock_create.side_effect = ConnectionError("Network unreachable")
+            initialize_app(mock_config)
+
+    def test_cleanup_with_partial_initialization(self, mock_config):
+        initialize_app(mock_config)
+        shutdown_app()
+
+    def test_repeated_initialization_calls(self, mock_config):
+        initialize_app(mock_config)
+        initialize_app(mock_config)
+
+    def test_initialization_with_corrupted_state(self, mock_config):
+        corrupt_state()
+        initialize_app(mock_config)
+
+# Additional utility functions for test helpers
+def create_test_database_url(temp_directory: str) -> str:
+    """Create a test database URL pointing to a temporary database."""
+    db_path = os.path.join(temp_directory, "test.db")
+    return f"sqlite:///{db_path}"
+
+def assert_cleanup_completed(mock_logger):
+    """Assert that cleanup operations completed successfully."""
+    cleanup_calls = [
+        c for c in mock_logger.info.call_args_list
+        if "cleanup" in str(c).lower()
+    ]
+    assert cleanup_calls
+
+def assert_initialization_order(mock_calls, expected_order):
+    """Assert that initialization steps occurred in the expected order."""
+    actual_order = [c[0] for c in mock_calls]
+    assert actual_order == expected_order

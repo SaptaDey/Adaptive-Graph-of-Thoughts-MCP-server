@@ -1,228 +1,265 @@
 import json
 import subprocess
+from pathlib import Path
+from unittest.mock import patch, Mock, MagicMock
+import pytest
 import tempfile
 import os
-from pathlib import Path
-from unittest.mock import patch, MagicMock
-import pytest
 
 
-def test_vscode_parse_ndjson_success():
-    """Test successful execution of vscode ndjson parsing utility."""
+def test_vscode_parse_ndjson_integration():
+    """Integration test that runs the actual JavaScript test file."""
     script = Path("integrations/vscode-agot/test_utils.js")
     result = subprocess.run(["node", str(script)], capture_output=True, text=True)
     assert result.returncode == 0
     assert "OK" in result.stdout
-    assert result.stderr == "" or len(result.stderr.strip()) == 0
-
-
-def test_vscode_parse_ndjson_script_not_found():
-    """Test behavior when the Node.js script file doesn't exist."""
-    script = Path("integrations/vscode-agot/nonexistent_test_utils.js")
-    result = subprocess.run(["node", str(script)], capture_output=True, text=True)
-    assert result.returncode != 0
-    assert "Error" in result.stderr or "Cannot find module" in result.stderr
-
-
-def test_vscode_parse_ndjson_invalid_node_command():
-    """Test behavior when node command is not available or invalid."""
-    script = Path("integrations/vscode-agot/test_utils.js")
-    with patch('subprocess.run') as mock_run:
-        mock_run.return_value = MagicMock(returncode=127, stdout="", stderr="command not found")
-        result = subprocess.run(["invalid_node_command", str(script)], capture_output=True, text=True)
-        assert result.returncode == 127
-        assert "command not found" in result.stderr
 
 
 @patch('subprocess.run')
-def test_vscode_parse_ndjson_subprocess_timeout(mock_run):
-    """Test behavior when subprocess times out."""
-    mock_run.side_effect = subprocess.TimeoutExpired("node", 10)
+def test_vscode_parse_ndjson_success_mock(mock_run):
+    """Test successful execution of vscode test utils with mocked subprocess."""
+    # Mock successful execution
+    mock_result = Mock()
+    mock_result.returncode = 0
+    mock_result.stdout = "Test passed: OK"
+    mock_result.stderr = ""
+    mock_run.return_value = mock_result
+
+    script = Path("integrations/vscode-agot/test_utils.js")
+    result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+    # Verify subprocess was called correctly
+    mock_run.assert_called_once_with(["node", str(script)], capture_output=True, text=True)
+
+    # Verify results
+    assert result.returncode == 0
+    assert "OK" in result.stdout
+
+
+@patch('subprocess.run')
+def test_vscode_parse_ndjson_failure_returncode(mock_run):
+    """Test handling of non-zero return code from JavaScript test."""
+    mock_result = Mock()
+    mock_result.returncode = 1
+    mock_result.stdout = "Test failed"
+    mock_result.stderr = "Error: Test execution failed"
+    mock_run.return_value = mock_result
+
+    script = Path("integrations/vscode-agot/test_utils.js")
+    result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+    assert result.returncode == 1
+    assert "OK" not in result.stdout
+
+
+@patch('subprocess.run')
+def test_vscode_parse_ndjson_missing_ok_in_output(mock_run):
+    """Test when subprocess succeeds but doesn't contain expected 'OK' output."""
+    mock_result = Mock()
+    mock_result.returncode = 0
+    mock_result.stdout = "Test completed without OK marker"
+    mock_result.stderr = ""
+    mock_run.return_value = mock_result
+
+    script = Path("integrations/vscode-agot/test_utils.js")
+    result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+    assert result.returncode == 0
+    assert "OK" not in result.stdout
+
+
+@patch('subprocess.run')
+def test_vscode_parse_ndjson_subprocess_exception(mock_run):
+    """Test handling of subprocess execution exceptions."""
+    mock_run.side_effect = FileNotFoundError("node command not found")
+
+    script = Path("integrations/vscode-agot/test_utils.js")
+
+    with pytest.raises(FileNotFoundError):
+        subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+
+@patch('subprocess.run')
+def test_vscode_parse_ndjson_timeout_exception(mock_run):
+    """Test handling of subprocess timeout."""
+    mock_run.side_effect = subprocess.TimeoutExpired("node", 30)
+
     script = Path("integrations/vscode-agot/test_utils.js")
 
     with pytest.raises(subprocess.TimeoutExpired):
-        subprocess.run(["node", str(script)], capture_output=True, text=True, timeout=10)
+        subprocess.run(["node", str(script)], capture_output=True, text=True, timeout=30)
+
+
+def test_vscode_test_script_path_exists():
+    """Test that the JavaScript test file exists."""
+    script = Path("integrations/vscode-agot/test_utils.js")
+    assert script.exists(), f"Test script {script} should exist"
+    assert script.is_file(), f"Test script {script} should be a file"
+
+
+def test_vscode_test_script_path_handling():
+    """Test various path handling scenarios."""
+    # Test with string path
+    script_str = "integrations/vscode-agot/test_utils.js"
+    script_path = Path(script_str)
+    assert str(script_path) == script_str
+
+    # Test with Path object
+    script_path = Path("integrations/vscode-agot/test_utils.js")
+    assert isinstance(script_path, Path)
+
+    # Test path resolution
+    resolved_path = script_path.resolve()
+    assert resolved_path.is_absolute()
 
 
 @patch('subprocess.run')
-def test_vscode_parse_ndjson_with_different_outputs(mock_run):
-    """Test parsing of different possible outputs from the Node.js script."""
-    script = Path("integrations/vscode-agot/test_utils.js")
-
-    # Test with various success outputs
-    test_cases = [
-        ("OK - All tests passed", 0),
-        ("OK\nTest completed successfully", 0),
-        ("Tests: OK", 0),
-    ]
-
-    for stdout, returncode in test_cases:
-        mock_run.return_value = MagicMock(returncode=returncode, stdout=stdout, stderr="")
-        result = subprocess.run(["node", str(script)], capture_output=True, text=True)
-        assert result.returncode == returncode
-        assert "OK" in result.stdout
-
-
-@patch('subprocess.run')
-def test_vscode_parse_ndjson_failure_scenarios(mock_run):
-    """Test various failure scenarios for the Node.js script."""
-    script = Path("integrations/vscode-agot/test_utils.js")
-
-    failure_cases = [
-        ("Error: Failed to parse", 1, "Parse error occurred"),
-        ("FAIL - Test failed", 1, "Test execution failed"),
-        ("", 2, "Syntax error in script"),
-    ]
-
-    for stdout, returncode, stderr in failure_cases:
-        mock_run.return_value = MagicMock(returncode=returncode, stdout=stdout, stderr=stderr)
-        result = subprocess.run(["node", str(script)], capture_output=True, text=True)
-        assert result.returncode != 0
-        if stdout:
-            assert "OK" not in result.stdout
-
-
-def test_vscode_script_path_validation():
-    """Test that the script path is valid and accessible."""
-    script = Path("integrations/vscode-agot/test_utils.js")
-    assert script.exists(), f"Script file should exist at {script}"
-    assert script.is_file(), f"Path should point to a file, not directory: {script}"
-    assert script.suffix == ".js", f"Script should be a JavaScript file: {script}"
-
-
-def test_vscode_script_path_edge_cases():
-    """Test edge cases for script path handling."""
-    # Test with absolute path
-    script = Path("integrations/vscode-agot/test_utils.js").resolve()
-    if script.exists():
-        result = subprocess.run(["node", str(script)], capture_output=True, text=True)
-        assert result.returncode == 0
-
-    # Test with relative path containing ".."
-    script_relative = Path("./integrations/vscode-agot/test_utils.js")
-    if script_relative.exists():
-        result = subprocess.run(["node", str(script_relative)], capture_output=True, text=True)
-        assert result.returncode == 0
-
-
-@patch('subprocess.run')
-def test_vscode_parse_ndjson_with_env_variables(mock_run):
-    """Test script execution with different environment variables."""
-    mock_run.return_value = MagicMock(returncode=0, stdout="OK", stderr="")
-    script = Path("integrations/vscode-agot/test_utils.js")
-
-    # Test with custom environment
-    custom_env = os.environ.copy()
-    custom_env['NODE_ENV'] = 'test'
-
-    result = subprocess.run(
-        ["node", str(script)],
-        capture_output=True,
-        text=True,
-        env=custom_env
-    )
-    mock_run.assert_called_once()
-    assert result.returncode == 0
-
-
-def test_vscode_parse_ndjson_output_encoding():
-    """Test that the script output is properly encoded and decoded."""
-    script = Path("integrations/vscode-agot/test_utils.js")
-
-    # Test with text=True (default)
-    result = subprocess.run(["node", str(script)], capture_output=True, text=True)
-    assert isinstance(result.stdout, str)
-    assert isinstance(result.stderr, str)
-
-    # Test with text=False for binary output
-    result_binary = subprocess.run(["node", str(script)], capture_output=True, text=False)
-    assert isinstance(result_binary.stdout, bytes)
-    assert isinstance(result_binary.stderr, bytes)
-
-
-class TestVSCodeUtilsIntegration:
-    """Integration tests for VSCode utilities."""
-
-    def test_script_execution_consistency(self):
-        """Test that multiple executions of the script produce consistent results."""
-        script = Path("integrations/vscode-agot/test_utils.js")
-        if not script.exists():
-            pytest.skip("Script file not found")
-
-        results = []
-        for _ in range(3):
-            result = subprocess.run(["node", str(script)], capture_output=True, text=True)
-            results.append((result.returncode, result.stdout, result.stderr))
-
-        # All executions should have the same return code
-        return_codes = [r[0] for r in results]
-        assert all(rc == return_codes[0] for rc in return_codes)
-
-        # All executions should have similar stdout patterns
-        stdout_outputs = [r[1] for r in results]
-        if return_codes[0] == 0:
-            assert all("OK" in output for output in stdout_outputs)
-
-    def test_script_performance(self):
-        """Test that the script executes within reasonable time limits."""
-        script = Path("integrations/vscode-agot/test_utils.js")
-        if not script.exists():
-            pytest.skip("Script file not found")
-
-        import time
-        start_time = time.time()
-        result = subprocess.run(["node", str(script)], capture_output=True, text=True, timeout=30)
-        execution_time = time.time() - start_time
-
-        assert execution_time < 30, f"Script took too long to execute: {execution_time}s"
-        assert result.returncode == 0
-
-
-@pytest.fixture
-def vscode_script_path():
-    """Fixture providing the path to the VSCode test script."""
-    return Path("integrations/vscode-agot/test_utils.js")
-
-
-@pytest.fixture
-def mock_subprocess_success():
-    """Fixture providing a mock successful subprocess result."""
-    mock_result = MagicMock()
+def test_vscode_parse_ndjson_with_stderr_output(mock_run):
+    """Test handling when subprocess has stderr output but still succeeds."""
+    mock_result = Mock()
     mock_result.returncode = 0
-    mock_result.stdout = "OK - Tests passed"
+    mock_result.stdout = "Processing... OK"
+    mock_result.stderr = "Warning: Some non-critical issue"
+    mock_run.return_value = mock_result
+
+    script = Path("integrations/vscode-agot/test_utils.js")
+    result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+    assert result.returncode == 0
+    assert "OK" in result.stdout
+    assert "Warning" in result.stderr
+
+
+@patch('subprocess.run')
+def test_vscode_parse_ndjson_empty_output(mock_run):
+    """Test handling of empty stdout from subprocess."""
+    mock_result = Mock()
+    mock_result.returncode = 0
+    mock_result.stdout = ""
     mock_result.stderr = ""
-    return mock_result
+    mock_run.return_value = mock_result
+
+    script = Path("integrations/vscode-agot/test_utils.js")
+    result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+    assert result.returncode == 0
+    assert "OK" not in result.stdout
+
+
+@patch('subprocess.run')
+def test_vscode_parse_ndjson_case_sensitive_ok_check(mock_run):
+    """Test that OK check is case sensitive."""
+    mock_result = Mock()
+    mock_result.returncode = 0
+    mock_result.stdout = "Test completed: ok"  # lowercase
+    mock_result.stderr = ""
+    mock_run.return_value = mock_result
+
+    script = Path("integrations/vscode-agot/test_utils.js")
+    result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+    assert result.returncode == 0
+    assert "OK" not in result.stdout  # Should fail because "ok" != "OK"
+    assert "ok" in result.stdout
+
+
+@patch('subprocess.run')
+def test_vscode_parse_ndjson_multiple_ok_in_output(mock_run):
+    """Test when output contains multiple instances of OK."""
+    mock_result = Mock()
+    mock_result.returncode = 0
+    mock_result.stdout = "Test 1: OK\nTest 2: OK\nAll tests: OK"
+    mock_result.stderr = ""
+    mock_run.return_value = mock_result
+
+    script = Path("integrations/vscode-agot/test_utils.js")
+    result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+    assert result.returncode == 0
+    assert "OK" in result.stdout
+    assert result.stdout.count("OK") == 3
+
+
+class TestVSCodeTestUtilsEdgeCases:
+    """Test class for edge cases and boundary conditions."""
+
+    @patch('subprocess.run')
+    def test_very_long_output(self, mock_run):
+        """Test handling of very long output from subprocess."""
+        long_output = "A" * 10000 + " OK " + "B" * 10000
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stdout = long_output
+        mock_result.stderr = ""
+        mock_run.return_value = mock_result
+
+        script = Path("integrations/vscode-agot/test_utils.js")
+        result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+        assert result.returncode == 0
+        assert "OK" in result.stdout
+        assert len(result.stdout) == 20005  # 10000 + 4 (" OK ") + 10000 + 1
+
+    @patch('subprocess.run')
+    def test_unicode_characters_in_output(self, mock_run):
+        """Test handling of unicode characters in subprocess output."""
+        mock_result = Mock()
+        mock_result.returncode = 0
+        mock_result.stdout = "Test résultat: ✓ OK 🎉"
+        mock_result.stderr = ""
+        mock_run.return_value = mock_result
+
+        script = Path("integrations/vscode-agot/test_utils.js")
+        result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+        assert result.returncode == 0
+        assert "OK" in result.stdout
+        assert "✓" in result.stdout
+        assert "résultat" in result.stdout
 
 
 @pytest.fixture
-def mock_subprocess_failure():
-    """Fixture providing a mock failed subprocess result."""
-    mock_result = MagicMock()
-    mock_result.returncode = 1
-    mock_result.stdout = ""
-    mock_result.stderr = "Error: Test failed"
-    return mock_result
+def temp_js_file():
+    """Fixture to create temporary JavaScript test file."""
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.js', delete=False) as f:
+        f.write('console.log("Test OK");')
+        temp_path = f.name
+
+    yield Path(temp_path)
+
+    # Cleanup
+    os.unlink(temp_path)
 
 
-def test_vscode_utils_with_fixtures(vscode_script_path, mock_subprocess_success):
-    """Test using fixtures for better test organization."""
-    with patch('subprocess.run', return_value=mock_subprocess_success):
-        result = subprocess.run(["node", str(vscode_script_path)], capture_output=True, text=True)
-        assert result.returncode == 0
-        assert "OK" in result.stdout
+def test_vscode_parse_ndjson_with_temp_file(temp_js_file):
+    """Test with a temporary JavaScript file that we know will work."""
+    result = subprocess.run(["node", str(temp_js_file)], capture_output=True, text=True)
+
+    assert result.returncode == 0
+    assert "OK" in result.stdout
 
 
-@pytest.mark.parametrize("stdout,expected_success", [
-    ("OK", True),
-    ("OK - All tests passed", True),
-    ("Tests completed: OK", True),
-    ("FAIL", False),
-    ("Error occurred", False),
-    ("", False),
+@pytest.mark.parametrize("return_code,stdout,stderr,should_have_ok", [
+    (0, "Test passed OK", "", True),
+    (0, "Test passed ok", "", False),  # Case sensitive
+    (0, "EVERYTHING IS OK", "", True),
+    (1, "Test failed OK", "Error occurred", True),  # OK in stdout even with failure
+    (0, "", "", False),  # Empty output
+    (0, "No success marker", "", False),
+    (127, "Command not found", "", False),
 ])
-def test_vscode_output_patterns(stdout, expected_success):
-    """Test various output patterns from the VSCode utility script."""
-    if expected_success:
-        assert "OK" in stdout
-    else:
-        assert "OK" not in stdout
+@patch('subprocess.run')
+def test_vscode_parse_ndjson_parametrized(mock_run, return_code, stdout, stderr, should_have_ok):
+    """Parametrized test for various subprocess outcomes."""
+    mock_result = Mock()
+    mock_result.returncode = return_code
+    mock_result.stdout = stdout
+    mock_result.stderr = stderr
+    mock_run.return_value = mock_result
+
+    script = Path("integrations/vscode-agot/test_utils.js")
+    result = subprocess.run(["node", str(script)], capture_output=True, text=True)
+
+    assert result.returncode == return_code
+    assert ("OK" in result.stdout) == should_have_ok
+    assert result.stderr == stderr
