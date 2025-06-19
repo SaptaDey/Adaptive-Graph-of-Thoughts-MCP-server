@@ -1,14 +1,15 @@
+import importlib
 import os
 from pathlib import Path
 
 import typer
-from dotenv import set_key
+from dotenv import load_dotenv, set_key
 from neo4j import GraphDatabase
 
 app = typer.Typer(add_completion=False)
 
 
-from neo4j.exceptions import ServiceUnavailable, AuthError
+from neo4j.exceptions import AuthError, ServiceUnavailable
 
 def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
     try:
@@ -27,6 +28,10 @@ def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
 @app.command()
 def run() -> None:
     """Interactive setup wizard for Adaptive GoT."""
+    if Path(".env").exists():
+        if typer.confirm("Import existing .env values?", default=True):
+            load_dotenv(".env")
+            typer.echo("Loaded values from .env")
     uri = typer.prompt(
         "Neo4j URI", default=os.getenv("NEO4J_URI", "neo4j://localhost:7687")
     )
@@ -54,6 +59,16 @@ def run() -> None:
     set_key(str(env_path), "NEO4J_DATABASE", database)
     env_path.chmod(0o600)
     typer.secho(f"Credentials saved to {env_path}", fg="green")
+
+    missing: list[str] = []
+    for pkg in ["openai", "anthropic"]:
+        if importlib.util.find_spec(pkg) is None:
+            missing.append(pkg)
+
+    if missing:
+        joined = ", ".join(missing)
+        typer.secho(f"Optional packages missing: {joined}", fg="yellow")
+        typer.secho("Install them with 'poetry add ' or 'pip install' to enable LLM features.", fg="yellow")
 
 
 if __name__ == "__main__":

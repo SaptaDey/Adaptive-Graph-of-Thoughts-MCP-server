@@ -20,5 +20,8 @@
     <label>Database <input name="database" value="{{ values.database }}" required></label><br>
     <button type="submit">Save & Continue</button>
   </form>
+  {% if missing_deps %}
+  <p style="color: orange;">Missing optional packages: {{ missing_deps|join(', ') }}. Install them for full functionality.</p>
+  {% endif %}
 </body>
 </html>
