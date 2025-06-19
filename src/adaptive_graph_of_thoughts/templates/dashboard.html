@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AGoT Dashboard</title>
+    <script src="https://unpkg.com/cytoscape/dist/cytoscape.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        #graph { width: 60%; height: 400px; float: left; border: 1px solid #ccc; }
+        #properties { width: 35%; float: right; }
+        #chat-panel, #config-editor { clear: both; margin-top: 20px; }
+        textarea { width: 100%; }
+    </style>
+</head>
+<body>
+<h1>Adaptive Graph of Thoughts Dashboard</h1>
+<div id="graph"></div>
+<table id="properties"></table>
+<div id="chat-panel">
+    <h2>LLM Chat</h2>
+    <textarea id="chat-input" rows="4"></textarea>
+    <button onclick="sendQuestion()">Send</button>
+    <pre id="chat-response"></pre>
+</div>
+<div id="config-editor">
+    <h2>Configuration</h2>
+    <textarea id="yaml-config" rows="10">{{ config_yaml }}</textarea>
+    <button onclick="saveConfig()">Apply & Restart</button>
+    <pre id="config-message"></pre>
+</div>
+<script>
+function sendQuestion(){
+    fetch('/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({question: document.getElementById('chat-input').value})})
+    .then(r=>r.json()).then(d=>{document.getElementById('chat-response').textContent=d.answer||d.message});
+}
+function saveConfig(){
+    fetch('/dashboard/save_config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({yaml: document.getElementById('yaml-config').value})})
+    .then(r=>r.json()).then(d=>{document.getElementById('config-message').textContent=d.message});
+}
+</script>
+</body>
+</html>

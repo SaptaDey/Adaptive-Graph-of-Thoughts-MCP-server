@@ -4,12 +4,15 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import yaml
-from dotenv import set_key
-from fastapi import FastAPI, Form, Request
+import importlib
+import asyncio
+from dotenv import set_key, load_dotenv
+from fastapi import FastAPI, Form, Request, Depends, Body, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from loguru import logger  # type: ignore
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from neo4j import GraphDatabase
 
 from src.adaptive_graph_of_thoughts.api.routes.mcp import mcp_router
@@ -17,6 +20,41 @@ from src.adaptive_graph_of_thoughts.config import runtime_settings, settings
 from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
     GoTProcessor,
 )
+
+security = HTTPBasic()
+
+
+def get_basic_auth(credentials: HTTPBasicCredentials = Depends(security)) -> bool:
+    user = os.getenv("BASIC_AUTH_USER")
+    password = os.getenv("BASIC_AUTH_PASS")
+    if user and password:
+        if not (credentials.username == user and credentials.password == password):
+            raise HTTPException(status_code=401, detail="Unauthorized", headers={"WWW-Authenticate": "Basic"})
+    return True
+
+
+def _ask_llm(prompt: str) -> str:
+    provider = os.getenv("LLM_PROVIDER", "openai").lower()
+    try:
+        if provider == "claude":
+            import anthropic
+            client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+            resp = client.messages.create(
+                model=os.getenv("CLAUDE_MODEL", "claude-3-sonnet-20240229"),
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return resp.content[0].text
+        else:
+            import openai
+            openai.api_key = os.getenv("OPENAI_API_KEY")
+            resp = openai.ChatCompletion.create(
+                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return resp.choices[0].message.content.strip()
+    except Exception as e:  # pragma: no cover - best effort
+        logger.error(f"LLM call failed: {e}")
+        return f"LLM error: {e}"
 
 # Add src directory to Python path if not already there
 # This must be done before other project imports
@@ -118,21 +156,30 @@ def create_app() -> FastAPI:
 
     # ----------------------- Setup Wizard -----------------------
     @app.get("/setup", response_class=HTMLResponse)
-    async def setup_get(request: Request):
+    async def setup_get(request: Request, _=Depends(get_basic_auth)):
+        if Path(".env").exists():
+            load_dotenv(".env")
         values = {
-            "uri": runtime_settings.neo4j.uri,
-            "user": runtime_settings.neo4j.user,
-            "password": runtime_settings.neo4j.password,
-            "database": runtime_settings.neo4j.database,
+            "uri": os.getenv("NEO4J_URI", runtime_settings.neo4j.uri),
+            "user": os.getenv("NEO4J_USER", runtime_settings.neo4j.user),
+            "password": os.getenv("NEO4J_PASSWORD", runtime_settings.neo4j.password),
+            "database": os.getenv("NEO4J_DATABASE", runtime_settings.neo4j.database),
         }
+        missing = [pkg for pkg in ("openai", "anthropic") if importlib.util.find_spec(pkg) is None]
         return templates.TemplateResponse(
             "setup_neo4j.html",
-            {"request": request, "values": values, "message": None},
+            {
+                "request": request,
+                "values": values,
+                "message": None,
+                "missing_deps": missing,
+            },
         )
 
     @app.post("/setup", response_class=HTMLResponse)
     async def setup_post(
         request: Request,
+        _=Depends(get_basic_auth),
         uri: str = Form(...),
         user: str = Form(...),
         password: str = Form(...),
@@ -198,33 +245,59 @@ def create_app() -> FastAPI:
             return False
 
     @app.get("/setup/settings", response_class=HTMLResponse)
-    async def edit_settings(request: Request):
+    async def edit_settings(request: Request, _=Depends(get_basic_auth)):
         return templates.TemplateResponse(
             "setup_settings.html",
             {"request": request, "settings": _read_settings(), "message": None},
         )
 
     @app.post("/setup/settings", response_class=HTMLResponse)
-    async def save_settings(request: Request):
+    async def save_settings(request: Request, _=Depends(get_basic_auth)):
         form = await request.form()
         # Whitelist allowed configuration keys
         allowed_keys = {"name", "version", "host", "port", "log_level"}
         data = {k: form[k] for k in form if k in allowed_keys}
         _write_settings(data)
-        return templates.TemplateResponse(
-            "setup_settings.html",
-            {"request": request, "settings": _read_settings(), "message": "Saved"},
-        )
+        return RedirectResponse("/dashboard", status_code=303)
 
     @app.post("/setup/settings/reset", name="reset_settings")
-    async def reset_settings() -> RedirectResponse:
+    async def reset_settings(_=Depends(get_basic_auth)) -> RedirectResponse:
         with open(yaml_path, "w") as fh:
             yaml.safe_dump(original_settings, fh)
-        return RedirectResponse("/setup/settings", status_code=303)
+        return RedirectResponse("/dashboard", status_code=303)
+
+    @app.get("/dashboard", response_class=HTMLResponse)
+    async def dashboard(request: Request, _=Depends(get_basic_auth)):
+        return templates.TemplateResponse(
+            "dashboard.html",
+            {"request": request, "config_yaml": yaml_path.read_text()},
+        )
+
+    @app.post("/dashboard/save_config")
+    async def dashboard_save_config(
+        payload: dict = Body(...), _=Depends(get_basic_auth)
+    ):
+        yaml_text = payload.get("yaml", "")
+        try:
+            data = yaml.safe_load(yaml_text) or {}
+            RuntimeSettings(**data)
+            with open(yaml_path, "w") as fh:
+                yaml.safe_dump(data, fh)
+            return {"message": "Saved"}
+        except Exception as e:
+            return JSONResponse(status_code=400, content={"message": str(e)})
+
+    @app.post("/chat")
+    async def chat_endpoint(
+        payload: dict = Body(...), _=Depends(get_basic_auth)
+    ) -> dict[str, str]:
+        question = payload.get("question", "")
+        answer = await asyncio.to_thread(_ask_llm, question)
+        return {"answer": answer}
 
     # Add health check endpoint
     @app.get("/health", tags=["Health"])
-    async def health_check():
+    async def health_check(_=Depends(get_basic_auth)):
         """Return application and Neo4j status."""
 
         logger.debug("Health check endpoint was called.")  # type: ignore
@@ -239,12 +312,18 @@ def create_app() -> FastAPI:
             driver.close()
             payload["neo4j"] = "up"
             return payload
+        except Exception:
             payload["neo4j"] = "down"
-            payload["status"] = "unhealthy" # Or a more descriptive status
+            payload["status"] = "unhealthy"  # Or a more descriptive status
             return JSONResponse(status_code=500, content=payload)
 
     # Include routers
-    app.include_router(mcp_router, prefix="/mcp", tags=["MCP"])
+    app.include_router(
+        mcp_router,
+        prefix="/mcp",
+        tags=["MCP"],
+        dependencies=[Depends(get_basic_auth)],
+    )
     logger.info("API routers included. MCP router mounted at /mcp.")
 
     logger.info(

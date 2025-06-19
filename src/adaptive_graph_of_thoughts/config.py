@@ -7,7 +7,7 @@ from threading import Lock
 from typing import Any, Optional, Union
 
 import yaml
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Thread safety lock
@@ -363,17 +363,12 @@ class RuntimeSettings(BaseSettings):
 
     app: AppSettingsModel = AppSettingsModel()
     neo4j: Neo4jSettingsModel = Neo4jSettingsModel()
-# at the top of src/adaptive_graph_of_thoughts/config.py, alongside your other imports
-from pydantic import Field
-
-…
-
--    asr_got: dict[str, Any] = field(default_factory=dict)
-+    asr_got: dict[str, Any] = Field(default_factory=dict)
+    asr_got: dict[str, Any] = Field(default_factory=dict)
 
     model_config = SettingsConfigDict(
         env_file=".env", env_nested_delimiter="__", extra="ignore"
     )
+
 
 
 def load_runtime_settings() -> RuntimeSettings:
