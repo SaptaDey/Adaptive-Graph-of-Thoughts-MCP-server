@@ -7,6 +7,16 @@ DOC_PATH = Path(__file__).resolve().parents[1] / "docs_src" / "configuration.md"
 
 
 def dump_section(data, prefix=""):
+    """
+    Recursively generates a Markdown-formatted list representing the structure and contents of a nested configuration dictionary.
+    
+    Parameters:
+        data (dict): The configuration data to document.
+        prefix (str): String to prepend to each key, used for representing nested paths.
+    
+    Returns:
+        list[str]: Markdown lines describing the configuration hierarchy and values.
+    """
     lines = []
     for key, value in data.items():
         if isinstance(value, dict):
@@ -18,6 +28,11 @@ def dump_section(data, prefix=""):
 
 
 def main() -> None:
+    """
+    Generate Markdown documentation for the YAML configuration file.
+    
+    Reads the YAML configuration from a predefined path, validates its content, converts its structure into a Markdown-formatted list, and writes the result to a documentation file. Creates the output directory if it does not exist. Raises exceptions for missing files, invalid YAML, or empty configurations.
+    """
     try:
         cfg = yaml.safe_load(CONFIG_PATH.read_text())
         if not cfg:

@@ -11,6 +11,9 @@ from src.adaptive_graph_of_thoughts.config import runtime_settings
 # --- Simple Configuration ---
 class Neo4jSettings:
     def __init__(self):
+        """
+        Initialize Neo4j connection settings from the application's runtime configuration.
+        """
         self.uri: str = runtime_settings.neo4j.uri
         self.user: str = runtime_settings.neo4j.user
         self.password: str = runtime_settings.neo4j.password

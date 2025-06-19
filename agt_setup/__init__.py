@@ -9,7 +9,12 @@ app = typer.Typer(add_completion=False)
 
 
 def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
-    """Test Neo4j connection with provided credentials."""
+    """
+    Attempts to connect to a Neo4j database using the provided URI, username, password, and database name.
+    
+    Returns:
+        bool: True if the connection is successful; False otherwise.
+    """
     try:
         driver = GraphDatabase.driver(uri, auth=(user, password))
         with driver.session(database=database) as session:
@@ -22,7 +27,11 @@ def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
 
 @app.command()
 def run() -> None:
-    """Interactive setup wizard for Adaptive GoT."""
+    """
+    Launches an interactive command-line wizard to configure and securely store Neo4j database credentials for the Adaptive GoT application.
+    
+    Prompts the user for connection details, tests the connection, and saves the credentials to a `.env` file with restricted permissions. Exits with an error if the connection cannot be established.
+    """
     uri = typer.prompt(
         "Neo4j URI", default=os.getenv("NEO4J_URI", "neo4j://localhost:7687")
     )
