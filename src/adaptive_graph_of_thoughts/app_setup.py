@@ -285,7 +285,8 @@ def create_app() -> FastAPI:
                 yaml.safe_dump(data, fh)
             return {"message": "Saved"}
         except Exception as e:
-            return JSONResponse(status_code=400, content={"message": str(e)})
+            logger.error("Error occurred while saving configuration: {}", e)  # Log the exception
+            return JSONResponse(status_code=400, content={"message": "An error occurred while processing your request."})
 
     @app.post("/chat")
     async def chat_endpoint(
