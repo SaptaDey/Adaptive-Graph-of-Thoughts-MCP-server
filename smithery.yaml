@@ -10,6 +10,50 @@ startCommand:
       apiKey:
         type: "string"
         description: "Your API key"
-    required: ["apiKey"]
+      NEO4J_URI:
+        type: "string"
+        description: "Neo4j connection URI"
+        default: "bolt://localhost:7687"
+      NEO4J_USER:
+        type: "string"
+        description: "Neo4j username"
+        default: "neo4j"
+      NEO4J_PASSWORD:
+        type: "string"
+        description: "Neo4j password"
+      NEO4J_DATABASE:
+        type: "string"
+        description: "Neo4j database name"
+        default: "neo4j"
+      GOOGLE_SCHOLAR_API_KEY:
+        type: "string"
+        description: "API key for Google Scholar/SerpApi"
+      PUBMED_API_KEY:
+        type: "string"
+        description: "API key for PubMed"
+      EXA_SEARCH_API_KEY:
+        type: "string"
+        description: "API key for Exa Search"
+      CLAUDE_API_KEY:
+        type: "string"
+        description: "API key for Claude"
+    required:
+      - apiKey
+      - NEO4J_URI
+      - NEO4J_USER
+      - NEO4J_PASSWORD
+      - NEO4J_DATABASE
   exampleConfig:
     apiKey: "sk-example123"
+    NEO4J_URI: "bolt://localhost:7687"
+    NEO4J_USER: "neo4j"
+    NEO4J_PASSWORD: "changeme"
+    NEO4J_DATABASE: "neo4j"
+
+tools:
+  - name: "initialize"
+    description: "Initialize connection with the MCP server"
+  - name: "asr_got.query"
+    description: "Execute an Adaptive Graph of Thoughts reasoning query"
+  - name: "shutdown"
+    description: "Shut down the MCP server"
