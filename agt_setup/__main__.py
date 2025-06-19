@@ -18,10 +18,9 @@ def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
             session.run("MATCH (n) RETURN count(n) LIMIT 1")
         driver.close()
         return True
-    except (ServiceUnavailable, AuthError):
-        return False
-    except Exception:
-        # Unexpected error
+    except Exception as e:
+        # Log the unexpected error
+        typer.echo(f"An unexpected error occurred: {e}", err=True)
         return False
 
 
