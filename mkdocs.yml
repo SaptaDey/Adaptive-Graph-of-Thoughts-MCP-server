@@ -59,7 +59,9 @@ nav:
   - Getting Started: getting_started.md
   - Configuration: configuration.md
   - Usage: usage.md
-  - API Reference: 
+  - VS Code Extension: vscode_extension.md
+  - Claude Desktop Action: claude_action.md
+  - API Reference:
     - MCP API: api/mcp_api.md
   - Extending Adaptive Graph of Thoughts:
     - Custom Stages: extending/custom_stages.md # Placeholder

@@ -1,0 +1,10 @@
+{
+  "name": "AGoT NLQ",
+  "version": "0.1.0",
+  "description": "Query Adaptive Graph of Thoughts",
+  "action": {
+    "title": "Ask Adaptive Graph",
+    "contexts": ["selection"],
+    "command": "node index.js"
+  }
+}

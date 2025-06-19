@@ -1,25 +1,32 @@
+import asyncio
+import importlib
 import os
 import sys
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 import yaml
-import importlib
-import asyncio
-from dotenv import set_key, load_dotenv
-from fastapi import FastAPI, Form, Request, Depends, Body, HTTPException
+from dotenv import load_dotenv, set_key
+from fastapi import Body, Depends, FastAPI, Form, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 from loguru import logger  # type: ignore
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from neo4j import GraphDatabase
 
 from src.adaptive_graph_of_thoughts.api.routes.mcp import mcp_router
-from src.adaptive_graph_of_thoughts.config import runtime_settings, settings
+from src.adaptive_graph_of_thoughts.api.routes.nlq import nlq_router
+from src.adaptive_graph_of_thoughts.config import (
+    RuntimeSettings,
+    runtime_settings,
+    settings,
+)
 from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
     GoTProcessor,
 )
+from src.adaptive_graph_of_thoughts.services.llm import LLM_QUERY_LOGS, ask_llm
 
 security = HTTPBasic()
 
@@ -34,27 +41,8 @@ def get_basic_auth(credentials: HTTPBasicCredentials = Depends(security)) -> boo
 
 
 def _ask_llm(prompt: str) -> str:
-    provider = os.getenv("LLM_PROVIDER", "openai").lower()
-    try:
-        if provider == "claude":
-            import anthropic
-            client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
-            resp = client.messages.create(
-                model=os.getenv("CLAUDE_MODEL", "claude-3-sonnet-20240229"),
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return resp.content[0].text
-        else:
-            import openai
-            openai.api_key = os.getenv("OPENAI_API_KEY")
-            resp = openai.ChatCompletion.create(
-                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return resp.choices[0].message.content.strip()
-    except Exception as e:  # pragma: no cover - best effort
-        logger.error(f"LLM call failed: {e}")
-        return f"LLM error: {e}"
+    """Proxy to ask_llm service for backward compatibility."""
+    return ask_llm(prompt)
 
 # Add src directory to Python path if not already there
 # This must be done before other project imports
@@ -292,7 +280,7 @@ def create_app() -> FastAPI:
         payload: dict = Body(...), _=Depends(get_basic_auth)
     ) -> dict[str, str]:
         question = payload.get("question", "")
-        answer = await asyncio.to_thread(_ask_llm, question)
+        answer = await asyncio.to_thread(ask_llm, question)
         return {"answer": answer}
 
     # Add health check endpoint
@@ -317,6 +305,31 @@ def create_app() -> FastAPI:
             payload["status"] = "unhealthy"  # Or a more descriptive status
             return JSONResponse(status_code=500, content=payload)
 
+    @app.get("/debug", response_class=HTMLResponse)
+    async def debug_page(_=Depends(get_basic_auth)) -> HTMLResponse:
+        start = time.time()
+        try:
+            driver = GraphDatabase.driver(
+                runtime_settings.neo4j.uri,
+                auth=(runtime_settings.neo4j.user, runtime_settings.neo4j.password),
+            )
+            with driver.session(database=runtime_settings.neo4j.database) as session:
+                session.run("RETURN 1")
+            latency = int((time.time() - start) * 1000)
+            status = "up"
+        except Exception:
+            latency = -1
+            status = "down"
+        logs_html = "".join(
+            f"<li><b>Prompt:</b> {l['prompt'][:50]}<br><b>Response:</b> {l['response'][:50]}</li>"
+            for l in LLM_QUERY_LOGS
+        )
+        html = (
+            f"<h1>Debug</h1><p>Neo4j status: {status}, latency: {latency} ms</p>"
+            f"<h2>Last LLM Queries</h2><ul>{logs_html}</ul>"
+        )
+        return HTMLResponse(content=html)
+
     # Include routers
     app.include_router(
         mcp_router,
@@ -324,6 +337,7 @@ def create_app() -> FastAPI:
         tags=["MCP"],
         dependencies=[Depends(get_basic_auth)],
     )
+    app.include_router(nlq_router, dependencies=[Depends(get_basic_auth)])
     logger.info("API routers included. MCP router mounted at /mcp.")
 
     logger.info(

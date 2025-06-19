@@ -10,6 +10,26 @@ import yaml
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
+class AGoTSettings(BaseSettings):
+    """Application settings loaded from environment variables or `.env`."""
+
+    llm_provider: str = Field(
+        default="openai",
+        description="LLM provider identifier: 'openai' or 'claude'",
+    )
+    openai_api_key: Optional[str] = Field(
+        default=None, description="API key for OpenAI completions"
+    )
+    anthropic_api_key: Optional[str] = Field(
+        default=None, description="API key for Anthropic Claude"
+    )
+
+    model_config = SettingsConfigDict(env_file=".env")
+
+
+env_settings = AGoTSettings()
+
 # Thread safety lock
 _config_lock = Lock()
 
