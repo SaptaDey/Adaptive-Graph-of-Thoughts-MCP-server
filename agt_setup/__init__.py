@@ -8,7 +8,15 @@ from neo4j import GraphDatabase
 app = typer.Typer(add_completion=False)
 
 
-    except neo4j.exceptions.Neo4jError:
+def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
+    """Test Neo4j connection with provided credentials."""
+    try:
+        driver = GraphDatabase.driver(uri, auth=(user, password))
+        with driver.session(database=database) as session:
+            session.run("RETURN 1")
+        driver.close()
+        return True
+    except Exception:
         return False
 
 
