@@ -22,8 +22,10 @@ def ask_llm(prompt: str) -> str:
             result = resp.content[0].text
         else:
             import openai  # type: ignore
-            openai.api_key = env_settings.openai_api_key
-            resp = openai.ChatCompletion.create(
+        else:
+            import openai  # type: ignore
+            client = openai.OpenAI(api_key=env_settings.openai_api_key)
+            resp = client.chat.completions.create(
                 model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
                 messages=[{"role": "user", "content": prompt}],
             )
