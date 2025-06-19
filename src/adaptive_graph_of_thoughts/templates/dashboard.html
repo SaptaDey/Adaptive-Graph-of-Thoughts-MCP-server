@@ -23,7 +23,7 @@
 </div>
 <div id="config-editor">
     <h2>Configuration</h2>
-    <textarea id="yaml-config" rows="10">{{ config_yaml }}</textarea>
+    <textarea id="yaml-config" rows="10">{{ config_yaml | e }}</textarea>
     <button onclick="saveConfig()">Apply & Restart</button>
     <pre id="config-message"></pre>
 </div>
