@@ -25,6 +25,7 @@ def ask_llm(prompt: str) -> str:
     try:
         if provider == "claude":
             import anthropic  # type: ignore
+
             client = anthropic.Anthropic(api_key=env_settings.anthropic_api_key)
             resp = client.messages.create(
                 model=os.getenv("CLAUDE_MODEL", "claude-3-sonnet-20240229"),
@@ -33,14 +34,14 @@ def ask_llm(prompt: str) -> str:
             result = resp.content[0].text
         else:
             import openai  # type: ignore
-        else:
-            import openai  # type: ignore
+
             client = openai.OpenAI(api_key=env_settings.openai_api_key)
             resp = client.chat.completions.create(
                 model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
                 messages=[{"role": "user", "content": prompt}],
             )
             result = resp.choices[0].message.content.strip()
+
         LLM_QUERY_LOGS.append({"prompt": prompt, "response": result})
         if len(LLM_QUERY_LOGS) > 5:
             LLM_QUERY_LOGS.pop(0)
