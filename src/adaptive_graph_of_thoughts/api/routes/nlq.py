@@ -33,8 +33,16 @@ async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse
         try:
             records = await execute_query(cypher)
             rows = [dict(r) for r in records]
+import logging
+
+logger = logging.getLogger(__name__)
+
+        try:
+            records = await execute_query(cypher)
+            rows = [dict(r) for r in records]
         except Exception as e:
-            rows = {"error": str(e)}
+            logger.error(f"Query execution failed: {e}")
+            rows = {"error": "Query execution failed"}
         yield json.dumps({"records": rows}).encode() + b"\n"
         summary_prompt = (
             f"Answer the question '{question}' using this data: {rows}."
