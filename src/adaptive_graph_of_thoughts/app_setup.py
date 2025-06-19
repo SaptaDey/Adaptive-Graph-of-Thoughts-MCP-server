@@ -234,14 +234,14 @@ def create_app() -> FastAPI:
             fh.truncate()
             yaml.safe_dump(existing, fh)
 
-    def _test_conn(uri: str, user: str, password: str, database: str) -> bool:
-        try:
-            driver = GraphDatabase.driver(uri, auth=(user, password))
-            with driver.session(database=database) as session:
-                session.run("MATCH (n) RETURN count(n) LIMIT 1")
-            driver.close()
-            return True
-        except Exception:
+        except neo4j.exceptions.ServiceUnavailable as e:
+            logger.warning(f"Neo4j connection failed: Service unavailable. Error: {e}")
+            return False
+        except neo4j.exceptions.AuthError as e:
+            logger.warning(f"Neo4j connection failed: Authentication error. Error: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"An unexpected error occurred during Neo4j connection test: {e}")
             return False
 
     @app.get("/setup/settings", response_class=HTMLResponse)
