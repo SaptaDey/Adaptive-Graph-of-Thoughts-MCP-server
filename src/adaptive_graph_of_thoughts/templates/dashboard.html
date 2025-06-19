@@ -29,12 +29,44 @@
 </div>
 <script>
 function sendQuestion(){
-    fetch('/chat', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({question: document.getElementById('chat-input').value})})
-    .then(r=>r.json()).then(d=>{document.getElementById('chat-response').textContent=d.answer||d.message});
+    const question = document.getElementById('chat-input').value.trim();
+    if (!question) return;
+    
+    fetch('/chat', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({question})
+    })
+    .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+    })
+    .then(d => {
+        document.getElementById('chat-response').textContent = d.answer || d.message || 'No response';
+    })
+    .catch(e => {
+        document.getElementById('chat-response').textContent = `Error: ${e.message}`;
+    });
 }
+
 function saveConfig(){
-    fetch('/dashboard/save_config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({yaml: document.getElementById('yaml-config').value})})
-    .then(r=>r.json()).then(d=>{document.getElementById('config-message').textContent=d.message});
+    const yaml = document.getElementById('yaml-config').value;
+    
+    fetch('/dashboard/save_config', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({yaml})
+    })
+    .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+    })
+    .then(d => {
+        document.getElementById('config-message').textContent = d.message || 'Saved successfully';
+    })
+    .catch(e => {
+        document.getElementById('config-message').textContent = `Error: ${e.message}`;
+    });
 }
 </script>
 </body>
