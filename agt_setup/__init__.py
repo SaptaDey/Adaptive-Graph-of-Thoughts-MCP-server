@@ -8,14 +8,7 @@ from neo4j import GraphDatabase
 app = typer.Typer(add_completion=False)
 
 
-def _test_connection(uri: str, user: str, password: str, database: str) -> bool:
-    try:
-        driver = GraphDatabase.driver(uri, auth=(user, password))
-        with driver.session(database=database) as session:
-            session.run("MATCH (n) RETURN count(n) LIMIT 1")
-        driver.close()
-        return True
-    except Exception:
+    except neo4j.exceptions.Neo4jError:
         return False
 
 
