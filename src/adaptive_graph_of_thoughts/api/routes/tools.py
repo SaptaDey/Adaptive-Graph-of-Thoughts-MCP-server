@@ -13,6 +13,14 @@ TOOLS_LIST = [
         "name": "shutdown",
         "description": "Shut down the MCP server",
     },
+    {
+        "name": "nlq",
+        "description": "Translate natural language to Cypher and execute the query",
+    },
+    {
+        "name": "graph_explorer",
+        "description": "Retrieve a subgraph for visualization",
+    },
 ]
 
 tools_router = APIRouter()

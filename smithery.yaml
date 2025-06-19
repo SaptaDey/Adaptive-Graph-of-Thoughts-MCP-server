@@ -4,6 +4,10 @@ build:
   dockerBuildPath: "."
 startCommand:
   type: "http"
+  containerPort: 8000
+  command:
+    - "/entrypoint.sh"
+    - "http"
   configSchema:
     type: "object"
     properties:
@@ -37,6 +41,10 @@ startCommand:
       CLAUDE_API_KEY:
         type: "string"
         description: "API key for Claude"
+      PORT:
+        type: "integer"
+        description: "Port for the HTTP server"
+        default: 8000
     required:
       - apiKey
       - NEO4J_URI
@@ -49,6 +57,7 @@ startCommand:
     NEO4J_USER: "neo4j"
     NEO4J_PASSWORD: "changeme"
     NEO4J_DATABASE: "neo4j"
+    PORT: 8000
 
 tools:
   - name: "initialize"
@@ -57,3 +66,7 @@ tools:
     description: "Execute an Adaptive Graph of Thoughts reasoning query"
   - name: "shutdown"
     description: "Shut down the MCP server"
+  - name: "nlq"
+    description: "Translate natural language questions into Cypher"
+  - name: "graph_explorer"
+    description: "Retrieve graph data for visualization"
