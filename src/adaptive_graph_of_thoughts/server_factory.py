@@ -1,5 +1,6 @@
 import json
 import sys
+import asyncio
 from typing import TYPE_CHECKING, Any, Optional
 
 # Only for type hints, not actual imports
@@ -78,22 +79,29 @@ class MCPServerFactory:
 
         # Initialize GoT processor
         got_processor = GoTProcessor(settings=settings)
+        read_transport: Optional[asyncio.Transport] = None
 
         try:
+            # Set up asyncio reader for stdin
+            loop = asyncio.get_running_loop()
+            reader = asyncio.StreamReader()
+            protocol = asyncio.StreamReaderProtocol(reader)
+            read_transport, _ = await loop.connect_read_pipe(
+                lambda: protocol, sys.stdin
+            )
+
             # Send a newline to stdout to signal readiness or wake up mcp-inspector
             print("", flush=True)
             # Main STDIO loop
             while True:
                 try:
-                    # Read a line from stdin without blocking the event loop
-                    import asyncio
-
-                    line = await asyncio.to_thread(sys.stdin.readline)
-                    if not line:
+                    # Read a line from stdin asynchronously
+                    line_bytes = await reader.readline()
+                    if not line_bytes:
                         logger.info("STDIO input closed, shutting down server.")
                         break
 
-                    line = line.strip()
+                    line = line_bytes.decode().strip()
                     if not line:
                         continue
 
@@ -134,6 +142,12 @@ class MCPServerFactory:
 
         finally:
             # Cleanup
+            try:
+                if read_transport is not None:
+                    read_transport.close()
+            except Exception as e:
+                logger.error("Error closing STDIO read transport: {}", e)
+
             try:
                 await got_processor.shutdown_resources()
             except Exception as e:
