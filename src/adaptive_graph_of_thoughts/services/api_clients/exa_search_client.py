@@ -15,14 +15,14 @@ from .base_client import (
 class ExaArticleResult(BaseModel):
     """Parsed article data returned by Exa."""
 
-    id: str = ""
-    url: str = ""
-    title: str = ""
-    author: str = ""
-    published_date: str = Field(default="", alias="publishedDate")
-    score: float = 0.0
-    highlights: list[str] = Field(default_factory=list)
-    raw_result: dict[str, Any] = Field(default_factory=dict)
+    id: str = ""  # Unique identifier for the article
+    url: str = ""  # URL of the article
+    title: str = ""  # Title of the article
+    author: str = ""  # Author of the article
+    published_date: str = Field(default="", alias="publishedDate")  # Publication date of the article
+    score: float = 0.0  # Relevance score from Exa
+    highlights: list[str] = Field(default_factory=list)  # Highlights from the article
+    raw_result: dict[str, Any] = Field(default_factory=dict)  # Raw result from Exa
 
     model_config = ConfigDict(populate_by_name=True)
 
