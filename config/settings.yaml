@@ -118,7 +118,8 @@ asr_got:
 
 # Configuration for Model Context Protocol (MCP) Server behavior
 mcp_settings:
-  protocol_version: "2024-11-05" # As per original claude_desktop_config.json  server_name: "Adaptive Graph of Thoughts MCP Server"
+  protocol_version: "2024-11-05" # As per original claude_desktop_config.json
+  server_name: "Adaptive Graph of Thoughts MCP Server"
   server_version: "0.1.0" # Match app.version
   vendor_name: "Adaptive Graph of Thoughts Development Team"
   # display_name: "Adaptive Graph of Thoughts" # If needed by MCP client

@@ -1,3 +1,4 @@
+import re
 from typing import Any, Generic, Literal, Optional, TypeVar, Union
 
 from pydantic import BaseModel, Field, validator
@@ -5,6 +6,18 @@ from pydantic import BaseModel, Field, validator
 # --- Generic JSON-RPC Models ---
 T = TypeVar("T")
 E = TypeVar("E")  # Error data type
+
+
+class NLQPayload(BaseModel):
+    """Schema for natural language query requests."""
+
+    question: str = Field(..., description="Natural language question", max_length=2000)
+
+    @validator("question", pre=True)
+    def sanitize_question(cls, v: str) -> str:  # type: ignore[override]
+        cleaned = v.replace("\r", " ").replace("\n", " ").strip()
+        cleaned = re.sub(r"\s+", " ", cleaned)
+        return cleaned
 
 
 class JSONRPCRequest(BaseModel, Generic[T]):

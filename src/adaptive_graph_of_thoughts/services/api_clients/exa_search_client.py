@@ -1,7 +1,7 @@
 from typing import Any, Optional
 
 from loguru import logger
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 
 from ...config import Config, ExaSearchConfig, LegacyConfig
 from .base_client import (
@@ -13,19 +13,18 @@ from .base_client import (
 
 
 class ExaArticleResult(BaseModel):
-    highlights: list[str] = Field(default_factory=list)
-    raw_result: dict[str, Any] = Field(default_factory=dict)
-    # keep alias so camelCase is accepted
-    published_date: str = Field(default="", alias="publishedDate")
-    author: str = Field(default="")
-    published_date: str = Field(
-        default=""
-    )  # Removed alias for pydantic v1 compatibility
-    score: float = Field(default=0.0)  # Relevance score from Exa
-    highlights: str = Field(
-        default=""
-    )  # Simplified from List[str] for pydantic v1 compatibility
-    raw_result: str = Field(default="")  # Simplified from Optional[Dict[str, Any]]
+    """Parsed article data returned by Exa."""
+
+    id: str = ""  # Unique identifier for the article
+    url: str = ""  # URL of the article
+    title: str = ""  # Title of the article
+    author: str = ""  # Author of the article
+    published_date: str = Field(default="", alias="publishedDate")  # Publication date of the article
+    score: float = 0.0  # Relevance score from Exa
+    highlights: list[str] = Field(default_factory=list)  # Highlights from the article
+    raw_result: dict[str, Any] = Field(default_factory=dict)  # Raw result from Exa
+
+    model_config = ConfigDict(populate_by_name=True)
 
 
 class ExaSearchClientError(BaseAPIClientError):
