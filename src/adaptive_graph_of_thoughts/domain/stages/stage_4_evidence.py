@@ -37,6 +37,10 @@ from ..utils.math_helpers import (
 from ..utils.metadata_helpers import (
     calculate_semantic_similarity,
 )
+from ..utils.neo4j_helpers import (
+    prepare_edge_properties_for_neo4j,
+    prepare_node_properties_for_neo4j,
+)
 from .base_stage import BaseStage, StageOutput
 from .stage_3_hypothesis import HypothesisStage  # To access hypothesis_node_ids
 
@@ -133,94 +137,6 @@ class EvidenceStage(BaseStage):
         except Exception:
             logger.warning("Could not deserialize tags payload '%s'", raw)
             return set()
-
-    def _prepare_node_properties_for_neo4j(self, node_pydantic: Node) -> dict[str, Any]:
-        if node_pydantic is None:
-            return {}
-        props = {"id": node_pydantic.id, "label": node_pydantic.label}
-        if node_pydantic.confidence:
-            for cv_field, cv_val in node_pydantic.confidence.model_dump().items():
-                if cv_val is not None:
-                    props[f"confidence_{cv_field}"] = cv_val
-        if node_pydantic.metadata:
-            for meta_field, meta_val in node_pydantic.metadata.model_dump().items():
-                if meta_val is None:
-                    continue
-                if isinstance(meta_val, dt):
-                    props[f"metadata_{meta_field}"] = meta_val.isoformat()
-                elif isinstance(meta_val, Enum):
-                    props[f"metadata_{meta_field}"] = meta_val.value
-                elif isinstance(meta_val, (list, set)):
-                    if all(
-                        isinstance(item, (str, int, float, bool)) for item in meta_val
-                    ):
-                        props[f"metadata_{meta_field}"] = list(meta_val)
-                    else:
-                        try:
-                            items_as_dicts = [
-                                item.model_dump()
-                                if hasattr(item, "model_dump")
-                                else item
-                                for item in meta_val
-                            ]
-                            props[f"metadata_{meta_field}_json"] = json.dumps(
-                                items_as_dicts
-                            )
-                        except TypeError as e:
-                            logger.warning(
-                                f"Could not serialize list/set metadata field {meta_field} to JSON: {e}"
-                            )
-                            props[f"metadata_{meta_field}_str"] = str(meta_val)
-                elif hasattr(meta_val, "model_dump"):
-                    try:
-                        props[f"metadata_{meta_field}_json"] = json.dumps(
-                            meta_val.model_dump()
-                        )
-                    except TypeError as e:
-                        logger.warning(
-                            f"Could not serialize Pydantic metadata field {meta_field} to JSON: {e}"
-                        )
-                        props[f"metadata_{meta_field}_str"] = str(meta_val)
-                else:
-                    props[f"metadata_{meta_field}"] = meta_val
-        return {k: v for k, v in props.items() if v is not None}
-
-    def _prepare_edge_properties_for_neo4j(self, edge_pydantic: Edge) -> dict[str, Any]:
-        if edge_pydantic is None:
-            return {}
-        props = {"id": edge_pydantic.id}
-        if (
-            hasattr(edge_pydantic, "confidence")
-            and edge_pydantic.confidence is not None
-        ):
-            if isinstance(edge_pydantic.confidence, (int, float)):
-                props["confidence"] = edge_pydantic.confidence
-            elif hasattr(edge_pydantic.confidence, "model_dump"):
-                props["confidence_json"] = json.dumps(
-                    edge_pydantic.confidence.model_dump()
-                )
-        if edge_pydantic.metadata:
-            for meta_field, meta_val in edge_pydantic.metadata.model_dump().items():
-                if meta_val is None:
-                    continue
-                if isinstance(meta_val, dt):
-                    props[f"metadata_{meta_field}"] = meta_val.isoformat()
-                elif isinstance(meta_val, Enum):
-                    props[f"metadata_{meta_field}"] = meta_val.value
-                elif isinstance(meta_val, (list, set, dict)) or hasattr(
-                    meta_val, "model_dump"
-                ):
-                    try:
-                        props[f"metadata_{meta_field}_json"] = json.dumps(
-                            meta_val.model_dump()
-                            if hasattr(meta_val, "model_dump")
-                            else meta_val
-                        )
-                    except TypeError:
-                        props[f"metadata_{meta_field}_str"] = str(meta_val)
-                else:
-                    props[f"metadata_{meta_field}"] = meta_val
-        return {k: v for k, v in props.items() if v is not None}
 
     async def _select_hypothesis_to_evaluate_from_neo4j(
         self, hypothesis_node_ids: list[str]
@@ -546,9 +462,7 @@ class EvidenceStage(BaseStage):
             confidence=evidence_confidence_vec,
             metadata=evidence_metadata,
         )
-        ev_props_for_neo4j = self._prepare_node_properties_for_neo4j(
-            evidence_node_pydantic
-        )
+        ev_props_for_neo4j = prepare_node_properties_for_neo4j(evidence_node_pydantic)
         if "timestamp" in evidence_data and isinstance(evidence_data["timestamp"], dt):
             ev_props_for_neo4j["metadata_timestamp_iso"] = evidence_data[
                 "timestamp"
@@ -586,9 +500,7 @@ class EvidenceStage(BaseStage):
                     description=f"Evidence '{evidence_node_pydantic.label[:20]}...' {'supports' if evidence_data['supports_hypothesis'] else 'contradicts'} hypothesis."
                 ),
             )
-            edge_props_for_neo4j = self._prepare_edge_properties_for_neo4j(
-                edge_pydantic
-            )
+            edge_props_for_neo4j = prepare_edge_properties_for_neo4j(edge_pydantic)
             create_rel_query = (
                 "MATCH (ev:Node {id: $evidence_id}) "
                 "MATCH (hyp:Node {id: $hypothesis_id}) "
@@ -729,7 +641,7 @@ class EvidenceStage(BaseStage):
             confidence=ibn_confidence,
             metadata=ibn_metadata,
         )
-        ibn_props = self._prepare_node_properties_for_neo4j(ibn_node_pydantic)
+        ibn_props = prepare_node_properties_for_neo4j(ibn_node_pydantic)
         try:
             create_ibn_query = """
             MERGE (ibn:Node {id: $props.id}) SET ibn += $props
@@ -756,7 +668,7 @@ class EvidenceStage(BaseStage):
                 type=EdgeType.IBN_SOURCE_LINK,
                 confidence=0.8,
             )
-            edge1_props = self._prepare_edge_properties_for_neo4j(edge1_pydantic)
+            edge1_props = prepare_edge_properties_for_neo4j(edge1_pydantic)
             edge2_id = f"edge_{created_ibn_id}_{EdgeType.IBN_TARGET_LINK.value}_{hypothesis_node_data['id']}"
             edge2_pydantic = Edge(
                 id=edge2_id,
@@ -765,7 +677,7 @@ class EvidenceStage(BaseStage):
                 type=EdgeType.IBN_TARGET_LINK,
                 confidence=0.8,
             )
-            edge2_props = self._prepare_edge_properties_for_neo4j(edge2_pydantic)
+            edge2_props = prepare_edge_properties_for_neo4j(edge2_pydantic)
             link_ibn_query = """
             MATCH (ev_node:Node {id: $ev_id})
             MATCH (ibn_node:Node {id: $ibn_id})
@@ -862,7 +774,7 @@ class EvidenceStage(BaseStage):
             confidence=hyper_confidence,
             metadata=hyperedge_node_metadata,
         )
-        center_node_props = self._prepare_node_properties_for_neo4j(
+        center_node_props = prepare_node_properties_for_neo4j(
             hyperedge_pydantic_for_center_node
         )
         try:

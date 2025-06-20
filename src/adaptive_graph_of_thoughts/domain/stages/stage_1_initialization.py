@@ -26,6 +26,9 @@ from adaptive_graph_of_thoughts.domain.services.neo4j_utils import (
     execute_query,
 )
 from adaptive_graph_of_thoughts.domain.stages.base_stage import BaseStage, StageOutput
+from adaptive_graph_of_thoughts.domain.utils.neo4j_helpers import (
+    prepare_node_properties_for_neo4j,
+)
 
 # T = TypeVar("T", bound=BaseModel) # No longer needed here as rehydration helpers are removed
 
@@ -38,85 +41,6 @@ class InitializationStage(BaseStage):
         self.root_node_label = "Task Understanding"
         self.initial_confidence_values = self.default_params.initial_confidence
         self.initial_layer = self.default_params.initial_layer
-
-    def _prepare_node_properties_for_neo4j(self, node_pydantic: Node) -> dict[str, Any]:
-        """
-        Converts a Node Pydantic model instance into a flat dictionary suitable for Neo4j properties.
-        Handles datetime, Enum, ConfidenceVector, and nested NodeMetadata.
-        """
-        if node_pydantic is None:
-            return {}
-
-        props = {
-            "id": node_pydantic.id,
-            "label": node_pydantic.label,
-        }  # Type is handled by label in query
-
-        # ConfidenceVector flattening
-        if node_pydantic.confidence:
-            for cv_field, cv_val in node_pydantic.confidence.model_dump().items():
-                if cv_val is not None:
-                    props[f"confidence_{cv_field}"] = cv_val
-
-        # NodeMetadata flattening
-        if node_pydantic.metadata:
-            for (
-                meta_field_name,
-                meta_value,
-            ) in node_pydantic.metadata.model_dump().items():
-                if meta_value is None:
-                    # props[f"metadata_{meta_field_name}"] = None # Neo4j handles missing fields better
-                    continue
-
-                if isinstance(meta_value, datetime):
-                    props[f"metadata_{meta_field_name}"] = meta_value.isoformat()
-                elif isinstance(meta_value, Enum):
-                    props[f"metadata_{meta_field_name}"] = meta_value.value
-                elif isinstance(meta_value, (list, set)):
-                    # Ensure all items are simple types or convert Pydantic models in list to dicts/JSON
-                    if all(
-                        isinstance(item, (str, int, float, bool)) for item in meta_value
-                    ):
-                        props[f"metadata_{meta_field_name}"] = list(meta_value)
-                    else:  # List of complex objects (e.g., Pydantic models like FalsificationCriteria)
-                        try:
-                            # Attempt to dump each model in the list, then dump the whole list to JSON
-                            # This assumes items in the list are Pydantic models themselves.
-                            items_as_dicts = [
-                                item.model_dump()
-                                if hasattr(item, "model_dump")
-                                else item
-                                for item in meta_value
-                            ]
-                            props[f"metadata_{meta_field_name}_json"] = json.dumps(
-                                items_as_dicts
-                            )
-                        except TypeError as e:
-                            logger.warning(
-                                f"Could not serialize list/set metadata field {meta_field_name} to JSON: {e}"
-                            )
-                            props[f"metadata_{meta_field_name}_str"] = str(
-                                meta_value
-                            )  # Fallback
-                elif hasattr(
-                    meta_value, "model_dump"
-                ):  # Other nested Pydantic models in metadata
-                    try:
-                        props[f"metadata_{meta_field_name}_json"] = json.dumps(
-                            meta_value.model_dump()
-                        )
-                    except TypeError as e:
-                        logger.warning(
-                            f"Could not serialize metadata field {meta_field_name} to JSON: {e}"
-                        )
-                        props[f"metadata_{meta_field_name}_str"] = str(
-                            meta_value
-                        )  # Fallback
-                else:
-                    props[f"metadata_{meta_field_name}"] = meta_value
-
-        # Clean out None values explicitly, Neo4j handles missing fields better than properties with None
-        return {k: v for k, v in props.items() if v is not None}
 
     async def execute(
         self,
@@ -252,7 +176,7 @@ class InitializationStage(BaseStage):
                     metadata=root_metadata_pydantic,
                 )
 
-                node_props_for_neo4j = self._prepare_node_properties_for_neo4j(
+                node_props_for_neo4j = prepare_node_properties_for_neo4j(
                     root_node_pydantic
                 )
 
