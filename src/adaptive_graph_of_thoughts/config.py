@@ -7,7 +7,7 @@ from threading import Lock
 from typing import Any, Optional, Union
 
 import yaml
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -53,7 +53,12 @@ def validate_max_steps(max_steps: int) -> None:
 
 
 def validate_config_schema(_config_data: dict) -> bool:
-    """Simple validation for now."""
+    """Validate settings data against the Pydantic schema."""
+
+    try:
+        SettingsFileModel.model_validate(_config_data)
+    except ValidationError as exc:
+        raise ValueError(str(exc)) from exc
     return True
 
 
@@ -378,6 +383,61 @@ class AppSettingsModel(BaseModel):
     log_level: str = "INFO"
 
 
+class MCPSettingsModel(BaseModel):
+    """Model Context Protocol server settings."""
+
+    protocol_version: str
+    server_name: str
+    server_version: str
+    vendor_name: str
+
+    model_config = SettingsConfigDict(extra="forbid")
+
+
+class GoogleScholarSettingsModel(BaseModel):
+    api_key: str | None = None
+    base_url: str = "https://serpapi.com/search"
+
+    model_config = SettingsConfigDict(extra="forbid")
+
+
+class PubMedSettingsModel(BaseModel):
+    api_key: str | None = None
+    base_url: str = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+    email: str | None = None
+
+    model_config = SettingsConfigDict(extra="forbid")
+
+
+class ExaSearchSettingsModel(BaseModel):
+    api_key: str | None = None
+    base_url: str = "https://api.exa.ai"
+
+    model_config = SettingsConfigDict(extra="forbid")
+
+
+class KnowledgeDomainModel(BaseModel):
+    name: str
+    keywords: list[str] = Field(default_factory=list)
+    description: str | None = None
+
+    model_config = SettingsConfigDict(extra="forbid")
+
+
+class SettingsFileModel(BaseModel):
+    """Schema for validating `settings.yaml`."""
+
+    app: AppSettingsModel
+    asr_got: dict[str, Any]
+    mcp_settings: MCPSettingsModel
+    google_scholar: GoogleScholarSettingsModel | None = None
+    pubmed: PubMedSettingsModel | None = None
+    exa_search: ExaSearchSettingsModel | None = None
+    knowledge_domains: list[KnowledgeDomainModel] = Field(default_factory=list)
+
+    model_config = SettingsConfigDict(extra="forbid")
+
+
 class RuntimeSettings(BaseSettings):
     """Central runtime settings loaded from YAML and environment."""
 
@@ -402,9 +462,9 @@ class RuntimeSettings(BaseSettings):
 def load_runtime_settings() -> RuntimeSettings:
     """
     Load runtime application settings from a YAML file and environment variables.
-    
+
     If `config/settings.yaml` exists, its contents are loaded and used as defaults, with environment variables taking precedence. Returns a `RuntimeSettings` instance containing the merged configuration.
-     
+
     Returns:
         RuntimeSettings: The combined runtime settings loaded from file and environment.
     """
@@ -414,6 +474,7 @@ def load_runtime_settings() -> RuntimeSettings:
     if yaml_path.exists():
         with open(yaml_path) as fh:
             data = yaml.safe_load(fh) or {}
+        validate_config_schema(data)
     return RuntimeSettings(**data)
 
 
