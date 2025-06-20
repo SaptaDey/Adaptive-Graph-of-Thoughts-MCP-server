@@ -21,7 +21,7 @@ def extract_clean_stage4_evidence():
     original_path = os.path.join(
         project_dir,
         "src",
-        "asr_got_reimagined",
+        "adaptive_graph_of_thoughts",
         "domain",
         "stages",
         "stage_4_evidence.py",
@@ -29,7 +29,7 @@ def extract_clean_stage4_evidence():
     clean_path = os.path.join(
         project_dir,
         "src",
-        "asr_got_reimagined",
+        "adaptive_graph_of_thoughts",
         "domain",
         "stages",
         "stage_4_evidence.py.clean",

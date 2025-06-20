@@ -300,6 +300,44 @@
   
   
   
+    <li class="md-tabs__item">
+      <a href="../vscode_extension/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  VS Code Extension
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../claude_action/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Claude Desktop Action
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
     
     
       <li class="md-tabs__item">
@@ -638,6 +676,50 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../vscode_extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    VS Code Extension
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../claude_action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Claude Desktop Action
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
       
@@ -658,10 +740,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
             
   
   
@@ -674,8 +756,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             API Reference
           </label>
@@ -739,10 +821,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
             
   
   
@@ -755,8 +837,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Extending Adaptive Graph of Thoughts
           </label>
@@ -1001,11 +1083,11 @@ end
    Refer to the <a href="../configuration/#production-environment-variables">Production Configuration section in the Configuration Guide</a> for details on required environment variables.</p>
 <h3 id="notes-on-specific-deployment-platforms">Notes on Specific Deployment Platforms</h3>
 <ul>
-<li><strong>Smithery.ai</strong>: Deployment to the Smithery.ai platform typically involves using the provided Docker image directly.<ul>
-<li>Consult Smithery.ai's specific documentation for instructions on deploying custom Docker images.</li>
-<li><strong>Port Configuration</strong>: Ensure that the platform is configured to expose port 8000 (or the port configured via <code>APP_PORT</code> if overridden) for the Adaptive Graph of Thoughts container.</li>
-<li><strong>Health Checks</strong>: The Adaptive Graph of Thoughts Docker image includes a <code>HEALTHCHECK</code> instruction verifying <code>/health</code>. Ensure Smithery.ai is configured to use this endpoint.</li>
-<li><strong>Environment Variables</strong>: Configure all necessary environment variables (especially <code>NEO4J_PASSWORD</code> and other Neo4j connection details) through the Smithery.ai platform.</li>
+<li><strong>Smithery.ai</strong>: Deploy using the provided <code>smithery.yaml</code>.<ul>
+<li>Connect your repository on Smithery and click <strong>Deploy</strong>.</li>
+<li>The container listens on the <code>PORT</code> environment variable (default <code>8000</code>).</li>
+<li><strong>Health Checks</strong> use the <code>/health</code> endpoint.</li>
+<li>Configure required environment variables (e.g. <code>NEO4J_PASSWORD</code>) through the Smithery dashboard.</li>
 </ul>
 </li>
 </ul>

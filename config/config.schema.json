@@ -240,7 +240,7 @@
               },
               "module_path": {
                 "type": "string",
-                "description": "The full Python path to the stage class (e.g., 'src.asr_got_reimagined.domain.stages.InitializationStage')."
+                "description": "The full Python path to the stage class (e.g., 'src.adaptive_graph_of_thoughts.domain.stages.InitializationStage')."
               },
               "enabled": {
                 "type": "boolean",

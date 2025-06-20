@@ -10,7 +10,7 @@ The `status.html` page, located in the root of the repository, provides a simple
 
 ## Usage
 
-1.  Ensure your Adaptive Graph of Thoughts server is running locally (e.g., via `poetry run uvicorn src.asr_got_reimagined.main:app --reload`).
+1.  Ensure your Adaptive Graph of Thoughts server is running locally (e.g., via `poetry run uvicorn src.adaptive_graph_of_thoughts.main:app --reload`).
 2.  Open the `status.html` file directly in your web browser (e.g., `file:///path/to/your/Adaptive Graph of Thoughts-2.0/status.html`).
 3.  The page will typically attempt to connect to the server at `http://localhost:8000/mcp`.
 4.  Use the form to send test queries.

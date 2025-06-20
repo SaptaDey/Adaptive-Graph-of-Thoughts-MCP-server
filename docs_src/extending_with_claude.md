@@ -48,13 +48,13 @@ You can create service functions or utility methods that encapsulate the logic f
 Here's a conceptual example using `httpx` for asynchronous requests:
 
 ```python
-# Hypothetical service function (e.g., in src/asr_got_reimagined/services/claude_service.py)
+# Hypothetical service function (e.g., in src/adaptive_graph_of_thoughts/services/claude_service.py)
 import httpx
 from typing import Optional, Dict, Any
 from loguru import logger
 
-# Assuming 'settings' is the global AppSettings instance from src.asr_got_reimagined.config
-from src.asr_got_reimagined.config import settings
+# Assuming 'settings' is the global AppSettings instance from src.adaptive_graph_of_thoughts.config
+from src.adaptive_graph_of_thoughts.config import settings
 
 CLAUDE_API_BASE_URL = "https://api.anthropic.com/v1" # Example base URL
 
@@ -144,13 +144,13 @@ async def call_claude_api(
 A custom ASR-GoT stage can leverage the service function described above to incorporate Claude's capabilities into the reasoning pipeline.
 
 ```python
-# Hypothetical custom stage (e.g., in src/asr_got_reimagined/domain/stages/custom_claude_stage.py)
-from src.asr_got_reimagined.domain.stages.base_stage import BaseStage, StageOutput
-from src.asr_got_reimagined.domain.models.common_types import GoTProcessorSessionData
+# Hypothetical custom stage (e.g., in src/adaptive_graph_of_thoughts/domain/stages/custom_claude_stage.py)
+from src.adaptive_graph_of_thoughts.domain.stages.base_stage import BaseStage, StageOutput
+from src.adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
 from loguru import logger
 
 # Assuming the service function is available, e.g.:
-# from src.asr_got_reimagined.services.claude_service import call_claude_api
+# from src.adaptive_graph_of_thoughts.services.claude_service import call_claude_api
 
 class ClaudeQueryStage(BaseStage):
     stage_name = "ClaudeQueryStage" # Unique name for this stage type
@@ -223,7 +223,7 @@ asr_got:
   pipeline_stages:
     # ... other stages ...
     - name: "Custom Claude Query"
-      module_path: "src.asr_got_reimagined.domain.stages.custom_claude_stage.ClaudeQueryStage"
+      module_path: "src.adaptive_graph_of_thoughts.domain.stages.custom_claude_stage.ClaudeQueryStage"
       enabled: true
     # ... other stages ...
 ```

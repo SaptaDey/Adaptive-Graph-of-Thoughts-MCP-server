@@ -92,12 +92,12 @@ from neo4j import Driver # type: ignore
 from testcontainers.neo4j import Neo4jContainer # type: ignore
 import os # For potentially setting environment variables
 
-from src.asr_got_reimagined.config import Settings
-from src.asr_got_reimagined.domain.models.common_types import GoTProcessorSessionData
-from src.asr_got_reimagined.domain.stages.stage_1_initialization import InitializationStage
+from src.adaptive_graph_of_thoughts.config import Settings
+from src.adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
+from src.adaptive_graph_of_thoughts.domain.stages.stage_1_initialization import InitializationStage
 # Import the neo4j_utils module itself to allow patching/re-evaluating its globals
-from src.asr_got_reimagined.domain.services import neo4j_utils
-from src.asr_got_reimagined.domain.models.graph_elements import NodeType
+from src.adaptive_graph_of_thoughts.domain.services import neo4j_utils
+from src.adaptive_graph_of_thoughts.domain.models.graph_elements import NodeType
 
 
 @pytest.fixture(scope="module")

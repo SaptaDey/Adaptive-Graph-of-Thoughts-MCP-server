@@ -59,7 +59,7 @@ The `config/claude_mcp_config.json` file defines how Adaptive Graph of Thoughts 
 -   `endpoints`: The URL for the MCP endpoint (e.g., `http://localhost:8000/mcp`).
 -   `capabilities`: A list of capabilities the server offers (e.g., "scientific_reasoning").
 
-Runtime behaviors, such as whether to include the reasoning trace or full graph state in responses, are typically controlled by parameters sent by the client in the `asr_got.query` request (see the `MCPASRGoTQueryParams` schema in `src/asr_got_reimagined/api/schemas.py` for details like `include_reasoning_trace` and `include_graph_state`). These are not configured in `claude_mcp_config.json`.
+Runtime behaviors, such as whether to include the reasoning trace or full graph state in responses, are typically controlled by parameters sent by the client in the `asr_got.query` request (see the `MCPASRGoTQueryParams` schema in `src/adaptive_graph_of_thoughts/api/schemas.py` for details like `include_reasoning_trace` and `include_graph_state`). These are not configured in `claude_mcp_config.json`.
 
 ## Status Page
 

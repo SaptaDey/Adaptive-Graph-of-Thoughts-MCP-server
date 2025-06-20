@@ -41,7 +41,7 @@ if __name__ == "__main__":
     stage2_path = os.path.join(
         base_dir,
         "src",
-        "asr_got_reimagined",
+        "adaptive_graph_of_thoughts",
         "domain",
         "stages",
         "stage_2_decomposition.py",

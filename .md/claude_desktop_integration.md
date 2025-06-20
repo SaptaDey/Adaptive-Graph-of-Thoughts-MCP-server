@@ -64,7 +64,7 @@ Parameters that control the reasoning process at runtime, such as:
 - The level of detail in responses (e.g., including the reasoning trace or full graph state)
 - Specific operational parameters for the ASR-GoT query (e.g., confidence thresholds, specific stages to run if that feature were implemented)
 
-are generally sent by the MCP client (Claude Desktop) as part of the `params` object in the JSON-RPC request to the `asr_got.query` method. For details on available query parameters, refer to the `MCPASRGoTQueryParams` schema defined in `src/asr_got_reimagined/api/schemas.py`. Modifying `claude_mcp_config.json` does not alter these runtime behaviors.
+are generally sent by the MCP client (Claude Desktop) as part of the `params` object in the JSON-RPC request to the `asr_got.query` method. For details on available query parameters, refer to the `MCPASRGoTQueryParams` schema defined in `src/adaptive_graph_of_thoughts/api/schemas.py`. Modifying `claude_mcp_config.json` does not alter these runtime behaviors.
 
 ## Detailed Logging
 
