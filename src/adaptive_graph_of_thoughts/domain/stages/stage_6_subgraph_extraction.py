@@ -101,17 +101,9 @@ class SubgraphExtractionStage(BaseStage):
             conditions.append("n.metadata_impact_score >= $min_impact_score")
             params["min_impact_score"] = criterion.min_impact_score
         if criterion.node_types:
-            # Cypher needs labels, not n.type property for this kind of check usually
-            # Assuming n.type property is used for NodeType enum value for now.
-            type_conditions = []
-            for i, nt in enumerate(criterion.node_types):
-                param_name = f"node_type_{i}"
-                type_conditions.append(
-                    f"n.type = ${param_name}"
-                )  # Or use labels: "n:{nt.value}"
-                params[param_name] = nt.value
-            if type_conditions:
-                conditions.append(f"({' OR '.join(type_conditions)})")
+            label_conditions = [f"n:{nt.value}" for nt in criterion.node_types]
+            if label_conditions:
+                conditions.append(f"({' OR '.join(label_conditions)})")
 
         if criterion.layer_ids:
             conditions.append("n.metadata_layer_id IN $layer_ids")
