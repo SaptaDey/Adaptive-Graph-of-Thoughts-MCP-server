@@ -289,9 +289,10 @@ def create_app() -> FastAPI:
 
         Returns an HTML response displaying the editable application settings.
         """
+        settings_data = await asyncio.to_thread(_read_settings)
         return templates.TemplateResponse(
             "setup_settings.html",
-            {"request": request, "settings": _read_settings(), "message": None},
+            {"request": request, "settings": settings_data, "message": None},
         )
 
     @app.post("/setup/settings", response_class=HTMLResponse)
@@ -305,7 +306,7 @@ def create_app() -> FastAPI:
         # Whitelist allowed configuration keys
         allowed_keys = {"name", "version", "host", "port", "log_level"}
         data = {k: form[k] for k in form if k in allowed_keys}
-        _write_settings(data)
+        await asyncio.to_thread(_write_settings, data)
         return RedirectResponse("/dashboard", status_code=303)
 
     @app.post("/setup/settings/reset", name="reset_settings")
@@ -316,8 +317,11 @@ def create_app() -> FastAPI:
         Returns:
             RedirectResponse: Redirects the user to the dashboard page after resetting settings.
         """
-        with open(yaml_path, "w") as fh:
-            yaml.safe_dump(original_settings, fh)
+        def _reset() -> None:
+            with open(yaml_path, "w") as fh:
+                yaml.safe_dump(original_settings, fh)
+
+        await asyncio.to_thread(_reset)
         return RedirectResponse("/dashboard", status_code=303)
 
     @app.get("/dashboard", response_class=HTMLResponse)
@@ -328,9 +332,10 @@ def create_app() -> FastAPI:
         Returns:
             TemplateResponse: Rendered HTML dashboard with the application's YAML configuration.
         """
+        config_yaml = await asyncio.to_thread(yaml_path.read_text)
         return templates.TemplateResponse(
             "dashboard.html",
-            {"request": request, "config_yaml": yaml_path.read_text()},
+            {"request": request, "config_yaml": config_yaml},
         )
 
     @app.post("/dashboard/save_config")
@@ -351,8 +356,12 @@ def create_app() -> FastAPI:
         try:
             data = yaml.safe_load(yaml_text) or {}
             RuntimeSettings(**data)
-            with open(yaml_path, "w") as fh:
-                yaml.safe_dump(data, fh)
+
+            def _write() -> None:
+                with open(yaml_path, "w") as fh:
+                    yaml.safe_dump(data, fh)
+
+            await asyncio.to_thread(_write)
             return {"message": "Saved"}
         except Exception as e:
             logger.error(
@@ -392,7 +401,7 @@ def create_app() -> FastAPI:
 
         logger.debug("Health check endpoint was called.")  # type: ignore
         payload = {"status": "ok"}
-        try:
+        def _check_db() -> None:
             driver = GraphDatabase.driver(
                 runtime_settings.neo4j.uri,
                 auth=(runtime_settings.neo4j.user, runtime_settings.neo4j.password),
@@ -400,6 +409,9 @@ def create_app() -> FastAPI:
             with driver.session(database=runtime_settings.neo4j.database) as session:
                 session.run("RETURN 1")
             driver.close()
+
+        try:
+            await asyncio.to_thread(_check_db)
             payload["neo4j"] = "up"
             return payload
         except Exception:
@@ -416,13 +428,18 @@ def create_app() -> FastAPI:
             HTMLResponse: An HTML page showing Neo4j database status and latency, along with a list of recent LLM prompts and responses.
         """
         start = time.time()
-        try:
+
+        def _check_db() -> None:
             driver = GraphDatabase.driver(
                 runtime_settings.neo4j.uri,
                 auth=(runtime_settings.neo4j.user, runtime_settings.neo4j.password),
             )
             with driver.session(database=runtime_settings.neo4j.database) as session:
                 session.run("RETURN 1")
+            driver.close()
+
+        try:
+            await asyncio.to_thread(_check_db)
             latency = int((time.time() - start) * 1000)
             status = "up"
         except Exception:
