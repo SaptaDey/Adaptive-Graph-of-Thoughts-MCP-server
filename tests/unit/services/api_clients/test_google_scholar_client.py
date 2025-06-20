@@ -13,6 +13,7 @@ from adaptive_graph_of_thoughts.services.api_clients.google_scholar_client impor
     GoogleScholarArticle,
     GoogleScholarClient,
     GoogleScholarClientError,
+    UnexpectedResponseStructureError,
 )
 
 # --- Sample Data ---
@@ -198,8 +199,8 @@ async def test_search_missing_organic_results_key(
         json=json.loads(SAMPLE_GS_SEARCH_MISSING_ORGANIC_RESULTS_KEY_JSON_STR)
     )
 
-    articles = await client.search("query missing key")
-    assert len(articles) == 0
+    with pytest.raises(UnexpectedResponseStructureError):
+        await client.search("query missing key")
     assert (
         "No 'organic_results' in SerpApi response for query 'missing key query' on engine 'google_scholar'"
         in caplog.text
