@@ -182,3 +182,61 @@ async def execute_query(
         raise  # Re-raise any other unexpected exception
 
     return records
+
+
+# Example of how to use (optional, for testing or demonstration)
+if __name__ == "__main__":
+    logger.add("neo4j_utils.log", rotation="500 MB")  # For local testing
+
+    # Ensure NEO4J_PASSWORD is set as an environment variable if different from default
+    # For example: export NEO4J_PASSWORD="your_actual_password"
+
+
+async def main():
+    try:
+        # Example Read Query
+        logger.info("Attempting to execute a sample READ query...")
+        read_query = "MATCH (n) RETURN count(n) AS node_count"
+        await execute_query(read_query, tx_type="read")
+        # ... rest of example code with await ...
+    # ... exception handling ...
+    finally:
+        close_neo4j_driver()
+        logger.info("Neo4j utils example finished.")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
+    """
+    try:
+        # Example Read Query
+        logger.info("Attempting to execute a sample READ query...")
+        read_query = "MATCH (n) RETURN count(n) AS node_count"
+        read_results = await execute_query(read_query, tx_type="read")
+        if read_results:
+            logger.info(f"Read query results: Found {read_results[0]['node_count']} nodes in database.")
+        else:
+            logger.info("Read query returned no results or failed.")
+
+        # Example Write Query (use with caution on your database)
+        # logger.info("Attempting to execute a sample WRITE query...")
+        # write_query = "CREATE (a:Greeting {message: $msg})"
+        # write_params = {"msg": "Hello from neo4j_utils"}
+        # await execute_query(write_query, parameters=write_params, tx_type="write")
+        # logger.info("Write query executed (if no errors).")
+
+        # logger.info("Attempting to read the written data...")
+        # verify_query = "MATCH (g:Greeting) WHERE g.message = $msg RETURN g.message AS message"
+        # verify_results = await execute_query(verify_query, parameters={"msg": "Hello from neo4j_utils"}, tx_type="read")
+        # if verify_results:
+        #     logger.info(f"Verification query results: Found message '{verify_results[0]['message']}'")
+        # else:
+        #     logger.warning("Verification query did not find the written data or failed.")
+    except ServiceUnavailable:
+        logger.error("Could not connect to Neo4j. Ensure Neo4j is running and accessible.")
+    except Exception as e:
+        logger.error(f"An error occurred during the example usage: {e}")
+    finally:
+        close_neo4j_driver()
+        logger.info("Neo4j utils example finished.")
+    """
