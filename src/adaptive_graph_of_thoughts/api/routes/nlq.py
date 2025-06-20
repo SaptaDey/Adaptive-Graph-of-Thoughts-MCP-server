@@ -5,13 +5,40 @@ import json
 from collections.abc import AsyncGenerator
 from typing import Dict
 
-from fastapi import APIRouter, Body
+import re
+import logging
+
+from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import StreamingResponse
 
 from ...domain.services.neo4j_utils import execute_query
 from ...services.llm import LLM_QUERY_LOGS, ask_llm
 
+logger = logging.getLogger(__name__)
+
 nlq_router = APIRouter()
+
+
+MALICIOUS_PATTERNS = [
+    re.compile(r"(?i)ignore\s+.*instruction"),
+    re.compile(r"(?i)forget\s+.*instruction"),
+    re.compile(r"(?i)system:"),
+    re.compile(r"(?i)assistant:"),
+]
+
+
+def _validate_question(question: str) -> str:
+    """Validate question for obvious prompt injection attempts."""
+    for pattern in MALICIOUS_PATTERNS:
+        if pattern.search(question):
+            logger.warning("Potential prompt injection attempt detected: %s", question)
+            raise HTTPException(status_code=400, detail="Malicious pattern detected in question")
+    return question.strip()
+
+
+def _armor(text: str) -> str:
+    """Simple prompt armoring to escape curly braces."""
+    return text.replace("{", "{{").replace("}", "}}").replace("\n", " ")
 
 
 def _log_query(prompt: str, response: str) -> None:
@@ -35,8 +62,9 @@ async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse
     Returns:
         StreamingResponse: Streams JSON objects for the generated Cypher query, query results, and a summary answer.
     """
-    question = payload.get("question", "")
-    cypher_prompt = f"Translate the question to a Cypher query: {question}"
+    question = _validate_question(payload.get("question", ""))
+    safe_question = _armor(question)
+    cypher_prompt = f"Translate the question to a Cypher query: {safe_question}"
     cypher = await asyncio.to_thread(ask_llm, cypher_prompt)
     _log_query(cypher_prompt, cypher)
 
@@ -51,19 +79,12 @@ async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse
         try:
             records = await execute_query(cypher)
             rows = [dict(r) for r in records]
-import logging
-
-logger = logging.getLogger(__name__)
-
-        try:
-            records = await execute_query(cypher)
-            rows = [dict(r) for r in records]
         except Exception as e:
             logger.error(f"Query execution failed: {e}")
             rows = {"error": "Query execution failed"}
         yield json.dumps({"records": rows}).encode() + b"\n"
         summary_prompt = (
-            f"Answer the question '{question}' using this data: {rows}."
+            f"Answer the question '{safe_question}' using this data: {rows}."
             " Respond in under 50 words."
         )
         summary = await asyncio.to_thread(ask_llm, summary_prompt)
