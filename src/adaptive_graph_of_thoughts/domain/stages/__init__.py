@@ -1,5 +1,6 @@
 # Makes 'stages' a sub-package.
 from .base_stage import BaseStage, StageOutput
+from .exceptions import StageInitializationError
 
 
 # Import stage classes using a function to prevent circular imports
@@ -29,5 +30,6 @@ def import_stages():
 __all__ = [
     "BaseStage",
     "StageOutput",
+    "StageInitializationError",
     "import_stages",
 ]
