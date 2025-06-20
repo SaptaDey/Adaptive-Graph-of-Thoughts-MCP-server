@@ -13,6 +13,7 @@ from ..models.common_types import (
 # Import the import_stages function for lazy loading
 from ..stages import import_stages
 from ..stages.base_stage import BaseStage, StageOutput
+from ..stages.exceptions import StageInitializationError
 
 
 class GoTProcessor:
@@ -79,6 +80,13 @@ class GoTProcessor:
                     )
                     raise RuntimeError(
                         f"Failed to load class for stage: {stage_config.name} ({class_name} from {module_name})"
+                    ) from e
+                except StageInitializationError as e:
+                    logger.error(
+                        f"Initialization of stage '{stage_config.name}' failed: {e}"
+                    )
+                    raise RuntimeError(
+                        f"Stage initialization failed: {stage_config.name}"
                     ) from e
                 except Exception as e:
                     logger.error(
