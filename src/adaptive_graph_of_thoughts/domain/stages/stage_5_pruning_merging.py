@@ -33,30 +33,33 @@ class PruningMergingStage(BaseStage):
             self.default_params, "pruning_edge_confidence_threshold", 0.2
         )
 
-    async def _prune_low_confidence_impact_nodes_in_neo4j(self) -> int:
-        """Prunes nodes based on confidence and impact directly in Neo4j using optimized single query."""
+    async def _prune_low_confidence_and_isolated_nodes_in_neo4j(self) -> int:
+        """Prunes low-confidence/impact nodes and isolated nodes in a single query."""
 
-        # Single optimized query that filters and deletes in one operation
-        prune_query = """
-        MATCH (n:Node)
+        combined_query = """
+        OPTIONAL MATCH (n:Node)
         WHERE NOT n:ROOT
-        AND NOT n:DECOMPOSITION_DIMENSION
-        AND n.type IN ['HYPOTHESIS', 'EVIDENCE', 'INTERDISCIPLINARY_BRIDGE']
-        AND coalesce(
-            apoc.coll.min([
-              coalesce(n.confidence_empirical_support, 1.0),
-              coalesce(n.confidence_theoretical_basis, 1.0),
-              coalesce(n.confidence_methodological_rigor, 1.0),
-              coalesce(n.confidence_consensus_alignment, 1.0)
-            ]), 1.0
-          ) < $conf_thresh
-        AND coalesce(n.metadata_impact_score, 1.0) < $impact_thresh
-        DETACH DELETE n
-        RETURN count(n) AS pruned_count
+          AND NOT n:DECOMPOSITION_DIMENSION
+          AND n.type IN ['HYPOTHESIS', 'EVIDENCE', 'INTERDISCIPLINARY_BRIDGE']
+          AND coalesce(
+                apoc.coll.min([
+                    coalesce(n.confidence_empirical_support, 1.0),
+                    coalesce(n.confidence_theoretical_basis, 1.0),
+                    coalesce(n.confidence_methodological_rigor, 1.0),
+                    coalesce(n.confidence_consensus_alignment, 1.0)
+                ]), 1.0
+            ) < $conf_thresh
+          AND coalesce(n.metadata_impact_score, 1.0) < $impact_thresh
+        WITH collect(DISTINCT n) AS low_conf_nodes
+        OPTIONAL MATCH (m:Node)
+        WHERE NOT m:ROOT AND size((m)--()) = 0
+        WITH low_conf_nodes + collect(DISTINCT m) AS nodes_to_delete
+        FOREACH (nd IN nodes_to_delete | DETACH DELETE nd)
+        RETURN size(nodes_to_delete) AS pruned_count
         """
         try:
             result = await execute_query(
-                prune_query,
+                combined_query,
                 {
                     "conf_thresh": self.pruning_confidence_threshold,
                     "impact_thresh": self.pruning_impact_threshold,
@@ -66,37 +69,16 @@ class PruningMergingStage(BaseStage):
             pruned_count = result[0]["pruned_count"] if result and result[0] else 0
             if pruned_count > 0:
                 logger.info(
-                    f"Pruned {pruned_count} low-confidence/low-impact nodes from Neo4j using optimized query."
+                    f"Pruned {pruned_count} nodes (low-confidence/impact or isolated) from Neo4j."
                 )
             else:
-                logger.info("No nodes met the criteria for confidence/impact pruning.")
+                logger.info("No nodes met the criteria for combined pruning.")
             return pruned_count
         except Neo4jError as e:
             logger.error(f"Neo4j error during node pruning: {e}")
             return 0
         except Exception as e:
             logger.error(f"Unexpected error during node pruning: {e}")
-            return 0
-
-    async def _prune_isolated_nodes_in_neo4j(self) -> int:
-        """Prunes isolated nodes (excluding ROOT) directly in Neo4j."""
-        query = """
-        MATCH (n:Node)
-        WHERE NOT n:ROOT AND size((n)--()) = 0
-        DETACH DELETE n
-        RETURN count(n) as pruned_count
-        """
-        try:
-            result = await execute_query(query, {}, tx_type="write")
-            pruned_count = result[0]["pruned_count"] if result and result[0] else 0
-            if pruned_count > 0:
-                logger.info(f"Pruned {pruned_count} isolated nodes from Neo4j.")
-            return pruned_count
-        except Neo4jError as e:
-            logger.error(f"Neo4j error during isolated node pruning: {e}")
-            return 0
-        except Exception as e:
-            logger.error(f"Unexpected error during isolated node pruning: {e}")
             return 0
 
     async def _prune_low_confidence_edges_in_neo4j(self) -> int:
@@ -158,15 +140,13 @@ class PruningMergingStage(BaseStage):
         total_nodes_pruned = 0
         total_edges_pruned = 0
 
-        logger.info("Starting Neo4j node pruning phase (low confidence/impact)...")
+        logger.info(
+            "Starting Neo4j node pruning phase (low confidence/impact and isolated)..."
+        )
         nodes_pruned_conf_impact = (
-            await self._prune_low_confidence_impact_nodes_in_neo4j()
+            await self._prune_low_confidence_and_isolated_nodes_in_neo4j()
         )
         total_nodes_pruned += nodes_pruned_conf_impact
-
-        logger.info("Starting Neo4j node pruning phase (isolated nodes)...")
-        nodes_pruned_isolated = await self._prune_isolated_nodes_in_neo4j()
-        total_nodes_pruned += nodes_pruned_isolated
 
         logger.info("Starting Neo4j edge pruning phase (low confidence)...")
         edges_pruned_conf = await self._prune_low_confidence_edges_in_neo4j()

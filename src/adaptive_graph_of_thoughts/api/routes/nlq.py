@@ -4,20 +4,22 @@ import asyncio
 import json
 from collections.abc import AsyncGenerator
 from typing import Dict
-
 import re
 import logging
 
 from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import StreamingResponse
 
+from ..schemas import NLQPayload
 from ...domain.services.neo4j_utils import execute_query
 from ...services.llm import LLM_QUERY_LOGS, ask_llm
+from .mcp import verify_token
+
+logger = logging.getLogger(__name__)
 
 logger = logging.getLogger(__name__)
 
 nlq_router = APIRouter()
-
 
 MALICIOUS_PATTERNS = [
     re.compile(r"(?i)ignore\s+.*instruction"),
@@ -51,8 +53,9 @@ def _log_query(prompt: str, response: str) -> None:
         LLM_QUERY_LOGS.pop(0)
 
 
-@nlq_router.post("/nlq")
+@nlq_router.post("/nlq", dependencies=[Depends(verify_token)])
 async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse:
+
     """
     Handles POST requests to the /nlq endpoint, translating a natural language question into a Cypher query, executing it, and streaming the Cypher query, results, and a concise summary as a JSON response.
     
@@ -62,6 +65,7 @@ async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse
     Returns:
         StreamingResponse: Streams JSON objects for the generated Cypher query, query results, and a summary answer.
     """
+
     question = _validate_question(payload.get("question", ""))
     safe_question = _armor(question)
     cypher_prompt = f"Translate the question to a Cypher query: {safe_question}"

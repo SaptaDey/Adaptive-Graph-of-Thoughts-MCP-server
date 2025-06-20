@@ -1,12 +1,13 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from ...domain.services.neo4j_utils import execute_query
+from .mcp import verify_token
 
 explorer_router = APIRouter()
 
 
-@explorer_router.get("/graph")
+@explorer_router.get("/graph", dependencies=[Depends(verify_token)])
 async def graph_explorer_json(limit: int = 50):
     """
     Retrieve a list of nodes and edges from the Neo4j database for use in a graph explorer dashboard.

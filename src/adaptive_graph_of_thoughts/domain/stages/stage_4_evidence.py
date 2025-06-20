@@ -1,19 +1,25 @@
 import json
 import random
 from datetime import datetime as dt  # Alias dt for datetime.datetime
-from enum import Enum  # For property preparation
 from typing import Any, Optional
 
 from loguru import logger  # type: ignore
 
 from ...config import LegacyConfig
-from ...services.api_clients.exa_search_client import ExaSearchClient
+from ...services.api_clients.exa_search_client import (
+    ExaSearchClient,
+    ExaSearchClientError,
+)
 from ...services.api_clients.google_scholar_client import (
     GoogleScholarClient,
+    UnexpectedResponseStructureError,
 )
 
 # Import API Clients and their data models
-from ...services.api_clients.pubmed_client import PubMedClient
+from ...services.api_clients.pubmed_client import (
+    PubMedClient,
+    PubMedClientError,
+)
 from ..models.common import (
     ConfidenceVector,
     EpistemicStatus,
@@ -42,6 +48,7 @@ from ..utils.neo4j_helpers import (
     prepare_node_properties_for_neo4j,
 )
 from .base_stage import BaseStage, StageOutput
+from .exceptions import StageInitializationError
 from .stage_3_hypothesis import HypothesisStage  # To access hypothesis_node_ids
 
 
@@ -59,13 +66,16 @@ class EvidenceStage(BaseStage):
         )
 
         # Initialize API Clients
+        failures: list[str] = []
+
         self.pubmed_client: Optional[PubMedClient] = None
         if settings.pubmed and settings.pubmed.base_url:
             try:
                 self.pubmed_client = PubMedClient(settings)
                 logger.info("PubMed client initialized for EvidenceStage.")
-            except Exception as e:
+            except PubMedClientError as e:
                 logger.error(f"Failed to initialize PubMedClient: {e}")
+                failures.append("PubMed")
         else:
             logger.warning(
                 "PubMed client not initialized for EvidenceStage: PubMed configuration missing or incomplete."
@@ -80,8 +90,9 @@ class EvidenceStage(BaseStage):
             try:
                 self.google_scholar_client = GoogleScholarClient(settings)
                 logger.info("Google Scholar client initialized for EvidenceStage.")
-            except Exception as e:
+            except GoogleScholarClientError as e:
                 logger.error(f"Failed to initialize GoogleScholarClient: {e}")
+                failures.append("GoogleScholar")
         else:
             logger.warning(
                 "Google Scholar client not initialized for EvidenceStage: Google Scholar configuration missing or incomplete (requires api_key and base_url)."
@@ -96,11 +107,17 @@ class EvidenceStage(BaseStage):
             try:
                 self.exa_client = ExaSearchClient(settings)
                 logger.info("Exa Search client initialized for EvidenceStage.")
-            except Exception as e:
+            except ExaSearchClientError as e:
                 logger.error(f"Failed to initialize ExaSearchClient: {e}")
+                failures.append("ExaSearch")
         else:
             logger.warning(
                 "Exa Search client not initialized for EvidenceStage: Exa Search configuration missing or incomplete (requires api_key and base_url)."
+            )
+
+        if not any([self.pubmed_client, self.google_scholar_client, self.exa_client]):
+            raise StageInitializationError(
+                "No evidence sources available. Failed to initialize: " + ", ".join(failures)
             )
 
     async def close_clients(self):
@@ -134,7 +151,7 @@ class EvidenceStage(BaseStage):
             return set(raw)
         try:
             return set(json.loads(raw))
-        except Exception:
+        except json.JSONDecodeError:
             logger.warning("Could not deserialize tags payload '%s'", raw)
             return set()
 
@@ -334,6 +351,10 @@ class EvidenceStage(BaseStage):
                     found_evidence_list.append(evidence_item)
                 logger.info(
                     f"Found {len(gs_articles)} articles from Google Scholar for '{search_query}'."
+                )
+            except UnexpectedResponseStructureError as e:
+                logger.warning(
+                    f"Google Scholar returned unexpected structure for '{search_query}': {e}"
                 )
             except Exception as e:
                 logger.error(f"Error querying Google Scholar for '{search_query}': {e}")

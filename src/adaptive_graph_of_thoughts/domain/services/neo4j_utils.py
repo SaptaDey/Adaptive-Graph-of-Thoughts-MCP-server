@@ -2,7 +2,14 @@ import asyncio
 from typing import Any, Optional
 
 from loguru import logger
-from neo4j import Driver, GraphDatabase, Record, Result, Transaction, unit_of_work
+from neo4j import (
+    Driver,
+    GraphDatabase,
+    Record,
+    Result,
+    Transaction,
+    unit_of_work,
+)
 from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
 from src.adaptive_graph_of_thoughts.config import runtime_settings
@@ -28,6 +35,18 @@ class GlobalSettings:
 
 _neo4j_settings: Optional[GlobalSettings] = None
 _driver: Optional[Driver] = None
+
+
+def create_neo4j_driver(settings: Neo4jSettings) -> Driver:
+    """Create and verify a new Neo4j driver using the provided settings."""
+    if not settings.uri or not settings.user or not settings.password:
+        raise ServiceUnavailable("Neo4j connection details are incomplete in settings.")
+
+    logger.info(f"Initializing Neo4j driver for URI: {settings.uri}")
+    driver = GraphDatabase.driver(settings.uri, auth=(settings.user, settings.password))
+    driver.verify_connectivity()
+    logger.info("Neo4j driver initialized and connectivity verified.")
+    return driver
 
 
 def get_neo4j_settings() -> GlobalSettings:
@@ -58,31 +77,17 @@ def get_neo4j_driver() -> Driver:
             logger.error("Neo4j configuration is missing in global settings.")
             raise ServiceUnavailable("Neo4j configuration is not available.")
 
-        uri = settings.neo4j.uri
-        username = settings.neo4j.user
-        password = settings.neo4j.password
-
-        if not uri or not username or not password:
-            logger.error("Neo4j URI, username, or password missing in configuration.")
-            raise ServiceUnavailable(
-                "Neo4j connection details are incomplete in settings."
-            )
-
-        logger.info(f"Initializing Neo4j driver for URI: {uri}")
         try:
-            _driver = GraphDatabase.driver(uri, auth=(username, password))
-            # Verify connectivity
-            _driver.verify_connectivity()
-            logger.info("Neo4j driver initialized and connectivity verified.")
+            _driver = create_neo4j_driver(settings.neo4j)
         except ServiceUnavailable as e:
             logger.error(f"Failed to connect to Neo4j at {settings.neo4j.uri}: {e}")
-            _driver = None  # Ensure driver is None if connection failed
-            raise  # Re-raise the exception to signal connection failure
+            _driver = None
+            raise
         except Exception as e:
             logger.error(
                 f"An unexpected error occurred while initializing Neo4j driver: {e}"
             )
-            _driver = None  # Ensure driver is None on other errors
+            _driver = None
             raise
     return _driver
 
@@ -104,6 +109,8 @@ async def execute_query(
     parameters: Optional[dict[str, Any]] = None,
     database: Optional[str] = None,
     tx_type: str = "read",  # 'read' or 'write'
+    *,
+    driver: Optional[Driver] = None,
 ) -> list[Record]:
     """
     Executes a Cypher query asynchronously against the Neo4j database.
@@ -115,6 +122,8 @@ async def execute_query(
         parameters: Optional dictionary of parameters to pass to the query.
         database: Optional database name; uses the configured default or "neo4j" if not provided.
         tx_type: Transaction type, either "read" or "write". Defaults to "read".
+        driver: Optional Neo4j ``Driver`` instance. If not provided, the module's
+            global driver will be used.
 
     Returns:
         List of records returned by the query.
@@ -124,7 +133,7 @@ async def execute_query(
         Neo4jError: If an error occurs during query execution.
         ValueError: If an invalid transaction type is specified.
     """
-    driver = get_neo4j_driver()  # Ensures driver is initialized
+    driver = driver or get_neo4j_driver()
     if not driver:  # Should not happen if get_neo4j_driver raises on failure
         logger.error("Neo4j driver not available. Cannot execute query.")
         raise ServiceUnavailable("Neo4j driver not initialized or connection failed.")
