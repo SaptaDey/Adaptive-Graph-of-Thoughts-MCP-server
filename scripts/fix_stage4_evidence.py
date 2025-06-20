@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Format Python stage files under src/asr_got_reimagined/domain/stages using Black.
+Format Python stage files under src/adaptive_graph_of_thoughts/domain/stages using Black.
 """
 
 import os
@@ -22,7 +22,7 @@ def format_file(file_path):
 
 if __name__ == "__main__":
     base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    stages_dir = os.path.join(base_dir, "src", "asr_got_reimagined", "domain", "stages")
+    stages_dir = os.path.join(base_dir, "src", "adaptive_graph_of_thoughts", "domain", "stages")
     target_file = os.path.join(stages_dir, "stage_4_evidence.py")
     if not os.path.isfile(target_file):
         print(f"Error: {target_file} does not exist.", file=sys.stderr)

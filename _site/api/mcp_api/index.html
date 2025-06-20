@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://SaptaDey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/api/mcp_api/">
       
       
-        <link rel="prev" href="../../usage/">
+        <link rel="prev" href="../../claude_action/">
       
       
         <link rel="next" href="../../extending/custom_stages/">
@@ -297,6 +297,44 @@
   
   
   
+  
+    <li class="md-tabs__item">
+      <a href="../../vscode_extension/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  VS Code Extension
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../claude_action/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Claude Desktop Action
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
     
   
   
@@ -516,6 +554,50 @@
       
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../../vscode_extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    VS Code Extension
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../claude_action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Claude Desktop Action
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
     
   
   
@@ -541,10 +623,10 @@
       
         
         
-        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" checked>
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_7" checked>
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="">
             
   
   
@@ -557,8 +639,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="true">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             API Reference
           </label>
@@ -715,10 +797,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
             
   
   
@@ -731,8 +813,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Extending Adaptive Graph of Thoughts
           </label>
@@ -858,18 +940,19 @@
 <p>This section provides details about the Model Context Protocol (MCP) API endpoints implemented by Adaptive Graph of Thoughts.</p>
 <h2 id="overview">Overview</h2>
 <p>Adaptive Graph of Thoughts implements an MCP server to allow integration with MCP clients such as Claude Desktop. The primary endpoint for MCP communication is <code>/mcp</code>.</p>
+<p>This endpoint accepts <code>GET</code>, <code>POST</code>, and <code>DELETE</code> requests. Configuration values passed by Smithery are supplied as query parameters using dot notation, for example <code>GET /mcp?server.host=localhost&amp;server.port=8080</code>.</p>
 <h2 id="methods">Methods</h2>
 <p>The following JSON-RPC methods are supported via the <code>/mcp</code> endpoint:</p>
 <h3 id="initialize"><code>initialize</code></h3>
 <ul>
 <li><strong>Description:</strong> Initializes the session between the MCP client and the Adaptive Graph of Thoughts server. Provides server information to the client.</li>
-<li><strong>Parameters:</strong> See <code>MCPInitializeParams</code> in <code>src/asr_got_reimagined/api/schemas.py</code>.</li>
-<li><strong>Returns:</strong> <code>MCPInitializeResult</code> (see <code>src/asr_got_reimagined/api/schemas.py</code>).</li>
+<li><strong>Parameters:</strong> See <code>MCPInitializeParams</code> in <code>src/adaptive_graph_of_thoughts/api/schemas.py</code>.</li>
+<li><strong>Returns:</strong> <code>MCPInitializeResult</code> (see <code>src/adaptive_graph_of_thoughts/api/schemas.py</code>).</li>
 </ul>
 <h3 id="asr_gotquery"><code>asr_got.query</code></h3>
 <ul>
 <li><strong>Description:</strong> Submits a natural language query to the Adaptive Graph of Thoughts ASR-GoT engine for processing through its 8-stage pipeline.</li>
-<li><strong>Parameters:</strong> See <code>MCPASRGoTQueryParams</code> in <code>src/asr_got_reimagined/api/schemas.py</code>. This includes:<ul>
+<li><strong>Parameters:</strong> See <code>MCPASRGoTQueryParams</code> in <code>src/adaptive_graph_of_thoughts/api/schemas.py</code>. This includes:<ul>
 <li><code>query</code> (str): The main query string.</li>
 <li><code>session_id</code> (Optional[str]): An optional session identifier.</li>
 <li><code>parameters</code> (Optional[<code>ASRGoTQueryExecutionParams</code>]): Parameters to control query execution, such as:<ul>
@@ -881,7 +964,7 @@
 <li><code>context</code> (Optional[<code>ASRGoTQueryContext</code>]): Optional initial context for the query.</li>
 </ul>
 </li>
-<li><strong>Returns:</strong> <code>MCPASRGoTQueryResult</code> (see <code>src/asr_got_reimagined/api/schemas.py</code>). This includes:<ul>
+<li><strong>Returns:</strong> <code>MCPASRGoTQueryResult</code> (see <code>src/adaptive_graph_of_thoughts/api/schemas.py</code>). This includes:<ul>
 <li><code>answer</code> (str): The final answer generated by the pipeline.</li>
 <li><code>reasoning_trace_summary</code> (Optional[str]): A summary of the reasoning steps if requested.</li>
 <li><code>graph_state_full</code> (Optional[<code>GraphStateSchema</code>]): The full graph state if requested.</li>
@@ -894,10 +977,10 @@
 <h3 id="shutdown"><code>shutdown</code></h3>
 <ul>
 <li><strong>Description:</strong> Signals the server that the client session is ending and the server can prepare for shutdown or resource cleanup if necessary.</li>
-<li><strong>Parameters:</strong> See <code>ShutdownParams</code> in <code>src/asr_got_reimagined/api/schemas.py</code>.</li>
+<li><strong>Parameters:</strong> See <code>ShutdownParams</code> in <code>src/adaptive_graph_of_thoughts/api/schemas.py</code>.</li>
 <li><strong>Returns:</strong> <code>None</code>.</li>
 </ul>
-<p><em>Further details on request/response schemas can be found by examining the Pydantic models in <code>src/asr_got_reimagined/api/schemas.py</code>.</em></p>
+<p><em>Further details on request/response schemas can be found by examining the Pydantic models in <code>src/adaptive_graph_of_thoughts/api/schemas.py</code>.</em></p>
 
 
 

@@ -8,7 +8,7 @@ This guide provides a basic outline for developing your own custom stages.
 
 ## Stage Structure
 
-A custom stage should inherit from the `BaseStage` class found in `src.asr_got_reimagined.domain.stages.base_stage`.
+A custom stage should inherit from the `BaseStage` class found in `src.adaptive_graph_of_thoughts.domain.stages.base_stage`.
 
 Key components of a stage:
 
@@ -17,12 +17,12 @@ Key components of a stage:
     *   Example: `stage_name = "MyCustomAnalysisStage"`
 
 2.  **`__init__(self, settings)`:**
-    *   The constructor can be used to accept the global application `settings` (an instance of `AppSettings` from `src.asr_got_reimagined.config`) if your stage needs access to configuration parameters.
+    *   The constructor can be used to accept the global application `settings` (an instance of `AppSettings` from `src.adaptive_graph_of_thoughts.config`) if your stage needs access to configuration parameters.
 
 3.  **`async def execute(self, current_session_data: GoTProcessorSessionData) -> StageOutput:`:**
     *   This is the main method where your stage's logic resides.
     *   It takes `current_session_data` as input, allowing access to the query, existing graph state (if applicable, though direct graph manipulation is now stage-local within Neo4j), and outputs from previous stages stored in `current_session_data.accumulated_context`.
-    *   It must return an instance of `StageOutput` (from `src.asr_got_reimagined.domain.stages.base_stage`).
+    *   It must return an instance of `StageOutput` (from `src.adaptive_graph_of_thoughts.domain.stages.base_stage`).
 
 ## `StageOutput` Class
 
@@ -40,11 +40,11 @@ The `StageOutput` class is used to return results from your stage:
 ## Example Custom Stage (Conceptual)
 
 ```python
-# src/asr_got_reimagined/domain/stages/my_custom_stage.py (Example Path)
+# src/adaptive_graph_of_thoughts/domain/stages/my_custom_stage.py (Example Path)
 
-from asr_got_reimagined.domain.stages.base_stage import BaseStage, StageOutput
-from asr_got_reimagined.domain.models.common_types import GoTProcessorSessionData
-from src.asr_got_reimagined.config import Settings # Assuming settings are passed
+from adaptive_graph_of_thoughts.domain.stages.base_stage import BaseStage, StageOutput
+from adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
+from src.adaptive_graph_of_thoughts.config import Settings # Assuming settings are passed
 from loguru import logger
 class MyCustomAnalysisStage(BaseStage):
     stage_name = "MyCustomAnalysisStage"
@@ -101,7 +101,7 @@ class MyCustomAnalysisStage(BaseStage):
 
 ## Integrating Your Custom Stage
 
-1.  **Place your stage file** in a suitable location (e.g., within `src/asr_got_reimagined/domain/stages/` or a new subdirectory for custom/plugin stages).
+1.  **Place your stage file** in a suitable location (e.g., within `src/adaptive_graph_of_thoughts/domain/stages/` or a new subdirectory for custom/plugin stages).
 2.  **Configure the pipeline** in `config/settings.yaml` to include your stage:
     ```yaml
     # config/settings.yaml (snippet)
@@ -110,7 +110,7 @@ class MyCustomAnalysisStage(BaseStage):
       pipeline_stages:
         # ... other stages ...
         - name: "My Custom Analysis" # Friendly name for your stage
-          module_path: "src.asr_got_reimagined.domain.stages.my_custom_stage.MyCustomAnalysisStage" # Adjust path as needed
+          module_path: "src.adaptive_graph_of_thoughts.domain.stages.my_custom_stage.MyCustomAnalysisStage" # Adjust path as needed
           enabled: true
         # ... other stages ...
     ```
@@ -124,4 +124,4 @@ class MyCustomAnalysisStage(BaseStage):
 *   **Logging:** Use `loguru` for detailed logging within your stage to aid in debugging and monitoring.
 *   **Testing:** Write unit tests for your custom stage to ensure its logic is correct and it handles various inputs and edge cases properly.
 
-This placeholder guide should help you get started. Refer to the existing stages in `src/asr_got_reimagined/domain/stages/` for more detailed examples.
+This placeholder guide should help you get started. Refer to the existing stages in `src/adaptive_graph_of_thoughts/domain/stages/` for more detailed examples.

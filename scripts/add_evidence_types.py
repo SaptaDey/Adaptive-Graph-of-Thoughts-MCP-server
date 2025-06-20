@@ -44,7 +44,7 @@ if __name__ == "__main__":
     evidence_file = (
         base_dir
         / "src"
-        / "asr_got_reimagined"
+        / "adaptive_graph_of_thoughts"
         / "domain"
         / "stages"
         / "stage_4_evidence.py"

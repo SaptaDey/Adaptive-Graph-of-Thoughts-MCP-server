@@ -14,7 +14,7 @@
         <link rel="prev" href="../configuration/">
       
       
-        <link rel="next" href="../api/mcp_api/">
+        <link rel="next" href="../vscode_extension/">
       
       
       <link rel="icon" href="../assets/images/favicon.png">
@@ -289,6 +289,44 @@
     
   
   Usage
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../vscode_extension/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  VS Code Extension
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../claude_action/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Claude Desktop Action
 
       </a>
     </li>
@@ -668,6 +706,50 @@
   
   
   
+    <li class="md-nav__item">
+      <a href="../vscode_extension/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    VS Code Extension
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../claude_action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Claude Desktop Action
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
     
     
       
@@ -688,10 +770,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
         
           
-          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
             
   
   
@@ -704,8 +786,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
             <span class="md-nav__icon md-icon"></span>
             API Reference
           </label>
@@ -769,10 +851,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
         
           
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
             
   
   
@@ -785,8 +867,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
             <span class="md-nav__icon md-icon"></span>
             Extending Adaptive Graph of Thoughts
           </label>
@@ -914,7 +996,7 @@
 <p>Adaptive Graph of Thoughts exposes its functionalities via a FastAPI backend. The primary interaction points are:</p>
 <h3 id="mcp-protocol-endpoint">MCP Protocol Endpoint</h3>
 <ul>
-<li><strong>Endpoint:</strong> <code>POST /mcp</code></li>
+<li><strong>Endpoint:</strong> <code>/mcp</code> (supports <code>GET</code>, <code>POST</code>, and <code>DELETE</code>)</li>
 <li><strong>Description:</strong> This is the main endpoint for communication with Model Context Protocol (MCP) clients like Claude Desktop. It handles JSON-RPC requests for various methods defined by the ASR-GoT framework.</li>
 <li><strong>Example Request (<code>asr_got.query</code> method):</strong>
     <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="p">{</span>

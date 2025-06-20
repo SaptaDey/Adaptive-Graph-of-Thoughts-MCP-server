@@ -148,12 +148,12 @@ Before running Adaptive Graph of Thoughts (either locally or via Docker if not u
 
 6. **Run the development server**:
    ```bash
-   python src/asr_got_reimagined/main.py
+   python src/adaptive_graph_of_thoughts/main.py
    ```
    
    Alternatively, for more control:
    ```bash
-   uvicorn asr_got_reimagined.main:app --reload --host 0.0.0.0 --port 8000
+   uvicorn adaptive_graph_of_thoughts.main:app --reload --host 0.0.0.0 --port 8000
    ```
    
    The API will be available at `http://localhost:8000`.
