@@ -3,16 +3,29 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncGenerator
+import logging
+import re
 from typing import Dict
 
 from fastapi import APIRouter, Body, Depends
 from fastapi.responses import StreamingResponse
 
+from ..schemas import NLQPayload
 from ...domain.services.neo4j_utils import execute_query
 from ...services.llm import LLM_QUERY_LOGS, ask_llm
 from .mcp import verify_token
 
+logger = logging.getLogger(__name__)
+
 nlq_router = APIRouter()
+
+
+def _sanitize_question(question: str) -> str:
+    """Sanitize user provided question to reduce prompt injection risks."""
+    cleaned = question.replace("\r", " ").replace("\n", " ").strip()
+    cleaned = re.sub(r"\s+", " ", cleaned)
+    # Truncate to a reasonable length
+    return cleaned[:2000]
 
 
 def _log_query(prompt: str, response: str) -> None:
@@ -27,6 +40,7 @@ def _log_query(prompt: str, response: str) -> None:
 
 @nlq_router.post("/nlq", dependencies=[Depends(verify_token)])
 async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse:
+
     """
     Handles POST requests to the /nlq endpoint, translating a natural language question into a Cypher query, executing it, and streaming the Cypher query, results, and a concise summary as a JSON response.
     
@@ -36,7 +50,7 @@ async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse
     Returns:
         StreamingResponse: Streams JSON objects for the generated Cypher query, query results, and a summary answer.
     """
-    question = payload.get("question", "")
+    question = _sanitize_question(payload.question)
     cypher_prompt = f"Translate the question to a Cypher query: {question}"
     cypher = await asyncio.to_thread(ask_llm, cypher_prompt)
     _log_query(cypher_prompt, cypher)
@@ -49,13 +63,6 @@ async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse
             bytes: JSON-encoded Cypher query and query results, each separated by a newline.
         """
         yield json.dumps({"cypher": cypher}).encode() + b"\n"
-        try:
-            records = await execute_query(cypher)
-            rows = [dict(r) for r in records]
-import logging
-
-logger = logging.getLogger(__name__)
-
         try:
             records = await execute_query(cypher)
             rows = [dict(r) for r in records]
