@@ -1,7 +1,6 @@
 import json
 import random
 from datetime import datetime as dt  # Alias dt for datetime.datetime
-from enum import Enum  # For property preparation
 from typing import Any, Optional
 
 from loguru import logger  # type: ignore
@@ -13,7 +12,7 @@ from ...services.api_clients.exa_search_client import (
 )
 from ...services.api_clients.google_scholar_client import (
     GoogleScholarClient,
-    GoogleScholarClientError,
+    UnexpectedResponseStructureError,
 )
 
 # Import API Clients and their data models
@@ -352,6 +351,10 @@ class EvidenceStage(BaseStage):
                     found_evidence_list.append(evidence_item)
                 logger.info(
                     f"Found {len(gs_articles)} articles from Google Scholar for '{search_query}'."
+                )
+            except UnexpectedResponseStructureError as e:
+                logger.warning(
+                    f"Google Scholar returned unexpected structure for '{search_query}': {e}"
                 )
             except Exception as e:
                 logger.error(f"Error querying Google Scholar for '{search_query}': {e}")

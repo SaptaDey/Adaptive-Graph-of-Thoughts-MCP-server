@@ -28,7 +28,13 @@ class GoogleScholarArticle(BaseModel):
 
 
 class GoogleScholarClientError(BaseAPIClientError):
-    """Custom error for GoogleScholarClient."""
+    """Base error for GoogleScholarClient."""
+
+    pass
+
+
+class UnexpectedResponseStructureError(GoogleScholarClientError):
+    """Raised when the API response lacks the expected structure."""
 
     pass
 
@@ -75,7 +81,9 @@ class GoogleScholarClient:
             )
             if "error" in response_json:
                 logger.error(f"SerpApi returned an error: {response_json['error']}")
-            return articles
+            raise UnexpectedResponseStructureError(
+                "SerpApi response missing 'organic_results' key"
+            )
 
         for res in response_json.get("organic_results", []):
             title = res.get("title")
@@ -161,9 +169,7 @@ class GoogleScholarClient:
 
         try:
             response = await self.http_client.get(api_endpoint, params=params)
-            response_json = (
-                response.json()
-            )  # This can raise JSONDecodeError (ValueError)
+            response_json = response.json()  # This can raise JSONDecodeError
 
             articles = self._parse_serpapi_response(response_json)
             logger.info(
@@ -171,6 +177,8 @@ class GoogleScholarClient:
             )
             return articles
 
+        except UnexpectedResponseStructureError:
+            raise
         except (APIHTTPError, APIRequestError) as e:
             logger.error(f"Google Scholar API request error for query '{query}': {e}")
             raise GoogleScholarClientError(
