@@ -18,7 +18,6 @@ To enable direct Claude API calls, you need to configure the `claude_api` sectio
 # Optional: Direct Claude API integration settings (if the app needs to call Claude API itself)
 claude_api:
   api_key: "env_var:CLAUDE_API_KEY" # Recommended: Load from environment variable CLAUDE_API_KEY
-  # api_key: "your_actual_claude_api_key_here" # Alternatively, direct input (less secure)
   default_model: "claude-3-opus-20240229" # Or any other Claude model you intend to use
   timeout_seconds: 120 # Timeout for API requests in seconds
   max_retries: 2       # Maximum number of retries for API requests
@@ -29,7 +28,6 @@ claude_api:
 *   `api_key` (Optional\[str]):
     *   Your API key for accessing the Claude API.
     *   **Security Best Practice:** It is strongly recommended to provide the API key via an environment variable named `CLAUDE_API_KEY`. The application is configured to recognize the `"env_var:CLAUDE_API_KEY"` string and substitute it with the actual value from the environment variable at runtime.
-    *   Alternatively, for development or testing, you can directly paste your API key, but avoid this for production deployments.
     *   If not provided, any direct Claude API calls will fail.
 *   `default_model` (str):
     *   The default Claude model to use for API calls (e.g., `"claude-3-opus-20240229"`, `"claude-3-sonnet-20240229"`).
