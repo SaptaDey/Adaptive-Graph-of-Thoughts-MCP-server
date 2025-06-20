@@ -32,6 +32,10 @@ from adaptive_graph_of_thoughts.domain.services.neo4j_utils import (  # Import N
     execute_query,
 )
 from adaptive_graph_of_thoughts.domain.stages.base_stage import BaseStage, StageOutput
+from adaptive_graph_of_thoughts.domain.utils.neo4j_helpers import (
+    prepare_edge_properties_for_neo4j,
+    prepare_node_properties_for_neo4j,
+)
 
 # Import names of previous stages to access their output keys in accumulated_context
 from .stage_2_decomposition import DecompositionStage
@@ -53,93 +57,6 @@ class HypothesisStage(BaseStage):
             self.default_params.default_disciplinary_tags
         )
         self.default_plan_types_config = self.default_params.default_plan_types
-
-    def _prepare_node_properties_for_neo4j(self, node_pydantic: Node) -> dict[str, Any]:
-        """Converts a Node Pydantic model into a flat dictionary for Neo4j."""
-        if node_pydantic is None:
-            return {}
-        props = {"id": node_pydantic.id, "label": node_pydantic.label}
-        if node_pydantic.confidence:
-            for cv_field, cv_val in node_pydantic.confidence.model_dump().items():
-                if cv_val is not None:
-                    props[f"confidence_{cv_field}"] = cv_val
-        if node_pydantic.metadata:
-            for meta_field, meta_val in node_pydantic.metadata.model_dump().items():
-                if meta_val is None:
-                    continue
-                if isinstance(meta_val, datetime):
-                    props[f"metadata_{meta_field}"] = meta_val.isoformat()
-                elif isinstance(meta_val, Enum):
-                    props[f"metadata_{meta_field}"] = meta_val.value
-                elif isinstance(meta_val, (list, set)):
-                    if all(
-                        isinstance(item, (str, int, float, bool)) for item in meta_val
-                    ):
-                        props[f"metadata_{meta_field}"] = list(meta_val)
-                    else:
-                        try:
-                            items_as_dicts = [
-                                item.model_dump()
-                                if hasattr(item, "model_dump")
-                                else item
-                                for item in meta_val
-                            ]
-                            props[f"metadata_{meta_field}_json"] = json.dumps(
-                                items_as_dicts
-                            )
-                        except TypeError as e:
-                            logger.warning(
-                                f"Could not serialize list/set metadata field {meta_field} to JSON: {e}"
-                            )
-                            props[f"metadata_{meta_field}_str"] = str(meta_val)
-                elif hasattr(
-                    meta_val, "model_dump"
-                ):  # Handles Plan, FalsificationCriteria, BiasFlag if they are direct fields
-                    try:
-                        props[f"metadata_{meta_field}_json"] = json.dumps(
-                            meta_val.model_dump()
-                        )
-                    except TypeError as e:
-                        logger.warning(
-                            f"Could not serialize Pydantic metadata field {meta_field} to JSON: {e}"
-                        )
-                        props[f"metadata_{meta_field}_str"] = str(meta_val)
-                else:
-                    props[f"metadata_{meta_field}"] = meta_val
-        return {k: v for k, v in props.items() if v is not None}
-
-    def _prepare_edge_properties_for_neo4j(self, edge_pydantic: Edge) -> dict[str, Any]:
-        """Converts an Edge Pydantic model into a flat dictionary for Neo4j."""
-        if edge_pydantic is None:
-            return {}
-        props = {"id": edge_pydantic.id}
-        if (
-            hasattr(edge_pydantic, "confidence")
-            and edge_pydantic.confidence is not None
-        ):
-            props["confidence"] = edge_pydantic.confidence
-        if edge_pydantic.metadata:
-            for meta_field, meta_val in edge_pydantic.metadata.model_dump().items():
-                if meta_val is None:
-                    continue
-                if isinstance(meta_val, datetime):
-                    props[f"metadata_{meta_field}"] = meta_val.isoformat()
-                elif isinstance(meta_val, Enum):
-                    props[f"metadata_{meta_field}"] = meta_val.value
-                elif isinstance(meta_val, (list, set, dict)) or hasattr(
-                    meta_val, "model_dump"
-                ):
-                    try:
-                        props[f"metadata_{meta_field}_json"] = json.dumps(
-                            meta_val.model_dump()
-                            if hasattr(meta_val, "model_dump")
-                            else meta_val
-                        )
-                    except TypeError:
-                        props[f"metadata_{meta_field}_str"] = str(meta_val)
-                else:
-                    props[f"metadata_{meta_field}"] = meta_val
-        return {k: v for k, v in props.items() if v is not None}
 
     async def _generate_hypothesis_content(
         self,
@@ -318,7 +235,7 @@ class HypothesisStage(BaseStage):
                         ),
                         metadata=hypo_metadata,
                     )
-                    hyp_props_for_neo4j = self._prepare_node_properties_for_neo4j(
+                    hyp_props_for_neo4j = prepare_node_properties_for_neo4j(
                         hypothesis_node_pydantic
                     )
 
@@ -400,9 +317,7 @@ class HypothesisStage(BaseStage):
                         description=f"Hypothesis '{hypo_label_for_rel}' generated for dimension '{dim_label_placeholder}'."
                     ),
                 )
-                edge_props_for_neo4j = self._prepare_edge_properties_for_neo4j(
-                    edge_pydantic
-                )
+                edge_props_for_neo4j = prepare_edge_properties_for_neo4j(edge_pydantic)
                 batch_relationship_data.append(
                     {
                         "dim_id": dim_id_for_rel,
