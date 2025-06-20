@@ -28,7 +28,7 @@
 [![CodeQL Advanced](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/codeql.yml/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/codeql.yml)
 [![Dependabot Updates](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/dependabot/dependabot-updates)
 [![Deploy Documentation to GitHub Pages](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/gh-pages.yml/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/gh-pages.yml)
-![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server?utm_source=oss&utm_medium=github&utm_campaign=SaptaDey%2FAdaptive-Graph-of-Thoughts-MCP-server&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
+
 
 </div>
 
