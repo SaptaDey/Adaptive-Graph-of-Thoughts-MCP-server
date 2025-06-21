@@ -3,11 +3,11 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncGenerator
-import logging
-import re
 from typing import Dict
+import re
+import logging
 
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, HTTPException
 from fastapi.responses import StreamingResponse
 
 from ..schemas import NLQPayload
@@ -17,15 +17,30 @@ from .mcp import verify_token
 
 logger = logging.getLogger(__name__)
 
+logger = logging.getLogger(__name__)
+
 nlq_router = APIRouter()
 
+MALICIOUS_PATTERNS = [
+    re.compile(r"(?i)ignore\s+.*instruction"),
+    re.compile(r"(?i)forget\s+.*instruction"),
+    re.compile(r"(?i)system:"),
+    re.compile(r"(?i)assistant:"),
+]
 
-def _sanitize_question(question: str) -> str:
-    """Sanitize user provided question to reduce prompt injection risks."""
-    cleaned = question.replace("\r", " ").replace("\n", " ").strip()
-    cleaned = re.sub(r"\s+", " ", cleaned)
-    # Truncate to a reasonable length
-    return cleaned[:2000]
+
+def _validate_question(question: str) -> str:
+    """Validate question for obvious prompt injection attempts."""
+    for pattern in MALICIOUS_PATTERNS:
+        if pattern.search(question):
+            logger.warning("Potential prompt injection attempt detected: %s", question)
+            raise HTTPException(status_code=400, detail="Malicious pattern detected in question")
+    return question.strip()
+
+
+def _armor(text: str) -> str:
+    """Simple prompt armoring to escape curly braces."""
+    return text.replace("{", "{{").replace("}", "}}").replace("\n", " ")
 
 
 def _log_query(prompt: str, response: str) -> None:
@@ -50,8 +65,10 @@ async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse
     Returns:
         StreamingResponse: Streams JSON objects for the generated Cypher query, query results, and a summary answer.
     """
-    question = _sanitize_question(payload.question)
-    cypher_prompt = f"Translate the question to a Cypher query: {question}"
+
+    question = _validate_question(payload.get("question", ""))
+    safe_question = _armor(question)
+    cypher_prompt = f"Translate the question to a Cypher query: {safe_question}"
     cypher = await asyncio.to_thread(ask_llm, cypher_prompt)
     _log_query(cypher_prompt, cypher)
 
@@ -71,7 +88,7 @@ async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse
             rows = {"error": "Query execution failed"}
         yield json.dumps({"records": rows}).encode() + b"\n"
         summary_prompt = (
-            f"Answer the question '{question}' using this data: {rows}."
+            f"Answer the question '{safe_question}' using this data: {rows}."
             " Respond in under 50 words."
         )
         summary = await asyncio.to_thread(ask_llm, summary_prompt)
