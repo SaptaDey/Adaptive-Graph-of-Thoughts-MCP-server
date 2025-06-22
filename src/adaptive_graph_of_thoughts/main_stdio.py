@@ -24,18 +24,21 @@ class AdaptiveGraphServer:
         if self._processor is None:
             raise RuntimeError("Server resources not initialized")
         async for session_message in read_stream:
-            if isinstance(session_message, Exception):
-                logging.error("Session error: %s", session_message)
-                continue
-            request_dict = session_message.message.model_dump()
-            response = await MCPServerFactory._handle_stdio_request(
-                request_dict, self._processor
-            )
-            if response:
-                message = JSONRPCMessage.model_validate(response.model_dump())
-                await write_stream.send(SessionMessage(message))
-            if request_dict.get("method") == "shutdown":
-                break
+            try:
+                if isinstance(session_message, Exception):
+                    logging.error("Session error: %s", session_message)
+                    continue
+                request_dict = session_message.message.model_dump()
+                response = await MCPServerFactory._handle_stdio_request(
+                    request_dict, self._processor
+                )
+                if response:
+                    message = JSONRPCMessage.model_validate(response.model_dump())
+                    await write_stream.send(SessionMessage(message))
+                if request_dict.get("method") == "shutdown":
+                    break
+            except Exception as e:
+                logging.exception("Error processing request: %s", e)
         await self._processor.shutdown_resources()
 
 
