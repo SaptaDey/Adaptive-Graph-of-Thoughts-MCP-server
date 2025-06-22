@@ -339,13 +339,14 @@ class LegacyConfig:
         base_path = Path(base_file).resolve()
         override_path = Path(override_file).resolve()
 
-        if (
-            base_path == override_path
-            or base_path in _loading_stack
-            or override_path in _loading_stack
-        ):
+        if base_path == override_path:
+            raise ValueError(f"Circular dependency detected: config file '{base_path}' cannot override itself.")
+
+        if base_path in _loading_stack or override_path in _loading_stack:
+            # Add current base_path to the stack for a more informative error message
+            current_chain = list(_loading_stack) + [base_path]
             raise ValueError(
-                f"Circular dependency detected in config files: {', '.join(str(p) for p in _loading_stack)}"
+                f"Circular dependency detected in config files: {' -> '.join(map(str, current_chain))}"
             )
 
         _loading_stack.add(base_path)
