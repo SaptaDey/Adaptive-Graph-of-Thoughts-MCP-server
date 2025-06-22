@@ -36,8 +36,41 @@ class EnvSettings(AGoTSettings):
 
 env_settings = EnvSettings()
 
-# Thread safety lock
+# Thread safety lock for LegacyConfig operations
 _config_lock = threading.RLock()
+
+
+class ThreadSafeConfigManager:
+    """Manage a ``LegacyConfig`` instance with thread safety."""
+
+    def __init__(self) -> None:
+        self._lock = threading.RLock()
+        self._config: Optional["LegacyConfig"] = None
+
+    @contextmanager
+    def _acquire_lock(self):
+        self._lock.acquire()
+        try:
+            yield
+        finally:
+            self._lock.release()
+
+    def get_config(self) -> "LegacyConfig":
+        """Return a copy of the global LegacyConfig instance."""
+        with self._acquire_lock():
+            if self._config is None:
+                self._config = LegacyConfig()
+            return self._config.copy()
+
+    def update_config(self, updates: dict[str, Any]) -> None:
+        """Update the global LegacyConfig instance with provided values."""
+        with self._acquire_lock():
+            if self._config is None:
+                self._config = LegacyConfig()
+            self._config.update(updates)
+
+
+_legacy_config_manager = ThreadSafeConfigManager()
 
 
 def validate_learning_rate(lr: float) -> None:
@@ -354,9 +387,19 @@ class Settings(LegacyConfig):
     pass
 
 
-# Global config instance
-config = LegacyConfig()
+# Global LegacyConfig instance managed via a thread-safe manager
+config = _legacy_config_manager.get_config()
 legacy_settings = config  # For backward compatibility
+
+
+def get_legacy_config() -> "LegacyConfig":
+    """Return the thread-safe global ``LegacyConfig`` instance."""
+    return _legacy_config_manager.get_config()
+
+
+def update_legacy_config(updates: dict[str, Any]) -> None:
+    """Thread-safe update of the global ``LegacyConfig`` instance."""
+    _legacy_config_manager.update_config(updates)
 
 # ---------------------------------------------------------------------------
 # New Pydantic-based settings

@@ -34,10 +34,11 @@ from adaptive_graph_of_thoughts.domain.services.got_processor import (
 )
 from adaptive_graph_of_thoughts.services.llm import LLM_QUERY_LOGS, ask_llm
 
-security = HTTPBasic()
+# Allow missing credentials when no BASIC_AUTH_* env vars are set
+security = HTTPBasic(auto_error=False)
 
 
-def get_basic_auth(credentials: HTTPBasicCredentials = Depends(security)) -> bool:
+def get_basic_auth(credentials: HTTPBasicCredentials | None = Depends(security)) -> bool:
     """
     Validates HTTP Basic authentication credentials against environment variables.
 
@@ -46,7 +47,11 @@ def get_basic_auth(credentials: HTTPBasicCredentials = Depends(security)) -> boo
     user = os.getenv("BASIC_AUTH_USER")
     password = os.getenv("BASIC_AUTH_PASS")
     if user and password:
-        if not (credentials.username == user and credentials.password == password):
+        if (
+            credentials is None
+            or credentials.username != user
+            or credentials.password != password
+        ):
             raise HTTPException(
                 status_code=401,
                 detail="Unauthorized",
@@ -416,7 +421,10 @@ def create_app() -> FastAPI:
             )
             with driver.session(database=runtime_settings.neo4j.database) as session:
                 session.run("RETURN 1")
-            driver.close()
+            try:
+                driver.close()
+            except Exception:
+                logger.warning("Neo4j driver close failed.")
             payload["neo4j"] = "up"
             return payload
         except Exception:
