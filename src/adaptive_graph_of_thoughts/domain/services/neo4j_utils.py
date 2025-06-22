@@ -2,11 +2,13 @@ import asyncio
 from typing import Any, Optional
 
 from loguru import logger
+from dataclasses import dataclass
 from neo4j import (
     Driver,
     GraphDatabase,
     Record,
     Result,
+    Session,
     Transaction,
     unit_of_work,
 )
@@ -35,6 +37,28 @@ class GlobalSettings:
 
 _neo4j_settings: Optional[GlobalSettings] = None
 _driver: Optional[Driver] = None
+
+
+@dataclass
+class Neo4jConnection:
+    """Lightweight Neo4j connection wrapper used in unit tests."""
+
+    uri: str
+    user: str
+    password: str
+    database: str = "neo4j"
+
+    def __post_init__(self) -> None:
+        self._driver: Driver | None = None
+
+    def connect(self) -> None:
+        if self._driver is None:
+            self._driver = GraphDatabase.driver(self.uri, auth=(self.user, self.password))
+
+    def close(self) -> None:
+        if self._driver:
+            self._driver.close()
+            self._driver = None
 
 
 def create_neo4j_driver(settings: Neo4jSettings) -> Driver:
@@ -191,6 +215,70 @@ async def execute_query(
         raise  # Re-raise any other unexpected exception
 
     return records
+
+
+async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
+    query = (
+        f"CREATE (n:{label} {{" + ", ".join(f"{k}: ${k}" for k in properties) + "}) RETURN n"
+    )
+    return await execute_query(query, properties, tx_type="write")
+
+
+async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
+    set_clause = ", ".join(f"n.{k} = ${k}" for k in updates)
+    query = f"MATCH (n) WHERE id(n) = $id SET {set_clause} RETURN n"
+    params = {"id": int(node_id), **updates}
+    return await execute_query(query, params, tx_type="write")
+
+
+async def delete_node(node_id: str) -> list[Record]:
+    query = "MATCH (n) WHERE id(n) = $id DETACH DELETE n RETURN count(n)"
+    return await execute_query(query, {"id": int(node_id)}, tx_type="write")
+
+
+async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
+    where = " AND ".join(f"n.{k} = ${k}" for k in filters)
+    query = f"MATCH (n:{label}) WHERE {where} RETURN n"
+    return await execute_query(query, filters)
+
+
+async def create_relationship(
+    from_id: str, to_id: str, rel_type: str, properties: dict[str, Any]
+) -> list[Record]:
+    props = ", ".join(f"{k}: ${k}" for k in properties)
+    query = (
+        "MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
+        f"CREATE (a)-[r:{rel_type} {{{props}}}]->(b) RETURN r"
+    )
+    params = {"from": int(from_id), "to": int(to_id), **properties}
+    return await execute_query(query, params, tx_type="write")
+
+
+async def get_database_info() -> list[Record]:
+    query = "CALL db.info()"
+    return await execute_query(query)
+
+
+async def validate_connection() -> bool:
+    try:
+        await get_database_info()
+        return True
+    except Exception:
+        return False
+
+
+async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Record]:
+    results: list[Record] = []
+    for props in nodes:
+        res = await create_node(label, props)
+        results.extend(res)
+    return results
+
+
+async def execute_cypher_file(path: str) -> list[Record]:
+    with open(path) as f:
+        query = f.read()
+    return await execute_query(query, tx_type="write")
 
 
 # Example of how to use (optional, for testing or demonstration)
