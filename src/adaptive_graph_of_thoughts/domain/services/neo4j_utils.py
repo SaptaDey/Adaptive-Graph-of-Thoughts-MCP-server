@@ -59,9 +59,8 @@ class Neo4jDriverManager:
         with self._lock:
             if self._driver is None or self._driver.closed:
                 self._driver = self._create_driver()
-if self._driver:
-    global _driver
-    _driver = self._driver
+                global _driver
+                _driver = self._driver
             return self._driver
 
     def cleanup(self) -> None:
@@ -69,9 +68,8 @@ if self._driver:
             logger.info("Closing Neo4j driver.")
             self._driver.close()
             self._driver = None
-if self._driver is not None:
-    global _driver
-    _driver = None
+            global _driver
+            _driver = None
 
 
 driver_manager = Neo4jDriverManager()
@@ -160,7 +158,6 @@ def get_neo4j_settings() -> GlobalSettings:
 # --- Driver Management ---
 def get_neo4j_driver() -> Driver:
     """Return a singleton Neo4j driver instance."""
-
 
     try:
         return driver_manager.get_driver()
@@ -267,7 +264,6 @@ async def execute_query(
 
 
 async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
-
     # Validate label to prevent injection
     if not label.replace("_", "").replace("-", "").isalnum():
         raise ValueError(
@@ -282,10 +278,6 @@ async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
     return await execute_query(query, properties, tx_type="write")
 
 
-    query = f"CREATE (n:{clean_label}) SET n = $props RETURN n"
-    return await execute_query(query, {"props": properties}, tx_type="write")
-
-
 async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
     # Validate property names to prevent injection
     for key in updates:
@@ -293,9 +285,6 @@ async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
             raise ValueError(
                 f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only."
             )
-
-
-async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
     try:
         node_id_int = int(node_id)
     except ValueError as exc:
@@ -315,13 +304,11 @@ async def delete_node(node_id: str) -> list[Record]:
     except ValueError:
         raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
 
-
     query = "MATCH (n) WHERE id(n) = $id DETACH DELETE n RETURN count(n)"
     return await execute_query(query, {"id": node_id_int}, tx_type="write")
 
 
 async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
-
     # Validate label to prevent injection
     if not label.replace("_", "").replace("-", "").isalnum():
         raise ValueError(
@@ -340,19 +327,15 @@ async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
     return await execute_query(query, filters)
 
 
-
 async def create_relationship(
     from_id: str, to_id: str, rel_type: str, properties: dict[str, Any]
 ) -> list[Record]:
-
     # Validate relationship type to prevent injection
     if not rel_type.replace("_", "").replace("-", "").isalnum():
-
         raise ValueError(
             f"Invalid relationship type: {rel_type}. "
             "Must be alphanumeric with underscores/hyphens only."
         )
-
 
     # Validate property names to prevent injection
     for key in properties:
@@ -361,7 +344,6 @@ async def create_relationship(
                 f"Invalid property name: {key}. "
                 "Property names must be alphanumeric with underscores/hyphens only."
             )
-
 
     # Validate node IDs
     try:
@@ -373,10 +355,9 @@ async def create_relationship(
             "Invalid node IDs. Both from_id and to_id must be valid integers."
         )
 
-
     query = (
         f"MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
-        f"CREATE (a)-[r:{clean_rel_type}]->(b) SET r = $props RETURN r"
+        f"CREATE (a)-[r:{rel_type}]->(b) SET r = $props RETURN r"
     )
     params = {"from": from_id_int, "to": to_id_int, "props": properties}
     return await execute_query(query, params, tx_type="write")
@@ -396,8 +377,6 @@ async def validate_connection() -> bool:
 
 
 async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Record]:
-
-
     # Validate label to prevent injection
     if not label.replace("_", "").replace("-", "").isalnum():
         raise ValueError(
@@ -406,7 +385,6 @@ async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Rec
 
     # Use UNWIND for efficient bulk creation
     query = f"UNWIND $nodes AS nodeData CREATE (n:{label}) SET n = nodeData RETURN n"
-
 
     return await execute_query(query, {"nodes": nodes}, tx_type="write")
 
@@ -465,7 +443,6 @@ async def ensure_indexes() -> None:
 
 async def execute_cypher_file(path: str) -> list[Record]:
     try:
-
         with open(path, "r", encoding="utf-8") as f:
             query = f.read()
     except FileNotFoundError as exc:

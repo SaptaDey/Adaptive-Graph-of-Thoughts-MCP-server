@@ -18,6 +18,20 @@ from ..stages.exceptions import StageInitializationError
 from .exceptions import StageExecutionError
 
 
+def create_checkpoint(session_data: GoTProcessorSessionData) -> GoTProcessorSessionData:
+    """Create a deep copy of the current session data to allow recovery."""
+    return session_data.copy(deep=True)
+
+
+async def restore_checkpoint(
+    session_data: GoTProcessorSessionData,
+    checkpoint: GoTProcessorSessionData,
+) -> None:
+    """Restore session data fields from a checkpoint."""
+    for field, value in checkpoint.dict().items():
+        setattr(session_data, field, value)
+
+
 async def cleanup_stage_resources(stage_instance: BaseStage) -> None:
     """Attempt to cleanup resources for a stage instance."""
     if hasattr(stage_instance, "cleanup"):
@@ -53,6 +67,24 @@ async def execute_stage_safely(
             logger.exception(
                 f"Unexpected error in stage {stage_instance.__class__.__name__}"
             )
+        raise StageExecutionError(stage_instance.__class__.__name__, e) from e
+
+
+async def execute_stage_with_recovery(
+    stage_instance: BaseStage, session_data: GoTProcessorSessionData
+) -> StageOutput:
+    """Execute a stage with checkpointing and improved exception handling."""
+    checkpoint = create_checkpoint(session_data)
+    try:
+        return await stage_instance.execute(current_session_data=session_data)
+    except (ValidationError, StageInitializationError) as e:
+        logger.error(f"Recoverable error in {stage_instance.__class__.__name__}: {e}")
+        await restore_checkpoint(session_data, checkpoint)
+        raise StageExecutionError(stage_instance.__class__.__name__, e) from e
+    except Exception as e:
+        logger.exception(f"Unrecoverable error in {stage_instance.__class__.__name__}")
+        await cleanup_stage_resources(stage_instance)
+        await restore_checkpoint(session_data, checkpoint)
         raise StageExecutionError(stage_instance.__class__.__name__, e) from e
 
 
@@ -247,7 +279,7 @@ class GoTProcessor:
             logger.debug(f"--- End Preparing for Stage: {stage_name_for_log} ---")
 
             try:
-                stage_result = await execute_stage_safely(
+                stage_result = await execute_stage_with_recovery(
                     stage_instance, current_session_data
                 )
 
@@ -446,9 +478,7 @@ class GoTProcessor:
                 logger.exception(
                     f"Critical error during execution of stage {stage_name_for_log}: {e.original_error!s}"
                 )
-                halt_msg = (
-                    f"A critical error occurred during the '{stage_name_for_log}' stage. Processing cannot continue."
-                )
+                halt_msg = f"A critical error occurred during the '{stage_name_for_log}' stage. Processing cannot continue."
                 current_session_data.final_answer = halt_msg
                 current_session_data.final_confidence_vector = [0.0, 0.0, 0.0, 0.0]
 
