@@ -41,11 +41,18 @@ async def execute_stage_safely(
     except ValidationError as e:
         logger.error(f"Stage validation failed: {e}")
         raise StageExecutionError(stage_instance.__class__.__name__, e) from e
-    except Exception as e:  # pragma: no cover - unexpected errors
-        logger.exception(
-            f"Unexpected error in stage {stage_instance.__class__.__name__}"
-        )
+    try:
+        return await stage_instance.execute(current_session_data=session_data)
+    except Exception as e:
         await cleanup_stage_resources(stage_instance)
+        if isinstance(e, StageInitializationError):
+            logger.error(f"Stage initialization failed: {e}")
+        elif isinstance(e, ValidationError):
+            logger.error(f"Stage validation failed: {e}")
+        else:
+            logger.exception(
+                f"Unexpected error in stage {stage_instance.__class__.__name__}"
+            )
         raise StageExecutionError(stage_instance.__class__.__name__, e) from e
 
 
