@@ -330,3 +330,132 @@ async def mcp_delete(http_request: Request) -> dict[str, Any]:
     """Handle DELETE requests for MCP shutdown acknowledgment."""
     config = _parse_dot_notation(dict(http_request.query_params))
     return {"status": "deleted", "config": config}
+
+@mcp_router.get("/tools", dependencies=[Depends(verify_token)])
+async def get_available_tools() -> dict[str, Any]:
+    """Return available MCP tools for client discovery."""
+    import json
+    import os
+    
+    # Load tools definition
+    tools_file = os.path.join(os.path.dirname(__file__), "../../../config/mcp_tools_definition.json")
+    try:
+        with open(tools_file, 'r') as f:
+            tools_data = json.load(f)
+        return {
+            "status": "success",
+            "tools": tools_data.get("tools", []),
+            "resources": tools_data.get("resources", []),
+            "prompts": tools_data.get("prompts", [])
+        }
+    except FileNotFoundError:
+        logger.warning(f"Tools definition file not found: {tools_file}")
+        return {
+            "status": "error",
+            "message": "Tools definition not available",
+            "tools": []
+        }
+
+@mcp_router.get("/capabilities", dependencies=[Depends(verify_token)])
+async def get_server_capabilities() -> dict[str, Any]:
+    """Return server capabilities for MCP client negotiation."""
+    return {
+        "server_name": "Adaptive Graph of Thoughts MCP Server",
+        "server_version": "0.1.0",
+        "mcp_version": "2024-11-05",
+        "capabilities": {
+            "tools": True,
+            "resources": True,
+            "prompts": True,
+            "logging": True,
+            "experimental": {
+                "graph_reasoning": True,
+                "evidence_integration": True,
+                "confidence_scoring": True
+            }
+        },
+        "supported_transports": ["stdio", "http"],
+        "evidence_sources": ["pubmed", "google_scholar", "exa_search"]
+    }
+
+@mcp_router.post("/tools/{tool_name}", dependencies=[Depends(verify_token)])
+async def execute_tool(
+    tool_name: str,
+    tool_params: dict[str, Any],
+    http_request: Request
+) -> dict[str, Any]:
+    """Execute a specific MCP tool by name."""
+    logger.info(f"Executing tool: {tool_name} with params: {tool_params}")
+    
+    # Map tool names to existing handlers
+    tool_mapping = {
+        "scientific_reasoning_query": "asr_got.query",
+        "analyze_research_hypothesis": "asr_got.query",
+        "explore_scientific_relationships": "asr_got.query",
+        "validate_scientific_claims": "asr_got.query"
+    }
+    
+    if tool_name not in tool_mapping:
+        return {
+            "status": "error",
+            "message": f"Tool '{tool_name}' not found",
+            "available_tools": list(tool_mapping.keys())
+        }
+    
+    # Transform tool parameters to MCP query format
+    mcp_method = tool_mapping[tool_name]
+    
+    # Create appropriate query based on tool type
+    if tool_name == "scientific_reasoning_query":
+        query = tool_params.get("query", "")
+    elif tool_name == "analyze_research_hypothesis":
+        hypothesis = tool_params.get("hypothesis", "")
+        domain = tool_params.get("research_domain", "")
+        query = f"Analyze the following research hypothesis in the context of {domain}: {hypothesis}"
+    elif tool_name == "explore_scientific_relationships":
+        primary = tool_params.get("primary_concept", "")
+        related = tool_params.get("related_concepts", [])
+        query = f"Explore the scientific relationships between {primary} and the following concepts: {', '.join(related)}"
+    elif tool_name == "validate_scientific_claims":
+        claim = tool_params.get("claim", "")
+        threshold = tool_params.get("evidence_threshold", 0.7)
+        query = f"Validate the following scientific claim with evidence threshold {threshold}: {claim}"
+    else:
+        query = str(tool_params)
+    
+    # Create MCP request
+    mcp_params = MCPASRGoTQueryParams(
+        query=query,
+        parameters=MCPQueryOperationalParams(
+            include_reasoning_trace=tool_params.get("include_reasoning_trace", True),
+            include_graph_state=tool_params.get("include_graph_state", True),
+            max_nodes_in_response_graph=tool_params.get("max_nodes_in_response_graph", 50),
+            output_detail_level=tool_params.get("output_detail_level", "summary")
+        ),
+        session_id=tool_params.get("session_id")
+    )
+    
+    try:
+        # Execute the query
+        response = await handle_asr_got_query(http_request, mcp_params, None)
+        
+        if hasattr(response, 'result') and response.result:
+            return {
+                "status": "success",
+                "tool": tool_name,
+                "result": response.result.model_dump()
+            }
+        else:
+            return {
+                "status": "error",
+                "tool": tool_name,
+                "message": "Tool execution failed",
+                "error": response.error.model_dump() if hasattr(response, 'error') and response.error else None
+            }
+    except Exception as e:
+        logger.exception(f"Error executing tool {tool_name}: {e}")
+        return {
+            "status": "error",
+            "tool": tool_name,
+            "message": str(e)
+        }
