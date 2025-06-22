@@ -218,6 +218,10 @@ async def execute_query(
 
 
 async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
+    # Validate label to prevent injection
+    if not label.replace('_', '').replace('-', '').isalnum():
+        raise ValueError(f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only.")
+    
     query = (
         f"CREATE (n:{label} {{" + ", ".join(f"{k}: ${k}" for k in properties) + "}) RETURN n"
     )
