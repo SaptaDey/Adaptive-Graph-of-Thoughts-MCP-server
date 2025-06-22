@@ -60,8 +60,9 @@ class Neo4jDriverManager:
             if self._driver is None or self._driver.closed:
                 self._driver = self._create_driver()
 
-                global _driver
-                _driver = self._driver
+                if self._driver:
+                    global _driver
+                    _driver = self._driver
 
             return self._driver
 
@@ -101,6 +102,13 @@ def mask_username(username: str) -> str:
     return username[:2] + "*" * (len(username) - 2)
 
 
+def mask_credentials(uri: str, username: str) -> tuple[str, str]:
+    """Mask both URI credentials and username."""
+    masked_uri = mask_uri(uri)
+    masked_user = mask_username(username)
+    return masked_uri, masked_user
+
+
 @dataclass
 class Neo4jConnection:
     """Lightweight Neo4j connection wrapper used in unit tests."""
@@ -130,7 +138,7 @@ def create_neo4j_driver(settings: Neo4jSettings) -> Driver:
     if not settings.uri or not settings.user or not settings.password:
         raise ServiceUnavailable("Neo4j connection details are incomplete in settings.")
 
-    logger.info(f"Initializing Neo4j driver for URI: {settings.uri}")
+    logger.info(f"Initializing Neo4j driver for URI: {mask_uri(settings.uri)}")
     driver = GraphDatabase.driver(
         settings.uri,
         auth=(settings.user, settings.password),
@@ -154,10 +162,13 @@ def get_neo4j_settings() -> GlobalSettings:
     if _neo4j_settings is None:
         logger.info("Initializing Neo4j settings.")
         _neo4j_settings = GlobalSettings()
+        masked_uri, masked_user = mask_credentials(
+            _neo4j_settings.neo4j.uri, _neo4j_settings.neo4j.user
+        )
         logger.debug(
             "Neo4j Settings loaded: URI='%s', User='%s', Default DB='%s'",
-            mask_uri(_neo4j_settings.neo4j.uri),
-            mask_username(_neo4j_settings.neo4j.user),
+            masked_uri,
+            masked_user,
             _neo4j_settings.neo4j.database,
         )
     return _neo4j_settings
