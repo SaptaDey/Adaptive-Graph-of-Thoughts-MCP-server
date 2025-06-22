@@ -1,6 +1,8 @@
 import asyncio
 from typing import Any, Optional
 
+import re
+
 from loguru import logger
 from dataclasses import dataclass
 from neo4j import (
@@ -38,6 +40,14 @@ class GlobalSettings:
 _neo4j_settings: Optional[GlobalSettings] = None
 _driver: Optional[Driver] = None
 
+# Allowed labels for node creation to mitigate injection attacks
+ALLOWED_LABELS = {"User", "Document", "Hypothesis", "Evidence"}
+
+
+def sanitize_cypher_input(value: str) -> str:
+    """Remove potentially dangerous characters from a Cypher identifier."""
+    # Allow alphanumeric, underscore, hyphen, and dot (for namespaces)
+    return re.sub(r"[^\w.-]", "", value)
 
 @dataclass
 class Neo4jConnection:
@@ -218,28 +228,23 @@ async def execute_query(
 
 
 async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
-    # Validate label to prevent injection
-    if not label.replace('_', '').replace('-', '').isalnum():
-        raise ValueError(f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only.")
-    
-    query = (
-        f"CREATE (n:{label} {{" + ", ".join(f"{k}: ${k}" for k in properties) + "}) RETURN n"
-    )
-    return await execute_query(query, properties, tx_type="write")
+    """Create a node using parameterized queries to avoid injection."""
+    clean_label = sanitize_cypher_input(label)
+    if clean_label not in ALLOWED_LABELS:
+        raise ValueError(f"Label '{label}' not in allowed list")
+
+    query = f"CREATE (n:{clean_label}) SET n = $props RETURN n"
+    return await execute_query(query, {"props": properties}, tx_type="write")
 
 
 async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
-    # Validate property names to prevent injection
-    for key in updates:
-        if not key.replace('_', '').replace('-', '').isalnum():
-            raise ValueError(f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only.")
-
-    set_clause = ", ".join(f"n.{k} = ${k}" for k in updates)
-    query = f"MATCH (n) WHERE id(n) = $id SET {set_clause} RETURN n"
     try:
-        params = {"id": int(node_id), **updates}
+        node_id_int = int(node_id)
     except ValueError:
         raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
+
+    query = "MATCH (n) WHERE id(n) = $id SET n += $props RETURN n"
+    params = {"id": node_id_int, "props": updates}
     return await execute_query(query, params, tx_type="write")
 
 
@@ -254,37 +259,25 @@ async def delete_node(node_id: str) -> list[Record]:
 
 
 async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
-    # Validate label to prevent injection
-    if not label.replace('_', '').replace('-', '').isalnum():
-        raise ValueError(f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only.")
+    clean_label = sanitize_cypher_input(label)
+    if clean_label not in ALLOWED_LABELS:
+        raise ValueError(f"Label '{label}' not in allowed list")
 
-    # Validate property names to prevent injection
-    for key in filters:
-        if not key.replace('_', '').replace('-', '').isalnum():
-            raise ValueError(f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only.")
-
-    where = " AND ".join(f"n.{k} = ${k}" for k in filters)
-    query = f"MATCH (n:{label}) WHERE {where} RETURN n"
-    return await execute_query(query, filters)
+    clean_filters = {sanitize_cypher_input(k): v for k, v in filters.items()}
+    where = " AND ".join(f"n.{k} = ${k}" for k in clean_filters)
+    query = f"MATCH (n:{clean_label}) WHERE {where} RETURN n"
+    return await execute_query(query, clean_filters)
 
 
 async def create_relationship(
     from_id: str, to_id: str, rel_type: str, properties: dict[str, Any]
 ) -> list[Record]:
-    # Validate relationship type to prevent injection
-    if not rel_type.replace('_', '').replace('-', '').isalnum():
+    if not re.fullmatch(r"[\w-]+", rel_type):
         raise ValueError(
             f"Invalid relationship type: {rel_type}. "
             "Must be alphanumeric with underscores/hyphens only."
         )
-
-    # Validate property names to prevent injection
-    for key in properties:
-        if not key.replace('_', '').replace('-', '').isalnum():
-            raise ValueError(
-                f"Invalid property name: {key}. "
-                "Property names must be alphanumeric with underscores/hyphens only."
-            )
+    clean_rel_type = rel_type
 
     # Validate node IDs
     try:
@@ -293,12 +286,11 @@ async def create_relationship(
     except ValueError:
         raise ValueError("Invalid node IDs. Both from_id and to_id must be valid integers.")
 
-    props = ", ".join(f"{k}: ${k}" for k in properties)
     query = (
-        "MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
-        f"CREATE (a)-[r:{rel_type} {{{props}}}]->(b) RETURN r"
+        f"MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
+        f"CREATE (a)-[r:{clean_rel_type}]->(b) SET r = $props RETURN r"
     )
-    params = {"from": from_id_int, "to": to_id_int, **properties}
+    params = {"from": from_id_int, "to": to_id_int, "props": properties}
     return await execute_query(query, params, tx_type="write")
 
 
@@ -316,12 +308,11 @@ async def validate_connection() -> bool:
 
 
 async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Record]:
-    # Validate label to prevent injection
-    if not label.replace('_', '').replace('-', '').isalnum():
-        raise ValueError(f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only.")
-    
-    # Use UNWIND for efficient bulk creation
-    query = f"UNWIND $nodes AS nodeData CREATE (n:{label}) SET n = nodeData RETURN n"
+    clean_label = sanitize_cypher_input(label)
+    if clean_label not in ALLOWED_LABELS:
+        raise ValueError(f"Label '{label}' not in allowed list")
+
+    query = f"UNWIND $nodes AS nodeData CREATE (n:{clean_label}) SET n = nodeData RETURN n"
     return await execute_query(query, {"nodes": nodes}, tx_type="write")
 
 
