@@ -242,6 +242,15 @@ async def delete_node(node_id: str) -> list[Record]:
 
 
 async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
+    # Validate label to prevent injection
+    if not label.replace('_', '').replace('-', '').isalnum():
+        raise ValueError(f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only.")
+
+    # Validate property names to prevent injection
+    for key in filters:
+        if not key.replace('_', '').replace('-', '').isalnum():
+            raise ValueError(f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only.")
+
     where = " AND ".join(f"n.{k} = ${k}" for k in filters)
     query = f"MATCH (n:{label}) WHERE {where} RETURN n"
     return await execute_query(query, filters)
