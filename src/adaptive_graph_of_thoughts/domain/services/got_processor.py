@@ -481,6 +481,16 @@ class GoTProcessor:
                 halt_msg = f"A critical error occurred during the '{stage_name_for_log}' stage. Processing cannot continue."
                 current_session_data.final_answer = halt_msg
                 current_session_data.final_confidence_vector = [0.0, 0.0, 0.0, 0.0]
+                critical_error_trace = {
+                    "stage_number": i + 1,
+                    "stage_name": stage_name_for_log,
+                    "error": f"StageExecutionError: {e.original_error!s}",
+                    "summary": halt_msg,
+                    "duration_ms": int((time.time() - stage_start_time) * 1000),
+                    "context": e.context if hasattr(e, 'context') else None # Capture context if available
+                }
+                current_session_data.final_answer = halt_msg
+                current_session_data.final_confidence_vector = [0.0, 0.0, 0.0, 0.0]
 
                 critical_error_trace = {
                     "stage_number": i + 1,
