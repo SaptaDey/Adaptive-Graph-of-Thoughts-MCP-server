@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -34,21 +35,30 @@ class LLMProvider:
     def __init__(self, config: LLMConfig) -> None:
         self.config = config
 
-    def complete(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:  # pragma: no cover - runtime only
+    def complete(
+        self, messages: List[Dict[str, str]], **kwargs: Any
+    ) -> Dict[str, Any]:  # pragma: no cover - runtime only
         raise NotImplementedError
 
 
 class OpenAIProvider(LLMProvider):
     """Stub OpenAI provider used for unit tests."""
 
-    def complete(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:  # pragma: no cover - runtime only
-        return {"choices": [{"message": {"content": "ok"}}], "usage": {"total_tokens": len(messages)}}
+    def complete(
+        self, messages: List[Dict[str, str]], **kwargs: Any
+    ) -> Dict[str, Any]:  # pragma: no cover - runtime only
+        return {
+            "choices": [{"message": {"content": "ok"}}],
+            "usage": {"total_tokens": len(messages)},
+        }
 
 
 class AnthropicProvider(LLMProvider):
     """Stub Anthropic provider used for unit tests."""
 
-    def complete(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:  # pragma: no cover - runtime only
+    def complete(
+        self, messages: List[Dict[str, str]], **kwargs: Any
+    ) -> Dict[str, Any]:  # pragma: no cover - runtime only
         return {"content": [{"text": "ok"}], "usage": {"input_tokens": len(messages)}}
 
 
@@ -95,7 +105,9 @@ class LLMService:
             if set(msg.keys()) != {"role", "content"}:
                 raise ValueError("Each message must have 'role' and 'content' keys")
             if msg["role"] not in {"system", "user", "assistant"}:
-                raise ValueError("Message role must be 'system', 'user', or 'assistant'")
+                raise ValueError(
+                    "Message role must be 'system', 'user', or 'assistant'"
+                )
             if len(msg["content"]) > 1000:  # Limit content length
                 raise ValueError("Message content exceeds maximum length")
 
@@ -126,40 +138,80 @@ class LLMService:
     def set_cache_ttl(self, ttl: int) -> None:
         self._cache_ttl = ttl
 
+
 LLM_QUERY_LOGS: list[dict[str, str]] = []
 
 
-def ask_llm(prompt: str) -> str:
+def validate_prompt(prompt: str) -> str:
+    """Validate and sanitize LLM prompt"""
+    if not prompt or not prompt.strip():
+        raise ValueError("Prompt cannot be empty")
+
+    if len(prompt) > 100000:
+        raise ValueError("Prompt exceeds maximum length")
+
+    sanitized = re.sub(
+        r"<script[^>]*>.*?</script>", "", prompt, flags=re.IGNORECASE | re.DOTALL
+    )
+    sanitized = re.sub(r"javascript:", "", sanitized, flags=re.IGNORECASE)
+
+    return sanitized.strip()
+
+
+def ask_llm(prompt: str, max_tokens: Optional[int] = None) -> str:
     """
     Send a prompt to a configured large language model (LLM) provider and return the generated response.
-    
+
     Depending on environment settings, queries either the Claude or OpenAI API using the specified model and API key. The function logs the last five prompt-response pairs for reference. If an error occurs during the LLM call, returns an error message string.
-    
+
     Parameters:
         prompt (str): The user prompt to send to the LLM.
-    
+
     Returns:
         str: The LLM's response text, or an error message if the call fails.
     """
+    validated_prompt = validate_prompt(prompt)
     provider = env_settings.llm_provider.lower()
+
+    if not env_settings.openai_api_key and not env_settings.anthropic_api_key:
+        raise ValueError("No LLM API key configured")
+
     try:
         if provider == "claude":
+            if not env_settings.anthropic_api_key:
+                raise ValueError("Anthropic API key not configured")
+
             import anthropic  # type: ignore
+
             client = anthropic.Anthropic(api_key=env_settings.anthropic_api_key)
             resp = client.messages.create(
                 model=os.getenv("CLAUDE_MODEL", "claude-3-sonnet-20240229"),
-                messages=[{"role": "user", "content": prompt}],
+                messages=[{"role": "user", "content": validated_prompt}],
+                max_tokens=max_tokens or 4000,
             )
             result = resp.content[0].text
         else:
+            if not env_settings.openai_api_key:
+                raise ValueError("OpenAI API key not configured")
+
             import openai  # type: ignore
+
             client = openai.OpenAI(api_key=env_settings.openai_api_key)
             resp = client.chat.completions.create(
                 model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
-                messages=[{"role": "user", "content": prompt}],
+                messages=[{"role": "user", "content": validated_prompt}],
+                max_tokens=max_tokens or 4000,
             )
             result = resp.choices[0].message.content.strip()
-        LLM_QUERY_LOGS.append({"prompt": prompt, "response": result})
+
+        LLM_QUERY_LOGS.append(
+            {
+                "prompt": validated_prompt[:100] + "..."
+                if len(validated_prompt) > 100
+                else validated_prompt,
+                "response": result[:100] + "..." if len(result) > 100 else result,
+            }
+        )
         if len(LLM_QUERY_LOGS) > 5:
             LLM_QUERY_LOGS.pop(0)
         return result

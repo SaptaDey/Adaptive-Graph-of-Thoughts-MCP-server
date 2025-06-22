@@ -317,12 +317,8 @@ class LegacyConfig:
         cls,
         base_file: str,
         override_file: str,
-    def load_with_overrides(
-        base_path: Path,
-        override_path: Path,
         *,
         _loading_stack: Optional[set[Path]] = None,
-    ) -> Config:
     ) -> "LegacyConfig":
         """Load config with hierarchical overrides.
 
@@ -345,7 +341,9 @@ class LegacyConfig:
         override_path = Path(override_file).resolve()
 
         if base_path == override_path:
-            raise ValueError(f"Circular dependency detected: config file '{base_path}' cannot override itself.")
+            raise ValueError(
+                f"Circular dependency detected: config file '{base_path}' cannot override itself."
+            )
 
         if base_path in _loading_stack or override_path in _loading_stack:
             # Add current base_path to the stack for a more informative error message
