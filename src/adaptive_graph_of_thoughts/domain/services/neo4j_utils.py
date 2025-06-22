@@ -67,8 +67,9 @@ if self._driver:
             logger.info("Closing Neo4j driver.")
             self._driver.close()
             self._driver = None
-            global _driver
-            _driver = None
+if self._driver is not None:
+    global _driver
+    _driver = None
 
 
 driver_manager = Neo4jDriverManager()
