@@ -9,11 +9,15 @@ app:
   mcp_transport_type: "http"  # Options: "http", "stdio", "both"
   mcp_stdio_enabled: true     # Enable STDIO transport
   mcp_http_enabled: true      # Enable HTTP transport
+  # MCP Inspector Testing Configuration
+  mcp_stdio_timeout: 180      # Timeout for STDIO operations in seconds
+  mcp_http_timeout: 120       # Timeout for HTTP operations in seconds
+  mcp_inspector_retries: 2    # Number of retries for failed tests
   log_level: "INFO" # Default log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
   # debug: false # Set to true for development if needed, enables more verbose errors
 
-# Adaptive Graph of Thoughts Core Parameters
-asr_got:
+  # Adaptive Graph of Thoughts Core Parameters
+  asr_got:
   default_parameters:
     # Parameters for Stage 1: Initialization
     initial_confidence: [0.9, 0.9, 0.9, 0.9] # P1.5 via P1.1
@@ -53,7 +57,6 @@ asr_got:
       - "interdisciplinary_studies"
     # Default plan types for hypotheses (can be expanded)
     default_plan_types: ["literature_review", "data_analysis", "simulation", "expert_consultation"]
-
 
     # Parameters for Stage 4: Evidence Integration
     evidence_max_iterations: 5                # P1.4
@@ -116,12 +119,49 @@ asr_got:
     # "molecular_perspective":
     #   description: "Nodes and analyses related to molecular biology aspects."
 
-# Configuration for Model Context Protocol (MCP) Server behavior
-mcp_settings:
+  # Configuration for Model Context Protocol (MCP) Server behavior
+  mcp_settings:
   protocol_version: "2024-11-05" # As per original claude_desktop_config.json
   server_name: "Adaptive Graph of Thoughts MCP Server"
   server_version: "0.1.0" # Match app.version
   vendor_name: "Adaptive Graph of Thoughts Development Team"
+  # Enhanced capabilities for better inspector compatibility
+  capabilities:
+    tools:
+      listChanged: false
+      supportsProgress: true
+    prompts:
+      listChanged: false
+    resources:
+      subscribe: false
+      listChanged: false
+    logging: {}
+  # Inspector testing specific settings
+  inspector:
+    enable_verbose_logging: true
+    ready_signal_timeout: 10  # Seconds to wait for ready signal
+    handshake_timeout: 30     # Seconds for MCP handshake
+    validation_timeout: 180   # Seconds for full validation
+  # display_name: "Adaptive Graph of Thoughts" # If needed by MCP client
+  # description: "Adaptive Graph of Thoughts provides advanced scientific reasoning capabilities." # If needed
+  vendor_name: "Adaptive Graph of Thoughts Development Team"
+  # Enhanced capabilities for better inspector compatibility
+  capabilities:
+    tools:
+      listChanged: false
+      supportsProgress: true
+    prompts:
+      listChanged: false
+    resources:
+      subscribe: false
+      listChanged: false
+    logging: {}
+  # Inspector testing specific settings
+  inspector:
+    enable_verbose_logging: true
+    ready_signal_timeout: 10  # Seconds to wait for ready signal
+    handshake_timeout: 30     # Seconds for MCP handshake
+    validation_timeout: 180   # Seconds for full validation
   # display_name: "Adaptive Graph of Thoughts" # If needed by MCP client
   # description: "Adaptive Graph of Thoughts provides advanced scientific reasoning capabilities." # If needed
 
