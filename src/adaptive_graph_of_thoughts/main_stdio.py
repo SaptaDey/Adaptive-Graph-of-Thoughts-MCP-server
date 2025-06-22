@@ -20,7 +20,7 @@ class AdaptiveGraphServer:
     async def initialize_resources(self) -> None:
         self._processor = GoTProcessor(settings=settings)
 
-    async def run(self, read_stream, write_stream, options: InitializationOptions) -> None:
+    async def run(self, read_stream, write_stream) -> None:
         if self._processor is None:
             raise RuntimeError("Server resources not initialized")
         async for session_message in read_stream:
