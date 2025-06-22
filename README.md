@@ -257,7 +257,7 @@ Adaptive Graph of Thoughts supports integration with various MCP clients:
 
 ### Quick Client Setup
 
-#### Claude Desktop
+#### Claude Desktop / VS Code settings
 ```json
 {
   "mcpServers": {
@@ -275,6 +275,12 @@ Adaptive Graph of Thoughts supports integration with various MCP clients:
   }
 }
 ```
+##Available MCP Tools
+        1. scientific_reasoning_query - Advanced scientific reasoning with graph analysis
+        2. analyze_research_hypothesis - Hypothesis evaluation with confidence scoring
+        3. explore_scientific_relationships - Concept relationship mapping
+        4. validate_scientific_claims - Evidence-based claim validation
+
 
 ## 🔌 API Endpoints
 
