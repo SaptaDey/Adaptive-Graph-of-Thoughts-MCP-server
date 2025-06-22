@@ -245,6 +245,37 @@ graph TB
    - **Health Check**: `http://localhost:8000/health`
    - **MCP Endpoint**: `http://localhost:8000/mcp`
 
+## 🔌 MCP Client Integration
+
+### Supported MCP Clients
+
+Adaptive Graph of Thoughts supports integration with various MCP clients:
+
+- **Claude Desktop** - Full STDIO and HTTP support
+- **VS Code** - Via MCP extensions
+- **Custom MCP Clients** - Generic configuration available
+
+### Quick Client Setup
+
+#### Claude Desktop
+```json
+{
+  "mcpServers": {
+    "adaptive-graph-of-thoughts": {
+      "command": "python",
+      "args": ["-m", "adaptive_graph_of_thoughts.main"],
+      "cwd": "/path/to/Adaptive-Graph-of-Thoughts-MCP-server",
+      "env": {
+        "NEO4J_URI": "bolt://localhost:7687",
+        "NEO4J_USER": "neo4j",
+        "NEO4J_PASSWORD": "your_password",
+        "MCP_TRANSPORT_TYPE": "stdio"
+      }
+    }
+  }
+}
+```
+
 ## 🔌 API Endpoints
 
 The primary API endpoints exposed by Adaptive Graph of Thoughts are:
