@@ -1,4 +1,8 @@
 import asyncio
+import atexit
+import threading
+from typing import Any, Optional
+
 import re
 from dataclasses import dataclass
 from typing import Any, Optional
@@ -36,7 +40,41 @@ class GlobalSettings:
 
 
 _neo4j_settings: Optional[GlobalSettings] = None
-_driver: Optional[Driver] = None
+_driver: Optional[Driver] = None  # Backwards compatibility for tests
+
+
+class Neo4jDriverManager:
+    """Thread-safe manager for the Neo4j driver."""
+
+    def __init__(self) -> None:
+        self._driver: Optional[Driver] = None
+        self._lock = threading.Lock()
+        atexit.register(self.cleanup)
+
+    def _create_driver(self) -> Driver:
+        settings = get_neo4j_settings().neo4j
+        return create_neo4j_driver(settings)
+
+    def get_driver(self) -> Driver:
+        with self._lock:
+            if self._driver is None or self._driver.closed:
+                self._driver = self._create_driver()
+if self._driver:
+    global _driver
+    _driver = self._driver
+            return self._driver
+
+    def cleanup(self) -> None:
+        if self._driver and not self._driver.closed:
+            logger.info("Closing Neo4j driver.")
+            self._driver.close()
+            self._driver = None
+if self._driver is not None:
+    global _driver
+    _driver = None
+
+
+driver_manager = Neo4jDriverManager()
 
 # Allowed labels for node creation to mitigate injection attacks
 ALLOWED_LABELS = {"User", "Document", "Hypothesis", "Evidence"}
@@ -92,7 +130,13 @@ def create_neo4j_driver(settings: Neo4jSettings) -> Driver:
         raise ServiceUnavailable("Neo4j connection details are incomplete in settings.")
 
     logger.info(f"Initializing Neo4j driver for URI: {settings.uri}")
-    driver = GraphDatabase.driver(settings.uri, auth=(settings.user, settings.password))
+    driver = GraphDatabase.driver(
+        settings.uri,
+        auth=(settings.user, settings.password),
+        max_connection_lifetime=3600,
+        max_connection_pool_size=50,
+        connection_acquisition_timeout=60,
+    )
     driver.verify_connectivity()
     logger.info("Neo4j driver initialized and connectivity verified.")
     return driver
@@ -115,44 +159,21 @@ def get_neo4j_settings() -> GlobalSettings:
 
 # --- Driver Management ---
 def get_neo4j_driver() -> Driver:
-    """
-    Returns a singleton Neo4j driver instance initialized with credentials from global settings.
+    """Return a singleton Neo4j driver instance."""
 
-    Raises:
-        ServiceUnavailable: If Neo4j configuration is missing or connection fails.
-    """
-    global _driver
-    settings = get_neo4j_settings()
-    # Create a driver only if one doesn't yet exist or has been closed
-    if _driver is None or getattr(_driver, "_closed", False):
-        if settings.neo4j is None:
-            logger.error("Neo4j configuration is missing in global settings.")
-            raise ServiceUnavailable("Neo4j configuration is not available.")
 
-        try:
-            _driver = create_neo4j_driver(settings.neo4j)
-        except ServiceUnavailable as e:
-            logger.error(f"Failed to connect to Neo4j at {settings.neo4j.uri}: {e}")
-            _driver = None
-            raise
-        except Exception as e:
-            logger.error(
-                f"An unexpected error occurred while initializing Neo4j driver: {e}"
-            )
-            _driver = None
-            raise
-    return _driver
+    try:
+        return driver_manager.get_driver()
+    except ServiceUnavailable:
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error obtaining Neo4j driver: {e}")
+        raise
 
 
 def close_neo4j_driver() -> None:
-    """Closes the Neo4j driver instance if it's open."""
-    global _driver
-    if _driver is not None and not getattr(_driver, "_closed", False):
-        logger.info("Closing Neo4j driver.")
-        _driver.close()
-        _driver = None
-    else:
-        logger.info("Neo4j driver is already closed or not initialized.")
+    """Close the Neo4j driver if it is open."""
+    driver_manager.cleanup()
 
 
 # --- Query Execution ---
@@ -246,13 +267,32 @@ async def execute_query(
 
 
 async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
-    """Create a node using parameterized queries to avoid injection."""
-    clean_label = sanitize_cypher_input(label)
-    if clean_label not in ALLOWED_LABELS:
-        raise ValueError(f"Label '{label}' not in allowed list")
+
+    # Validate label to prevent injection
+    if not label.replace("_", "").replace("-", "").isalnum():
+        raise ValueError(
+            f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only."
+        )
+
+    query = (
+        f"CREATE (n:{label} {{"
+        + ", ".join(f"{k}: ${k}" for k in properties)
+        + "}) RETURN n"
+    )
+    return await execute_query(query, properties, tx_type="write")
+
 
     query = f"CREATE (n:{clean_label}) SET n = $props RETURN n"
     return await execute_query(query, {"props": properties}, tx_type="write")
+
+
+async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
+    # Validate property names to prevent injection
+    for key in updates:
+        if not key.replace("_", "").replace("-", "").isalnum():
+            raise ValueError(
+                f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only."
+            )
 
 
 async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
@@ -271,44 +311,68 @@ async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
 async def delete_node(node_id: str) -> list[Record]:
     try:
         node_id_int = int(node_id)
-    except ValueError as exc:
-        raise ValueError(
-            f"Invalid node_id: {node_id}. Must be a valid integer."
-        ) from exc
+
+    except ValueError:
+        raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
+
 
     query = "MATCH (n) WHERE id(n) = $id DETACH DELETE n RETURN count(n)"
     return await execute_query(query, {"id": node_id_int}, tx_type="write")
 
 
 async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
-    clean_label = sanitize_cypher_input(label)
-    if clean_label not in ALLOWED_LABELS:
-        raise ValueError(f"Label '{label}' not in allowed list")
 
-    clean_filters = {sanitize_cypher_input(k): v for k, v in filters.items()}
-    where = " AND ".join(f"n.{k} = ${k}" for k in clean_filters)
-    query = f"MATCH (n:{clean_label}) WHERE {where} RETURN n"
-    return await execute_query(query, clean_filters)
+    # Validate label to prevent injection
+    if not label.replace("_", "").replace("-", "").isalnum():
+        raise ValueError(
+            f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only."
+        )
+
+    # Validate property names to prevent injection
+    for key in filters:
+        if not key.replace("_", "").replace("-", "").isalnum():
+            raise ValueError(
+                f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only."
+            )
+
+    where = " AND ".join(f"n.{k} = ${k}" for k in filters)
+    query = f"MATCH (n:{label}) WHERE {where} RETURN n"
+    return await execute_query(query, filters)
+
 
 
 async def create_relationship(
     from_id: str, to_id: str, rel_type: str, properties: dict[str, Any]
 ) -> list[Record]:
-    if not re.fullmatch(r"[\w-]+", rel_type):
+
+    # Validate relationship type to prevent injection
+    if not rel_type.replace("_", "").replace("-", "").isalnum():
+
         raise ValueError(
             f"Invalid relationship type: {rel_type}. "
             "Must be alphanumeric with underscores/hyphens only."
         )
-    clean_rel_type = rel_type
+
+
+    # Validate property names to prevent injection
+    for key in properties:
+        if not key.replace("_", "").replace("-", "").isalnum():
+            raise ValueError(
+                f"Invalid property name: {key}. "
+                "Property names must be alphanumeric with underscores/hyphens only."
+            )
+
 
     # Validate node IDs
     try:
         from_id_int = int(from_id)
         to_id_int = int(to_id)
-    except ValueError as exc:
+
+    except ValueError:
         raise ValueError(
             "Invalid node IDs. Both from_id and to_id must be valid integers."
-        ) from exc
+        )
+
 
     query = (
         f"MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
@@ -332,13 +396,18 @@ async def validate_connection() -> bool:
 
 
 async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Record]:
-    clean_label = sanitize_cypher_input(label)
-    if clean_label not in ALLOWED_LABELS:
-        raise ValueError(f"Label '{label}' not in allowed list")
 
-    query = (
-        f"UNWIND $nodes AS nodeData CREATE (n:{clean_label}) SET n = nodeData RETURN n"
-    )
+
+    # Validate label to prevent injection
+    if not label.replace("_", "").replace("-", "").isalnum():
+        raise ValueError(
+            f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only."
+        )
+
+    # Use UNWIND for efficient bulk creation
+    query = f"UNWIND $nodes AS nodeData CREATE (n:{label}) SET n = nodeData RETURN n"
+
+
     return await execute_query(query, {"nodes": nodes}, tx_type="write")
 
 
@@ -396,7 +465,8 @@ async def ensure_indexes() -> None:
 
 async def execute_cypher_file(path: str) -> list[Record]:
     try:
-        with open(path, encoding="utf-8") as f:
+
+        with open(path, "r", encoding="utf-8") as f:
             query = f.read()
     except FileNotFoundError as exc:
         raise FileNotFoundError(f"Cypher file not found: {path}") from exc
