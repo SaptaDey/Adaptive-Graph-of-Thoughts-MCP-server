@@ -85,7 +85,7 @@ async def execute_stage_with_recovery(
         logger.exception(f"Unrecoverable error in {stage_instance.__class__.__name__}")
         await cleanup_stage_resources(stage_instance)
         await restore_checkpoint(session_data, checkpoint)
-        raise StageExecutionError(stage_instance.__class__.__name__, e) from e
+        raise StageExecutionError(stage_instance.__class__.__name__, e, context=checkpoint.dict()) from e
 
 
 class GoTProcessor:
