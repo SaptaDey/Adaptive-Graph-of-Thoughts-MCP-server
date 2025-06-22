@@ -4,21 +4,21 @@ import threading
 from typing import Any, Optional
 
 import re
+from dataclasses import dataclass
+from typing import Any, Optional
 
 from loguru import logger
-from dataclasses import dataclass
 from neo4j import (
     Driver,
     GraphDatabase,
+    ManagedTransaction,
     Record,
     Result,
-    Session,
-    Transaction,
     unit_of_work,
 )
 from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
-from src.adaptive_graph_of_thoughts.config import runtime_settings
+from adaptive_graph_of_thoughts.config import runtime_settings
 
 
 # --- Simple Configuration ---
@@ -84,6 +84,7 @@ def sanitize_cypher_input(value: str) -> str:
     """Remove potentially dangerous characters from a Cypher identifier."""
     # Allow alphanumeric, underscore, hyphen, and dot (for namespaces)
     return re.sub(r"[^\w.-]", "", value)
+
 
 def mask_uri(uri: str) -> str:
     """Mask sensitive parts of a URI for logging."""
@@ -160,6 +161,7 @@ def get_neo4j_settings() -> GlobalSettings:
 def get_neo4j_driver() -> Driver:
     """Return a singleton Neo4j driver instance."""
 
+
     try:
         return driver_manager.get_driver()
     except ServiceUnavailable:
@@ -210,7 +212,7 @@ async def execute_query(
         raise ServiceUnavailable("Neo4j driver not initialized or connection failed.")
 
     settings = get_neo4j_settings()
-    db_name = database if database else settings.database
+    db_name = database if database else settings.neo4j.database
 
     records: list[Record] = []
 
@@ -221,7 +223,7 @@ async def execute_query(
             )
 
             @unit_of_work(timeout=30)  # Example timeout, adjust as needed
-            def _transaction_work(tx: Transaction) -> list[Record]:
+            def _transaction_work(tx: ManagedTransaction) -> list[Record]:
                 result: Result = tx.run(query, parameters)
                 return list(result)
 
@@ -296,8 +298,10 @@ async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
 async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
     try:
         node_id_int = int(node_id)
-    except ValueError:
-        raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid node_id: {node_id}. Must be a valid integer."
+        ) from exc
 
     query = "MATCH (n) WHERE id(n) = $id SET n += $props RETURN n"
     params = {"id": node_id_int, "props": updates}
@@ -307,8 +311,10 @@ async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
 async def delete_node(node_id: str) -> list[Record]:
     try:
         node_id_int = int(node_id)
+
     except ValueError:
         raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
+
 
     query = "MATCH (n) WHERE id(n) = $id DETACH DELETE n RETURN count(n)"
     return await execute_query(query, {"id": node_id_int}, tx_type="write")
@@ -361,10 +367,12 @@ async def create_relationship(
     try:
         from_id_int = int(from_id)
         to_id_int = int(to_id)
+
     except ValueError:
         raise ValueError(
             "Invalid node IDs. Both from_id and to_id must be valid integers."
         )
+
 
     query = (
         f"MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
@@ -389,6 +397,7 @@ async def validate_connection() -> bool:
 
 async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Record]:
 
+
     # Validate label to prevent injection
     if not label.replace("_", "").replace("-", "").isalnum():
         raise ValueError(
@@ -398,17 +407,71 @@ async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Rec
     # Use UNWIND for efficient bulk creation
     query = f"UNWIND $nodes AS nodeData CREATE (n:{label}) SET n = nodeData RETURN n"
 
+
     return await execute_query(query, {"nodes": nodes}, tx_type="write")
+
+
+async def bulk_create_nodes_optimized(
+    label: str, nodes: list[dict[str, Any]], batch_size: int = 1000
+) -> list[Record]:
+    """Create nodes in batches with basic optimizations."""
+    clean_label = sanitize_cypher_input(label)
+    if clean_label not in ALLOWED_LABELS:
+        raise ValueError(f"Label '{label}' not in allowed list")
+
+    if not nodes:
+        return []
+
+    if batch_size <= 0 or batch_size > 10000:
+        raise ValueError("Batch size must be between 1 and 10000")
+
+    all_results: list[Record] = []
+
+    for i in range(0, len(nodes), batch_size):
+        batch = nodes[i : i + batch_size]
+        query = f"""
+        UNWIND $nodes AS nodeData
+        MERGE (n:{clean_label} {{id: nodeData.id}})
+        SET n += nodeData
+        RETURN n
+        """
+        batch_results = await execute_query(
+            query,
+            {"nodes": batch},
+            tx_type="write",
+        )
+        all_results.extend(batch_results)
+        await asyncio.sleep(0.01)
+
+    return all_results
+
+
+async def ensure_indexes() -> None:
+    """Create indexes and constraints required for performance."""
+    indexes = [
+        "CREATE INDEX IF NOT EXISTS FOR (n:Hypothesis) ON (n.id)",
+        "CREATE INDEX IF NOT EXISTS FOR (n:Evidence) ON (n.id)",
+        "CREATE INDEX IF NOT EXISTS FOR (n:Document) ON (n.timestamp)",
+        "CREATE CONSTRAINT IF NOT EXISTS FOR (n:Session) REQUIRE n.session_id IS UNIQUE",
+    ]
+
+    for index_query in indexes:
+        try:
+            await execute_query(index_query, tx_type="write")
+            logger.info(f"Index created/verified: {index_query}")
+        except Exception as exc:
+            logger.warning(f"Could not create index with query '{index_query}': {exc}")
 
 
 async def execute_cypher_file(path: str) -> list[Record]:
     try:
+
         with open(path, "r", encoding="utf-8") as f:
             query = f.read()
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Cypher file not found: {path}")
-    except IOError as e:
-        raise IOError(f"Error reading Cypher file {path}: {e}")
+    except FileNotFoundError as exc:
+        raise FileNotFoundError(f"Cypher file not found: {path}") from exc
+    except OSError as exc:
+        raise OSError(f"Error reading Cypher file {path}: {exc}") from exc
 
     if not query.strip():
         raise ValueError(f"Cypher file {path} is empty or contains only whitespace")

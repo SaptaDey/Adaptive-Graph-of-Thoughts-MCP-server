@@ -14,7 +14,7 @@ from loguru import logger  # noqa: E402
 # Ensure settings are loaded before other project imports that might depend on them
 try:
     # Attempt to import settings to ensure it's configured early
-    from src.adaptive_graph_of_thoughts.config import settings
+    from adaptive_graph_of_thoughts.config import settings
 
     logger.info(
         f"Settings loaded. Initial MCP transport type: {settings.app.mcp_transport_type}"
@@ -29,7 +29,7 @@ except Exception as e:
 
 
 # Now import the server factory
-from src.adaptive_graph_of_thoughts.server_factory import MCPServerFactory  # noqa: E402
+from adaptive_graph_of_thoughts.server_factory import MCPServerFactory  # noqa: E402
 
 # It's possible MCPServerFactory or its dependencies (like app_setup) also configure logging.
 # Re-adding a basic stderr sink if no handlers exist or if log output isn't appearing.

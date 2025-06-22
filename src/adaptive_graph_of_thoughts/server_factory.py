@@ -5,13 +5,13 @@ from typing import TYPE_CHECKING, Any, Optional
 
 # Only for type hints, not actual imports
 if TYPE_CHECKING:
-    from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
+    from adaptive_graph_of_thoughts.domain.services.got_processor import (
         GoTProcessor,
     )
 
 from loguru import logger
 
-from src.adaptive_graph_of_thoughts.api.schemas import (
+from adaptive_graph_of_thoughts.api.schemas import (
     JSONRPCResponse,
     MCPASRGoTQueryParams,
     MCPASRGoTQueryResult,
@@ -19,7 +19,7 @@ from src.adaptive_graph_of_thoughts.api.schemas import (
     MCPInitializeResult,
     create_jsonrpc_error,
 )
-from src.adaptive_graph_of_thoughts.config import settings
+from adaptive_graph_of_thoughts.config import settings
 
 # Using lazy imports to avoid circular dependencies
 
@@ -73,7 +73,7 @@ class MCPServerFactory:
         logger.info("Starting MCP STDIO server...")
 
         # Import GoTProcessor only when needed to avoid circular dependencies
-        from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
+        from adaptive_graph_of_thoughts.domain.services.got_processor import (
             GoTProcessor,
         )
 
