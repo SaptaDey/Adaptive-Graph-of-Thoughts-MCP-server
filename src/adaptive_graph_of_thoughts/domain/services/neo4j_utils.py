@@ -294,9 +294,6 @@ async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
             raise ValueError(
                 f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only."
             )
-
-
-async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
     try:
         node_id_int = int(node_id)
     except ValueError as exc:
