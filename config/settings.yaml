@@ -179,3 +179,59 @@ knowledge_domains:
     keywords: ["biomedical llm", "medical ai", "nlp in medicine"]
     description: "Large language models specialized for biomedical applications."
   # Add more domains based on Dr. Dey's profile (K3.3, K3.4) or general needs
+
+# MCP Server Configuration
+mcp:
+  server_name: "Adaptive Graph of Thoughts MCP Server"
+  server_version: "0.1.0"
+  protocol_version: "2024-11-05"
+  
+  # Tool Configuration
+  tools:
+    enabled: true
+    max_concurrent_queries: 5
+    default_reasoning_depth: 3
+    default_confidence_threshold: 0.7
+    
+  # Evidence Sources Configuration
+  evidence_sources:
+    pubmed:
+      enabled: true
+      max_results: 50
+      api_key: null  # Set via environment variable
+    google_scholar:
+      enabled: true
+      max_results: 30
+    exa_search:
+      enabled: true
+      max_results: 20
+      api_key: null  # Set via environment variable
+  
+  # Graph Processing Configuration
+  graph:
+    max_nodes_per_query: 1000
+    max_edges_per_query: 2000
+    enable_hyperedges: true
+    confidence_propagation: true
+    
+  # Session Management
+  sessions:
+    enable_persistence: false  # Future feature
+    max_session_duration: 3600  # seconds
+    cleanup_interval: 300  # seconds
+
+# Client Integration Settings
+client_integration:
+  supported_transports: ["stdio", "http"]
+  default_transport: "stdio"
+  
+  # Authentication (for HTTP mode)
+  auth:
+    require_token: false
+    token_header: "Authorization"
+    
+  # Rate Limiting
+  rate_limiting:
+    enabled: false
+    requests_per_minute: 60
+    burst_limit: 10
