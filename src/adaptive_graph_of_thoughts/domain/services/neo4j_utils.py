@@ -259,12 +259,34 @@ async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
 async def create_relationship(
     from_id: str, to_id: str, rel_type: str, properties: dict[str, Any]
 ) -> list[Record]:
+    # Validate relationship type to prevent injection
+    if not rel_type.replace('_', '').replace('-', '').isalnum():
+        raise ValueError(
+            f"Invalid relationship type: {rel_type}. "
+            "Must be alphanumeric with underscores/hyphens only."
+        )
+
+    # Validate property names to prevent injection
+    for key in properties:
+        if not key.replace('_', '').replace('-', '').isalnum():
+            raise ValueError(
+                f"Invalid property name: {key}. "
+                "Property names must be alphanumeric with underscores/hyphens only."
+            )
+
+    # Validate node IDs
+    try:
+        from_id_int = int(from_id)
+        to_id_int = int(to_id)
+    except ValueError:
+        raise ValueError("Invalid node IDs. Both from_id and to_id must be valid integers.")
+
     props = ", ".join(f"{k}: ${k}" for k in properties)
     query = (
         "MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
         f"CREATE (a)-[r:{rel_type} {{{props}}}]->(b) RETURN r"
     )
-    params = {"from": int(from_id), "to": int(to_id), **properties}
+    params = {"from": from_id_int, "to": to_id_int, **properties}
     return await execute_query(query, params, tx_type="write")
 
 
