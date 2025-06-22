@@ -279,7 +279,7 @@ class GoTProcessor:
             logger.debug(f"--- End Preparing for Stage: {stage_name_for_log} ---")
 
             try:
-                stage_result = await execute_stage_with_recovery(
+                stage_result = await execute_stage_safely(
                     stage_instance, current_session_data
                 )
 
