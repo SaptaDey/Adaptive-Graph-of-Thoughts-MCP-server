@@ -1,5 +1,7 @@
+
 import os
 import secrets
+
 import time
 from typing import Any, Optional, Union
 
@@ -7,7 +9,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from loguru import logger
 from pydantic import ValidationError
 
-from src.adaptive_graph_of_thoughts.api.schemas import (
+from adaptive_graph_of_thoughts.api.schemas import (
     GraphStateSchema,
     JSONRPCErrorObject,
     JSONRPCRequest,
@@ -18,8 +20,8 @@ from src.adaptive_graph_of_thoughts.api.schemas import (
     MCPInitializeResult,
     ShutdownParams,
 )
-from src.adaptive_graph_of_thoughts.config import settings  # Import settings
-from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
+from adaptive_graph_of_thoughts.config import settings  # Import settings
+from adaptive_graph_of_thoughts.domain.services.got_processor import (
     GoTProcessor,
     GoTProcessorSessionData,
 )
@@ -41,6 +43,7 @@ def _parse_dot_notation(params: dict[str, str]) -> dict[str, Any]:
 
 # Dependency for authentication
 async def verify_token(http_request: Request):
+
     if os.getenv("SMITHERY_MODE", "false").lower() == "true":
         logger.debug("Smithery mode: skipping token verification")
         return True
@@ -53,22 +56,19 @@ async def verify_token(http_request: Request):
             )
             raise HTTPException(status_code=401, detail="Not authenticated")
 
-        parts = auth_header.split()
-        if len(parts) != 2 or parts[0].lower() != "bearer":
-            logger.warning(
-                f"MCP request with malformed Authorization header: {auth_header}"
-            )
-            raise HTTPException(
-                status_code=401, detail="Invalid authentication credentials"
-            )
 
-        token = parts[1]
-        if not secrets.compare_digest(token, settings.app.auth_token):
-            logger.warning("MCP request with invalid token.")
-            raise HTTPException(status_code=403, detail="Invalid token")
-        logger.debug("MCP request authenticated successfully via token.")
-    else:
-        logger.debug("MCP auth_token not configured, skipping authentication.")
+    if not settings.app.auth_token:
+        raise HTTPException(status_code=401, detail="Authentication required")
+
+    auth_header = http_request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+
+    token = auth_header[7:]
+
+    if not hmac.compare_digest(settings.app.auth_token.encode(), token.encode()):
+        raise HTTPException(status_code=403, detail="Invalid token")
+
     return True
 
 

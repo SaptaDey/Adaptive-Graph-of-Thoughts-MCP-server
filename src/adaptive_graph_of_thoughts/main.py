@@ -7,9 +7,9 @@ from loguru import logger  # Import logger if you want to log here too
 # Add src directory to Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from src.adaptive_graph_of_thoughts.app_setup import create_app
-from src.adaptive_graph_of_thoughts.config import settings
-from src.adaptive_graph_of_thoughts.server_factory import MCPServerFactory
+from adaptive_graph_of_thoughts.app_setup import create_app
+from adaptive_graph_of_thoughts.config import settings
+from adaptive_graph_of_thoughts.server_factory import MCPServerFactory
 
 app = create_app()
 
@@ -45,7 +45,7 @@ async def run_server():
     if MCPServerFactory.should_run_stdio():
         logger.info("STDIO transport also available - use main_stdio.py for STDIO mode")
     uvicorn.run(
-        "src.adaptive_graph_of_thoughts.main:app",
+        "adaptive_graph_of_thoughts.main:app",
         host=settings.app.host,
         port=settings.app.port,
         log_level=settings.app.log_level.lower(),

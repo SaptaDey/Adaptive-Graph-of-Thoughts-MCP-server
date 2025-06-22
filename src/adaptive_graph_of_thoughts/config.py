@@ -3,7 +3,8 @@ import logging
 import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from threading import Lock
+import threading
+from contextlib import contextmanager
 from typing import Any, Optional, Union
 
 import yaml
@@ -36,7 +37,7 @@ class EnvSettings(AGoTSettings):
 env_settings = EnvSettings()
 
 # Thread safety lock
-_config_lock = Lock()
+_config_lock = threading.RLock()
 
 
 def validate_learning_rate(lr: float) -> None:
@@ -204,15 +205,16 @@ class LegacyConfig:
 
     def update(self, updates: dict[str, Any]) -> None:
         """Update config with new values."""
-        for key, value in updates.items():
-            if hasattr(self, key):
-                if key == "learning_rate":
-                    validate_learning_rate(value)
-                elif key == "batch_size":
-                    validate_batch_size(value)
-                elif key == "max_steps":
-                    validate_max_steps(value)
-                setattr(self, key, value)
+        with _config_lock:
+            for key, value in updates.items():
+                if hasattr(self, key):
+                    if key == "learning_rate":
+                        validate_learning_rate(value)
+                    elif key == "batch_size":
+                        validate_batch_size(value)
+                    elif key == "max_steps":
+                        validate_max_steps(value)
+                    setattr(self, key, value)
 
     def merge(self, other: "LegacyConfig") -> "LegacyConfig":
         """Merge with another config, other takes precedence."""
@@ -283,8 +285,9 @@ class LegacyConfig:
         else:
             raise ValueError(f"Unsupported file format: {path.suffix}")
         try:
-            with open(file_path, "w") as f:
-                f.write(content)
+            with _config_lock:
+                with open(file_path, "w") as f:
+                    f.write(content)
         except PermissionError as err:
             raise PermissionError(f"Permission denied writing to: {file_path}") from err
 
@@ -677,20 +680,46 @@ class Config:
                     logging.warning("Unknown nested config key: %s.%s", section, key)
 
 
-_config: Optional[Config] = None
+class ThreadSafeConfig:
+    """Thread-safe wrapper around a ``Config`` instance."""
+
+    def __init__(self, initial: Optional[Config] = None) -> None:
+        self._lock = threading.RLock()
+        self._config = initial or Config()
+
+    @contextmanager
+    def _acquire_lock(self):
+        self._lock.acquire()
+        try:
+            yield
+        finally:
+            self._lock.release()
+
+    def get_config(self) -> Config:
+        with self._acquire_lock():
+            return self._config
+
+    def set_config(self, cfg: Config) -> None:
+        with self._acquire_lock():
+            cfg.validate()
+            self._config = cfg
+
+    def update_config(self, updates: dict[str, Any]) -> None:
+        with self._acquire_lock():
+            self._config.update(**updates)
+
+
+_global_config = ThreadSafeConfig()
 
 
 def get_config() -> Config:
-    global _config
-    if _config is None:
-        _config = Config()
-    return _config
+    """Return the process-wide configuration instance."""
+    return _global_config.get_config()
 
 
 def set_config(cfg: Config) -> None:
-    cfg.validate()
-    global _config
-    _config = cfg
+    """Replace the global configuration instance after validation."""
+    _global_config.set_config(cfg)
 
 
 def load_config(
