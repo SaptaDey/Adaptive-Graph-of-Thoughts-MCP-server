@@ -10,7 +10,7 @@
     "install:mcp-inspector": "npm install @modelcontextprotocol/inspector"
   },
   "devDependencies": {
-    "@modelcontextprotocol/inspector": "^0.1.0"
+    "@modelcontextprotocol/inspector": "^0.14.3"
   },
   "engines": {
     "node": ">=18.0.0"
