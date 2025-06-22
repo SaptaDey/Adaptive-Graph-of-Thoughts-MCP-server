@@ -326,8 +326,17 @@ async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Rec
 
 
 async def execute_cypher_file(path: str) -> list[Record]:
-    with open(path) as f:
-        query = f.read()
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            query = f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Cypher file not found: {path}")
+    except IOError as e:
+        raise IOError(f"Error reading Cypher file {path}: {e}")
+
+    if not query.strip():
+        raise ValueError(f"Cypher file {path} is empty or contains only whitespace")
+
     return await execute_query(query, tx_type="write")
 
 
