@@ -34,6 +34,7 @@ from adaptive_graph_of_thoughts.config import (
 from adaptive_graph_of_thoughts.domain.services.got_processor import (
     GoTProcessor,
 )
+from adaptive_graph_of_thoughts.services.resource_monitor import ResourceMonitor
 from adaptive_graph_of_thoughts.services.llm import LLM_QUERY_LOGS, ask_llm
 
 security = HTTPBasic()
@@ -159,7 +160,10 @@ def create_app() -> FastAPI:
     templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
 
     # Store GoTProcessor instance on app.state
-    app.state.got_processor = GoTProcessor(settings=settings)
+    resource_monitor = ResourceMonitor()
+    app.state.got_processor = GoTProcessor(
+        settings=settings, resource_monitor=resource_monitor
+    )
     logger.info("GoTProcessor instance created and attached to app state.")
 
     # Process allowed origins from settings

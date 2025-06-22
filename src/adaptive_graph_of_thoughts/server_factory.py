@@ -20,6 +20,7 @@ from adaptive_graph_of_thoughts.api.schemas import (
     create_jsonrpc_error,
 )
 from adaptive_graph_of_thoughts.config import settings
+from adaptive_graph_of_thoughts.services.resource_monitor import ResourceMonitor
 
 # Using lazy imports to avoid circular dependencies
 
@@ -78,7 +79,8 @@ class MCPServerFactory:
         )
 
         # Initialize GoT processor
-        got_processor = GoTProcessor(settings=settings)
+        resource_monitor = ResourceMonitor()
+        got_processor = GoTProcessor(settings=settings, resource_monitor=resource_monitor)
         read_transport: Optional[asyncio.Transport] = None
 
         try:
@@ -194,6 +196,16 @@ class MCPServerFactory:
                     params, request_id, got_processor
                 )
 
+            elif method == "listTools":
+                return await MCPServerFactory._handle_list_tools(
+                    request_id, got_processor
+                )
+
+            elif method == "callTool":
+                return await MCPServerFactory._handle_call_tool(
+                    params, request_id, got_processor
+                )
+
             elif method == "shutdown":
                 await MCPServerFactory._handle_shutdown(params, request_id)
                 return JSONRPCResponse(id=request_id, result=None)
@@ -281,3 +293,74 @@ class MCPServerFactory:
         """Handle shutdown request."""
         logger.info("MCP Shutdown request received via STDIO.")
         # Note: The actual shutdown will be handled by the main loop
+
+    @staticmethod
+    async def _handle_list_tools(
+        request_id: Optional[str], got_processor: "GoTProcessor"
+    ) -> JSONRPCResponse:
+        """Return available tools if the processor is ready."""
+        if not getattr(got_processor, "models_loaded", True):
+            return JSONRPCResponse(id=request_id, result=[])
+
+        tools = [
+            {
+                "name": "graph_reasoning",
+                "description": "Perform graph-based reasoning",
+                "inputSchema": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string"},
+                        "confidence_threshold": {"type": "number", "default": 0.7},
+                    },
+                },
+            }
+        ]
+        return JSONRPCResponse(id=request_id, result=tools)
+
+    @staticmethod
+    async def _handle_call_tool(
+        params: dict[str, Any], request_id: Optional[str], got_processor: "GoTProcessor"
+    ) -> JSONRPCResponse:
+        """Execute a tool call with basic error handling."""
+
+        if not getattr(got_processor, "models_loaded", True):
+            return JSONRPCResponse(
+                id=request_id,
+                result=[{"type": "text", "text": "Server is still initializing. Please wait..."}],
+            )
+
+        name = params.get("name")
+        arguments = params.get("arguments", {})
+
+        try:
+            if name == "graph_reasoning":
+                query = arguments.get("query")
+                if not query:
+                    return create_jsonrpc_error(
+                        request_id=request_id,
+                        code=-32602,
+                        message="Missing 'query' argument",
+                    )
+
+                conf = arguments.get("confidence_threshold", 0.7)
+                result = await got_processor.process_query(
+                    query=query,
+                    operational_params={"confidence_threshold": conf},
+                )
+                answer = result.final_answer or ""
+                return JSONRPCResponse(
+                    id=request_id,
+                    result=[{"type": "text", "text": answer}],
+                )
+
+            return create_jsonrpc_error(
+                request_id=request_id,
+                code=-32601,
+                message=f"Tool '{name}' not found",
+            )
+        except Exception as e:  # pragma: no cover - best effort
+            logger.error(f"Tool execution failed: {e}")
+            return JSONRPCResponse(
+                id=request_id,
+                result=[{"type": "text", "text": f"Error: {e}"}],
+            )
