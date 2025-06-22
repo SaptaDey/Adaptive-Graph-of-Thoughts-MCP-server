@@ -7,18 +7,18 @@ startCommand:
   type: "http"
   containerPort: 8000
   healthCheckPath: "/health"
-  mcpEndpoint: "/mcp"  # ✅ Specify MCP endpoint
+  mcpEndpoint: "/mcp"
   command:
     - "/entrypoint.sh"
     - "http"
   
+  # Main configuration schema for the server
   configSchema:
     type: "object"
     properties:
-      # ✅ Remove apiKey requirement for MCP access
       NEO4J_URI:
         type: "string"
-        description: "Neo4j connection URI (use embedded for testing)"
+        description: "Neo4j connection URI (bolt://host:port)"
         default: "bolt://neo4j:7687"
       NEO4J_USER:
         type: "string"
@@ -32,13 +32,34 @@ startCommand:
         type: "string"
         description: "Neo4j database name"
         default: "neo4j"
+      ENABLE_EVIDENCE_SOURCES:
+        type: "boolean"
+        description: "Enable external evidence sources (PubMed, Google Scholar, Exa Search)"
+        default: true
+      MAX_REASONING_DEPTH:
+        type: "integer"
+        description: "Maximum reasoning depth for graph analysis (1-10)"
+        default: 5
+        minimum: 1
+        maximum: 10
+      CONFIDENCE_THRESHOLD:
+        type: "number"
+        description: "Minimum confidence threshold for results (0.0-1.0)"
+        default: 0.7
+        minimum: 0.0
+        maximum: 1.0
+      LOG_LEVEL:
+        type: "string"
+        description: "Logging level"
+        enum: ["DEBUG", "INFO", "WARNING", "ERROR"]
+        default: "INFO"
       BASIC_AUTH_USER:
         type: "string"
-        description: "Admin dashboard username"
+        description: "Admin dashboard username (optional)"
         default: "admin"
       BASIC_AUTH_PASS:
         type: "string"
-        description: "Admin dashboard password"
+        description: "Admin dashboard password (optional)"
         default: "changeme"
       PORT:
         type: "integer"
@@ -54,68 +75,192 @@ startCommand:
     NEO4J_USER: "neo4j"
     NEO4J_PASSWORD: "password"
     NEO4J_DATABASE: "neo4j"
-    BASIC_AUTH_USER: "admin"
-    BASIC_AUTH_PASS: "changeme"
+    ENABLE_EVIDENCE_SOURCES: true
+    MAX_REASONING_DEPTH: 5
+    CONFIDENCE_THRESHOLD: 0.7
+    LOG_LEVEL: "INFO"
     PORT: 8000
 
-# ✅ Properly define MCP tools
+# MCP Tools Definition - This is what Smithery uses to display available tools
 tools:
-  - name: "asr_got.query"
-    description: "Execute an Adaptive Graph of Thoughts reasoning query for complex scientific problems"
+  - name: "scientific_reasoning_query"
+    description: "Perform advanced scientific reasoning using the Adaptive Graph of Thoughts framework. Analyzes complex scientific questions through graph-based reasoning with multi-dimensional confidence scoring."
     inputSchema:
       type: "object"
       properties:
         query:
           type: "string"
-          description: "The scientific question or problem to analyze"
-        parameters:
-          type: "object"
-          properties:
-            include_reasoning_trace:
-              type: "boolean"
-              default: true
-            include_graph_state:
-              type: "boolean"
-              default: false
+          description: "The scientific question or research query to analyze"
+          maxLength: 2000
+        include_reasoning_trace:
+          type: "boolean"
+          description: "Include detailed step-by-step reasoning trace in the response"
+          default: true
+        include_graph_state:
+          type: "boolean"
+          description: "Include the full graph state representation in the response"
+          default: true
+        max_nodes_in_response_graph:
+          type: "integer"
+          description: "Maximum number of nodes to include in response graph visualization"
+          default: 50
+          minimum: 0
+          maximum: 1000
+        output_detail_level:
+          type: "string"
+          description: "Level of detail in the output response"
+          enum: ["summary", "detailed"]
+          default: "summary"
+        session_id:
+          type: "string"
+          description: "Optional session ID for tracking related queries"
       required: ["query"]
 
-# Enhanced configuration schema
-configSchema:
-  type: "object"
-  properties:
-    NEO4J_URI:
-      type: "string"
-      description: "Neo4j connection URI"
-      default: "bolt://neo4j:7687"
-    NEO4J_USER:
-      type: "string"
-      description: "Neo4j username"
-      default: "neo4j"
-    NEO4J_PASSWORD:
-      type: "string"
-      description: "Neo4j password"
-      default: "password"
-    NEO4J_DATABASE:
-      type: "string"
-      description: "Neo4j database name"
-      default: "neo4j"
-    ENABLE_EVIDENCE_SOURCES:
-      type: "boolean"
-      description: "Enable external evidence sources (PubMed, Scholar)"
-      default: true
-    MAX_REASONING_DEPTH:
-      type: "integer"
-      description: "Maximum reasoning depth for graph analysis"
-      default: 5
-      minimum: 1
-      maximum: 10
-    CONFIDENCE_THRESHOLD:
-      type: "number"
-      description: "Minimum confidence threshold for results"
-      default: 0.7
-      minimum: 0.0
-      maximum: 1.0
-  required:
-    - NEO4J_URI
-    - NEO4J_USER
-    - NEO4J_PASSWORD
+  - name: "analyze_research_hypothesis"
+    description: "Analyze and evaluate research hypotheses using graph-based reasoning with confidence scoring and evidence integration from scientific databases (PubMed, Google Scholar)."
+    inputSchema:
+      type: "object"
+      properties:
+        hypothesis:
+          type: "string"
+          description: "The research hypothesis to analyze and evaluate"
+        research_domain:
+          type: "string"
+          description: "The scientific domain or field of research (e.g., 'cancer biology', 'microbiome research', 'neuroscience')"
+        evidence_sources:
+          type: "array"
+          items:
+            type: "string"
+            enum: ["pubmed", "google_scholar", "exa_search"]
+          description: "External evidence sources to query for supporting/contradicting evidence"
+          default: ["pubmed", "google_scholar"]
+        confidence_threshold:
+          type: "number"
+          description: "Minimum confidence threshold for evidence evaluation (0.0-1.0)"
+          default: 0.7
+          minimum: 0.0
+          maximum: 1.0
+      required: ["hypothesis"]
+
+  - name: "explore_scientific_relationships"
+    description: "Explore and map relationships between scientific concepts, entities, or phenomena using advanced graph-based analysis. Ideal for understanding complex interdisciplinary connections."
+    inputSchema:
+      type: "object"
+      properties:
+        primary_concept:
+          type: "string"
+          description: "The primary scientific concept to explore"
+        related_concepts:
+          type: "array"
+          items:
+            type: "string"
+          description: "List of related concepts to analyze relationships with"
+        relationship_types:
+          type: "array"
+          items:
+            type: "string"
+            enum: ["causal", "correlational", "mechanistic", "temporal", "hierarchical"]
+          description: "Types of relationships to explore and analyze"
+          default: ["causal", "correlational"]
+        depth_level:
+          type: "integer"
+          description: "Depth of relationship exploration (1=direct relationships, 5=deep network analysis)"
+          minimum: 1
+          maximum: 5
+          default: 3
+      required: ["primary_concept"]
+
+  - name: "validate_scientific_claims"
+    description: "Validate scientific claims against existing evidence using multi-dimensional confidence scoring and comprehensive evidence integration from multiple scientific databases."
+    inputSchema:
+      type: "object"
+      properties:
+        claim:
+          type: "string"
+          description: "The scientific claim to validate against existing evidence"
+        evidence_threshold:
+          type: "number"
+          description: "Minimum confidence threshold for evidence validation (0.0-1.0)"
+          minimum: 0.0
+          maximum: 1.0
+          default: 0.7
+        validation_criteria:
+          type: "array"
+          items:
+            type: "string"
+            enum: ["reproducibility", "peer_review", "sample_size", "methodology", "statistical_significance"]
+          description: "Criteria to use for claim validation"
+          default: ["peer_review", "methodology", "statistical_significance"]
+        include_counterevidence:
+          type: "boolean"
+          description: "Include analysis of contradictory or conflicting evidence"
+          default: true
+      required: ["claim"]
+
+  - name: "generate_research_insights"
+    description: "Generate novel research insights and potential research directions based on existing knowledge graphs, evidence synthesis, and gap analysis."
+    inputSchema:
+      type: "object"
+      properties:
+        research_area:
+          type: "string"
+          description: "The research area or scientific field to generate insights for"
+        current_knowledge:
+          type: "string"
+          description: "Summary of current knowledge or recent findings in the research area"
+        research_gaps:
+          type: "array"
+          items:
+            type: "string"
+          description: "Known research gaps or limitations to address"
+        innovation_focus:
+          type: "string"
+          enum: ["methodology", "theory", "application", "interdisciplinary"]
+          description: "Focus area for generating novel insights"
+          default: "theory"
+      required: ["research_area"]
+
+# Resources that the MCP server provides access to
+resources:
+  - uri: "graph://current-session"
+    name: "Current Session Graph State"
+    description: "Access to the current reasoning session's graph state and intermediate results"
+  - uri: "evidence://pubmed"
+    name: "PubMed Evidence Database"
+    description: "Access to PubMed scientific literature for evidence gathering and validation"
+  - uri: "evidence://scholar"
+    name: "Google Scholar Database"
+    description: "Access to Google Scholar for broader academic literature search"
+  - uri: "evidence://exa"
+    name: "Exa Search Database"
+    description: "Access to Exa Search for web-based scientific content and research"
+
+# Predefined prompts for common scientific reasoning tasks
+prompts:
+  - name: "analyze_complex_research_question"
+    description: "Analyze a complex, multi-faceted research question using comprehensive graph-based reasoning"
+    arguments:
+      - name: "research_question"
+        description: "The complex research question to analyze"
+        required: true
+      - name: "discipline"
+        description: "Primary scientific discipline or field"
+        required: false
+  - name: "synthesize_literature_findings"
+    description: "Synthesize findings from multiple research papers into coherent insights and conclusions"
+    arguments:
+      - name: "papers_summary"
+        description: "Summary of key papers or findings to synthesize"
+        required: true
+      - name: "synthesis_focus"
+        description: "Focus area for synthesis (e.g., 'mechanisms', 'outcomes', 'methodologies')"
+        required: false
+  - name: "identify_research_gaps"
+    description: "Identify potential research gaps and opportunities in a scientific field"
+    arguments:
+      - name: "field_overview"
+        description: "Overview of the scientific field or research area"
+        required: true
+      - name: "recent_advances"
+        description: "Recent advances or breakthroughs in the field"
+        required: false
