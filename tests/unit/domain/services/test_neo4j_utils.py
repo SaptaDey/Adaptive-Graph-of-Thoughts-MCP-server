@@ -5,7 +5,8 @@ Testing framework: pytest with pytest-asyncio for async support.
 
 import asyncio
 from unittest.mock import MagicMock, Mock, patch, AsyncMock
-from typing import Any, Dict, List, Optional
+from neo4j import Session
+from typing import Any, Optional
 
 import pytest
 from neo4j import Driver, Record, Result, Transaction
@@ -42,10 +43,12 @@ def mock_neo4j_driver():
     with patch(
         "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.GraphDatabase.driver"
     ) as mock_driver:
-        mock_instance = Mock(spec=Driver)
+        mock_instance = MagicMock(spec=Driver)
         mock_instance.closed = False
         mock_instance.verify_connectivity.return_value = None
         mock_instance.close.return_value = None
+        # ensure sessions support context manager protocol
+        mock_instance.session.return_value = MagicMock(spec=Session)
         mock_driver.return_value = mock_instance
         yield mock_driver, mock_instance
 
@@ -334,7 +337,7 @@ class TestExecuteQuery:
         mock_driver_instance.session.return_value.__enter__.return_value = mock_session
         mock_driver_instance.session.return_value.__exit__.return_value = None
 
-        mock_record = Mock(spec=Record)
+        mock_record = MagicMock(spec=Record)
         mock_session.execute_read.return_value = [mock_record]
 
         result = await execute_query("MATCH (n) RETURN n", tx_type="read")
@@ -357,7 +360,7 @@ class TestExecuteQuery:
         mock_driver_instance.session.return_value.__enter__.return_value = mock_session
         mock_driver_instance.session.return_value.__exit__.return_value = None
 
-        mock_record = Mock(spec=Record)
+        mock_record = MagicMock(spec=Record)
         mock_session.execute_write.return_value = [mock_record]
 
         result = await execute_query("CREATE (n:Test) RETURN n", tx_type="write")
@@ -525,7 +528,7 @@ class TestIntegrationScenarios:
         mock_driver_instance.session.return_value.__enter__.return_value = mock_session
         mock_driver_instance.session.return_value.__exit__.return_value = None
 
-        mock_record = Mock(spec=Record)
+        mock_record = MagicMock(spec=Record)
         mock_record.__getitem__.return_value = 5
         mock_session.execute_read.return_value = [mock_record]
 
@@ -558,20 +561,17 @@ class TestIntegrationScenarios:
         """Test concurrent query execution using the same driver."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
-        mock_session1 = Mock()
-        mock_session2 = Mock()
-        mock_driver_instance.session.side_effect = [
-            mock_session1.__enter__.return_value,
-            mock_session2.__enter__.return_value,
-        ]
-
+        mock_session1 = MagicMock()
+        mock_session2 = MagicMock()
         mock_session1.__enter__.return_value = mock_session1
         mock_session1.__exit__.return_value = None
-        mock_session1.execute_read.return_value = [Mock(spec=Record)]
+        mock_session1.execute_read.return_value = [MagicMock(spec=Record)]
 
         mock_session2.__enter__.return_value = mock_session2
         mock_session2.__exit__.return_value = None
-        mock_session2.execute_read.return_value = [Mock(spec=Record)]
+        mock_session2.execute_read.return_value = [MagicMock(spec=Record)]
+
+        mock_driver_instance.session.side_effect = [mock_session1, mock_session2]
 
         tasks = [
             execute_query("MATCH (n:User) RETURN n"),
