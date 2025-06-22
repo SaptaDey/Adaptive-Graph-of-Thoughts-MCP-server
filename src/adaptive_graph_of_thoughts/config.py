@@ -29,7 +29,6 @@ class AGoTSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
 
-
 class EnvSettings(AGoTSettings):
     """Backward-compatible alias used in tests."""
 
@@ -40,22 +39,59 @@ env_settings = EnvSettings()
 _config_lock = threading.RLock()
 
 
+class ConfigLimits:
+    """Centralized configuration limits used for validation."""
+
+    LEARNING_RATE_MIN = 0.0
+    LEARNING_RATE_MAX = 1.0
+    BATCH_SIZE_MIN = 1
+    BATCH_SIZE_MAX = 10_000
+    MAX_STEPS_MIN = 1
+    MAX_STEPS_MAX = 1_000_000
+
+    # Database limits
+    MAX_QUERY_LENGTH = 100_000
+    MAX_BATCH_SIZE = 10_000
+    CONNECTION_TIMEOUT = 30
+
+    # LLM limits
+    MAX_PROMPT_LENGTH = 100_000
+    MAX_RESPONSE_LENGTH = 50_000
+
+
 def validate_learning_rate(lr: float) -> None:
     """Validate learning rate is in valid range."""
-    if not isinstance(lr, (int, float)) or lr <= 0 or lr > 1.0:
-        raise ValueError(f"Learning rate must be between 0 and 1.0, got {lr}")
+    if not isinstance(lr, (int, float)):
+        raise TypeError(f"Learning rate must be a number, got {type(lr)}")
+    if not (ConfigLimits.LEARNING_RATE_MIN < lr <= ConfigLimits.LEARNING_RATE_MAX):
+        raise ValueError(
+            f"Learning rate must be between {ConfigLimits.LEARNING_RATE_MIN} and "
+            f"{ConfigLimits.LEARNING_RATE_MAX}, got {lr}"
+        )
 
 
 def validate_batch_size(batch_size: int) -> None:
-    """Validate batch size is positive integer."""
-    if not isinstance(batch_size, int) or batch_size <= 0:
-        raise ValueError(f"Batch size must be a positive integer, got {batch_size}")
+    """Validate batch size is within allowed limits."""
+    if not isinstance(batch_size, int):
+        raise TypeError(f"Batch size must be an integer, got {type(batch_size)}")
+    if not (
+        ConfigLimits.BATCH_SIZE_MIN <= batch_size <= ConfigLimits.BATCH_SIZE_MAX
+    ):
+        raise ValueError(
+            f"Batch size must be between {ConfigLimits.BATCH_SIZE_MIN} and "
+            f"{ConfigLimits.BATCH_SIZE_MAX}, got {batch_size}"
+        )
 
 
 def validate_max_steps(max_steps: int) -> None:
-    """Validate max steps is positive integer."""
-    if not isinstance(max_steps, int) or max_steps <= 0:
-        raise ValueError(f"Max steps must be a positive integer, got {max_steps}")
+    """Validate max steps is within allowed limits."""
+    if not isinstance(max_steps, int):
+        raise TypeError(f"Max steps must be an integer, got {type(max_steps)}")
+    if not (ConfigLimits.MAX_STEPS_MIN <= max_steps <= ConfigLimits.MAX_STEPS_MAX):
+        raise ValueError(
+            f"Max steps must be between {ConfigLimits.MAX_STEPS_MIN} and "
+            f"{ConfigLimits.MAX_STEPS_MAX}, got {max_steps}"
+        )
 
 
 def validate_config_schema(_config_data: dict) -> bool:
@@ -314,10 +350,49 @@ class LegacyConfig:
         return cls(**data)
 
     @classmethod
-    def load_with_overrides(cls, base_file: str, override_file: str) -> "LegacyConfig":
-        """Load config with hierarchical overrides."""
-        # Load base config normally
-        base_config = cls.load(base_file)
+    def load_with_overrides(
+        cls,
+        base_file: str,
+        override_file: str,
+        *,
+        _loading_stack: Optional[set[Path]] = None,
+    ) -> "LegacyConfig":
+        """Load config with hierarchical overrides.
+
+        Parameters
+        ----------
+        base_file:
+            Path to the base configuration file.
+        override_file:
+            Path to the file containing values that override the base
+            configuration.
+        _loading_stack:
+            Internal set used to detect circular dependencies when configuration
+            files reference each other recursively.
+        """
+
+        if _loading_stack is None:
+            _loading_stack = set()
+
+        base_path = Path(base_file).resolve()
+        override_path = Path(override_file).resolve()
+
+        if base_path == override_path:
+            raise ValueError(f"Circular dependency detected: config file '{base_path}' cannot override itself.")
+
+        if base_path in _loading_stack or override_path in _loading_stack:
+            # Add current base_path to the stack for a more informative error message
+            current_chain = list(_loading_stack) + [base_path]
+            raise ValueError(
+                f"Circular dependency detected in config files: {' -> '.join(map(str, current_chain))}"
+            )
+
+        _loading_stack.add(base_path)
+        try:
+            # Load base config normally
+            base_config = cls.load(str(base_path))
+        finally:
+            _loading_stack.remove(base_path)
 
         # Load override data without validation
         path = Path(override_file)

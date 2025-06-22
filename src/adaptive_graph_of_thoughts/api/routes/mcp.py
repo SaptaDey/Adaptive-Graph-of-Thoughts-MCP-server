@@ -1,6 +1,5 @@
-
-import os
 import secrets
+import hmac
 
 import time
 from typing import Any, Optional, Union
@@ -43,20 +42,6 @@ def _parse_dot_notation(params: dict[str, str]) -> dict[str, Any]:
 
 # Dependency for authentication
 async def verify_token(http_request: Request):
-
-    if os.getenv("SMITHERY_MODE", "false").lower() == "true":
-        logger.debug("Smithery mode: skipping token verification")
-        return True
-
-    if settings.app.auth_token:
-        auth_header = http_request.headers.get("Authorization")
-        if not auth_header:
-            logger.warning(
-                "MCP request missing Authorization header when auth_token is configured."
-            )
-            raise HTTPException(status_code=401, detail="Not authenticated")
-
-
     if not settings.app.auth_token:
         raise HTTPException(status_code=401, detail="Authentication required")
 
