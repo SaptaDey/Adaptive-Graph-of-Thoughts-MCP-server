@@ -18,20 +18,24 @@ class ProcessManager:
     def start_http_server(self, timeout=30):
         """Start HTTP server in background and wait for it to be ready."""
         print("Starting HTTP server for testing...")
+        
+        # Change to project root directory
         project_root = Path(__file__).parent.parent.parent
-
+        
+        # Start server process
         cmd = [
-            sys.executable, "-m", "uvicorn",
+            sys.executable, "-m", "uvicorn", 
             "src.adaptive_graph_of_thoughts.main:app",
             "--host", "0.0.0.0",
             "--port", "8000",
             "--log-level", "info"
         ]
+        
         process = subprocess.Popen(
             cmd,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            preexec_fn=os.setsid,
+            preexec_fn=os.setsid,  # Create new process group
             cwd=project_root
         )
         self.processes.append(process)

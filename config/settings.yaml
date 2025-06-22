@@ -13,15 +13,15 @@ app:
   mcp_stdio_timeout: 180      # Timeout for STDIO operations in seconds
   mcp_http_timeout: 120       # Timeout for HTTP operations in seconds
   mcp_inspector_retries: 2    # Number of retries for failed tests
-  log_level: "INFO" # Default log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-  # debug: false # Set to true for development if needed, enables more verbose errors
+  log_level: "INFO"           # Default log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  # debug: false               # Set to true for development if needed, enables more verbose errors
 
   # Adaptive Graph of Thoughts Core Parameters
   asr_got:
-  default_parameters:
-    # Parameters for Stage 1: Initialization
-    initial_confidence: [0.9, 0.9, 0.9, 0.9] # P1.5 via P1.1
-    initial_layer: "root_layer"             # P1.1
+    default_parameters:
+      # Parameters for Stage 1: Initialization
+      initial_confidence: [0.9, 0.9, 0.9, 0.9] # P1.5 via P1.1
+      initial_layer: "root_layer"             # P1.1
 
     # Parameters for Stage 2: Decomposition
     default_decomposition_dimensions:       # P1.2
@@ -70,7 +70,7 @@ app:
     # Parameters for Stage 6: Subgraph Extraction (P1.6)
     subgraph_min_confidence_threshold: 0.6
     subgraph_min_impact_threshold: 0.5
-    # temporal_recency_days: 365 # Example: only consider nodes/evidence from the last year
+    # temporal_recency_days: 365              # Example: only consider nodes/evidence from the last year
 
     # Parameters for Stage 8: Reflection (P1.7)
     # Thresholds for audit checks, e.g., high_confidence_coverage_min: 0.3
@@ -121,9 +121,45 @@ app:
 
   # Configuration for Model Context Protocol (MCP) Server behavior
   mcp_settings:
-  protocol_version: "2024-11-05" # As per original claude_desktop_config.json
-  server_name: "Adaptive Graph of Thoughts MCP Server"
-  server_version: "0.1.0" # Match app.version
+    protocol_version: "2024-11-05" # As per original claude_desktop_config.json
+    server_name: "Adaptive Graph of Thoughts MCP Server"
+    server_version: "0.1.0"        # Match app.version
+    vendor_name: "Adaptive Graph of Thoughts Development Team"
+    # Enhanced capabilities for better inspector compatibility
+    capabilities:
+      tools:
+        listChanged: false
+        supportsProgress: true
+      prompts:
+        listChanged: false
+      resources:
+        subscribe: false
+        listChanged: false
+      logging: {}
+    # Inspector testing specific settings
+    inspector:
+      enable_verbose_logging: true
+      ready_signal_timeout: 10    # Seconds to wait for ready signal
+      handshake_timeout: 30       # Seconds for MCP handshake
+      validation_timeout: 180     # Seconds for full validation
+  vendor_name: "Adaptive Graph of Thoughts Development Team"
+  # Enhanced capabilities for better inspector compatibility
+  capabilities:
+    tools:
+      listChanged: false
+      supportsProgress: true
+    prompts:
+      listChanged: false
+    resources:
+      subscribe: false
+      listChanged: false
+    logging: {}
+  # Inspector testing specific settings
+  inspector:
+    enable_verbose_logging: true
+    ready_signal_timeout: 10  # Seconds to wait for ready signal
+    handshake_timeout: 30     # Seconds for MCP handshake
+    validation_timeout: 180   # Seconds for full validation
   vendor_name: "Adaptive Graph of Thoughts Development Team"
   # Enhanced capabilities for better inspector compatibility
   capabilities:

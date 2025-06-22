@@ -140,26 +140,29 @@ class MCPServerFactory:
 
     @staticmethod
     def run_with_retry(command, max_retries=2, timeout=300):
-        """
-        Run command with retry logic and proper timeout handling.
-        """
+        """Run command with retry logic and proper timeout handling."""
         for attempt in range(max_retries + 1):
             try:
                 logger.info(f"Attempt {attempt + 1}/{max_retries + 1}: Running command: {' '.join(command)}")
+                
                 result = subprocess.run(
-                    command,
-                    capture_output=True,
-                    text=True,
+                    command, 
+                    capture_output=True, 
+                    text=True, 
                     timeout=timeout
                 )
+                
                 if result.returncode == 0:
                     logger.info("Command executed successfully")
                     return True, result.stdout, result.stderr
-                logger.warning(f"Command failed with exit code {result.returncode}")
-                if attempt < max_retries:
-                    wait_time = 5 * (attempt + 1)
-                    logger.info(f"Retrying in {wait_time} seconds...")
-                    time.sleep(wait_time)
+                else:
+                    logger.warning(f"Command failed with exit code {result.returncode}")
+                    
+                    if attempt < max_retries:
+                        wait_time = 5 * (attempt + 1)  # Progressive backoff
+                        logger.info(f"Retrying in {wait_time} seconds...")
+                        time.sleep(wait_time)
+            
             except subprocess.TimeoutExpired:
                 logger.warning(f"Command timed out after {timeout} seconds")
                 if attempt < max_retries:
@@ -170,6 +173,7 @@ class MCPServerFactory:
                 if attempt < max_retries:
                     logger.info("Retrying...")
                     time.sleep(5)
+        
         return False, "", ""
 
     @staticmethod
@@ -190,26 +194,33 @@ class MCPServerFactory:
         resource_monitor = ResourceMonitor()
         got_processor = GoTProcessor(settings=settings, resource_monitor=resource_monitor)
         
+        # MCP protocol state
         initialized = False
         
         try:
             # Send initial MCP handshake signal to stdout
+            # This helps mcp-inspector know the server is ready
             print(json.dumps({
                 "jsonrpc": "2.0",
                 "method": "server/ready",
                 "params": {}
             }), flush=True)
             
+            # Main STDIO loop
             while True:
                 try:
+                    # Read a line from stdin
                     line = sys.stdin.readline()
+                    
                     if not line:
                         logger.info("STDIO input closed, shutting down server.")
                         break
+
                     line = line.strip()
                     if not line:
                         continue
 
+                    # Parse JSON-RPC request
                     try:
                         request_data = json.loads(line)
                         logger.debug("Received STDIO request: {}", request_data)
@@ -221,11 +232,13 @@ class MCPServerFactory:
                         print(json.dumps(error_response.model_dump()), flush=True)
                         continue
 
+                    # Handle MCP protocol initialization
                     method = request_data.get("method")
                     if method == "initialize" and not initialized:
                         initialized = True
                         logger.info("MCP protocol initialization received")
                     elif not initialized and method != "initialize":
+                        # Reject requests before initialization
                         error_response = create_jsonrpc_error(
                             request_id=request_data.get("id"),
                             code=-32002,
@@ -234,20 +247,26 @@ class MCPServerFactory:
                         print(json.dumps(error_response.model_dump()), flush=True)
                         continue
 
+                    # Process the request
                     response = await MCPServerFactory._handle_stdio_request(
                         request_data, got_processor
                     )
+
+                    # Send response
                     if response:
                         response_json = json.dumps(response.model_dump())
                         print(response_json, flush=True)
                         logger.debug("Sent STDIO response: {}", response_json)
-
+                    
+                    # Handle shutdown
                     if method == "shutdown":
                         logger.info("Shutdown request received, exiting...")
                         break
 
                 except KeyboardInterrupt:
-                    logger.info("Received interrupt signal, shutting down STDIO server.")
+                    logger.info(
+                        "Received interrupt signal, shutting down STDIO server."
+                    )
                     break
                 except Exception as e:
                     logger.exception("Error in STDIO server loop: {}", e)
@@ -257,10 +276,12 @@ class MCPServerFactory:
                     print(json.dumps(error_response.model_dump()), flush=True)
 
         finally:
+            # Cleanup
             try:
                 await got_processor.shutdown_resources()
             except Exception as e:
                 logger.error("Error shutting down GoT processor: {}", e)
+
             logger.info("MCP STDIO server shutdown complete.")
 
     @staticmethod
@@ -365,6 +386,25 @@ class MCPServerFactory:
             result = await got_processor.process_query(
                 query=parsed_params.query,
                 session_id=parsed_params.session_id,
+                operational_params=parsed_params.operational_params,
+            )
+            result_dict = result.model_dump()
+            mcp_result = MCPASRGoTQueryResult(
+                answer=result_dict.get("final_answer", ""),
+                reasoning_trace_summary=result_dict.get("reasoning_trace_summary"),
+                graph_state_full=result_dict.get("graph_state_full"),
+                confidence_vector=result_dict.get("final_confidence_vector"),
+                execution_time_ms=result_dict.get("execution_time_ms"),
+                session_id=result_dict.get("session_id"),
+            )
+            return JSONRPCResponse(id=request_id, result=mcp_result)
+        except Exception as e:
+            logger.exception("Error in ASR-GoT query handler: {}", e)
+            return create_jsonrpc_error(
+                request_id=request_id,
+                code=-32603,
+                message="Internal error processing query",
+            )
                 operational_params=parsed_params.operational_params,
             )
             result_dict = result.model_dump()
