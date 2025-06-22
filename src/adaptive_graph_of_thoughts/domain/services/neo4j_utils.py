@@ -39,6 +39,20 @@ _neo4j_settings: Optional[GlobalSettings] = None
 _driver: Optional[Driver] = None
 
 
+def mask_uri(uri: str) -> str:
+    """Mask sensitive parts of a URI for logging."""
+    import re
+
+    return re.sub(r"://([^:]+):([^@]+)@", r"://\1:***@", uri)
+
+
+def mask_username(username: str) -> str:
+    """Mask a username for logging."""
+    if len(username) <= 2:
+        return "***"
+    return username[:2] + "*" * (len(username) - 2)
+
+
 @dataclass
 class Neo4jConnection:
     """Lightweight Neo4j connection wrapper used in unit tests."""
@@ -80,7 +94,10 @@ def get_neo4j_settings() -> GlobalSettings:
         logger.info("Initializing Neo4j settings.")
         _neo4j_settings = GlobalSettings()
         logger.debug(
-            f"Neo4j Settings loaded: URI='{_neo4j_settings.neo4j.uri}', User='{_neo4j_settings.neo4j.user}', Default DB='{_neo4j_settings.neo4j.database}'"
+            "Neo4j Settings loaded: URI='%s', User='%s', Default DB='%s'",
+            mask_uri(_neo4j_settings.neo4j.uri),
+            mask_username(_neo4j_settings.neo4j.user),
+            _neo4j_settings.neo4j.database,
         )
     return _neo4j_settings
 
