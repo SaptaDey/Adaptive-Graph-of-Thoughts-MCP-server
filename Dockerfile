@@ -65,7 +65,7 @@ COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/pytho
 COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code and configuration
-COPY --chown=appuser:appuser --chmod=644 ./src ./src
+COPY --chown=appuser:appuser --chmod=755 ./src ./src
 COPY --chown=appuser:appuser --chmod=600 ./config ./config
 
 # Copy and enable entrypoint script
