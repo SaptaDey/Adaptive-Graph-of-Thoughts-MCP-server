@@ -1,0 +1,194 @@
+{
+  "name": "Adaptive Graph of Thoughts",
+  "description": "Advanced scientific reasoning through graph-based analysis with evidence integration",
+  "version": "0.1.0",
+  "tools": [
+    {
+      "name": "scientific_reasoning_query",
+      "description": "Perform advanced scientific reasoning using the Adaptive Graph of Thoughts framework",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The scientific question or research query to analyze",
+            "maxLength": 2000
+          },
+          "include_reasoning_trace": {
+            "type": "boolean",
+            "description": "Include detailed reasoning trace in the response",
+            "default": true
+          },
+          "include_graph_state": {
+            "type": "boolean",
+            "description": "Include the full graph state representation",
+            "default": true
+          },
+          "max_nodes_in_response_graph": {
+            "type": "integer",
+            "description": "Maximum nodes in response graph",
+            "default": 50,
+            "minimum": 0
+          },
+          "output_detail_level": {
+            "type": "string",
+            "enum": ["summary", "detailed"],
+            "default": "summary"
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Optional session ID for tracking"
+          }
+        },
+        "required": ["query"]
+      }
+    },
+    {
+      "name": "analyze_research_hypothesis",
+      "description": "Analyze and evaluate research hypotheses with confidence scoring",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "hypothesis": {
+            "type": "string",
+            "description": "The research hypothesis to analyze"
+          },
+          "research_domain": {
+            "type": "string",
+            "description": "Scientific domain (e.g., 'cancer biology', 'microbiome')"
+          },
+          "evidence_sources": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["pubmed", "google_scholar", "exa_search"]
+            },
+            "default": ["pubmed", "google_scholar"]
+          }
+        },
+        "required": ["hypothesis"]
+      }
+    },
+    {
+      "name": "explore_scientific_relationships",
+      "description": "Explore relationships between scientific concepts using graph analysis",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "primary_concept": {
+            "type": "string",
+            "description": "Primary scientific concept to explore"
+          },
+          "related_concepts": {
+            "type": "array",
+            "items": {"type": "string"},
+            "description": "Related concepts to analyze"
+          },
+          "relationship_types": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["causal", "correlational", "mechanistic", "temporal", "hierarchical"]
+            },
+            "default": ["causal", "correlational"]
+          },
+          "depth_level": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 5,
+            "default": 3
+          }
+        },
+        "required": ["primary_concept"]
+      }
+    },
+    {
+      "name": "validate_scientific_claims",
+      "description": "Validate scientific claims against existing evidence",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "claim": {
+            "type": "string",
+            "description": "Scientific claim to validate"
+          },
+          "evidence_threshold": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 1.0,
+            "default": 0.7
+          },
+          "validation_criteria": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": ["reproducibility", "peer_review", "sample_size", "methodology", "statistical_significance"]
+            },
+            "default": ["peer_review", "methodology", "statistical_significance"]
+          },
+          "include_counterevidence": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "required": ["claim"]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "uri": "graph://current-session",
+      "name": "Current Session Graph State",
+      "description": "Access to current reasoning session's graph state"
+    },
+    {
+      "uri": "evidence://pubmed",
+      "name": "PubMed Evidence Database",
+      "description": "Access to PubMed scientific literature"
+    },
+    {
+      "uri": "evidence://scholar",
+      "name": "Google Scholar Database",
+      "description": "Access to Google Scholar academic literature"
+    },
+    {
+      "uri": "evidence://exa",
+      "name": "Exa Search Database",
+      "description": "Access to Exa Search web-based scientific content"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "analyze_complex_research_question",
+      "description": "Analyze complex, multi-faceted research questions",
+      "arguments": [
+        {
+          "name": "research_question",
+          "description": "The complex research question to analyze",
+          "required": true
+        },
+        {
+          "name": "discipline",
+          "description": "Primary scientific discipline",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "synthesize_literature_findings",
+      "description": "Synthesize findings from multiple research papers",
+      "arguments": [
+        {
+          "name": "papers_summary",
+          "description": "Summary of key papers or findings",
+          "required": true
+        },
+        {
+          "name": "synthesis_focus",
+          "description": "Focus area for synthesis",
+          "required": false
+        }
+      ]
+    }
+  ]
+}
