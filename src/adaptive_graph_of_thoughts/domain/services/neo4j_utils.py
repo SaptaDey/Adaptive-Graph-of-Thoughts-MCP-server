@@ -225,9 +225,17 @@ async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
 
 
 async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
+    # Validate property names to prevent injection
+    for key in updates:
+        if not key.replace('_', '').replace('-', '').isalnum():
+            raise ValueError(f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only.")
+
     set_clause = ", ".join(f"n.{k} = ${k}" for k in updates)
     query = f"MATCH (n) WHERE id(n) = $id SET {set_clause} RETURN n"
-    params = {"id": int(node_id), **updates}
+    try:
+        params = {"id": int(node_id), **updates}
+    except ValueError:
+        raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
     return await execute_query(query, params, tx_type="write")
 
 
