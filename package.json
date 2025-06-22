@@ -1,0 +1,18 @@
+{
+  "name": "adaptive-graph-of-thoughts-mcp-testing",
+  "version": "1.0.0",
+  "description": "MCP testing dependencies for Adaptive Graph of Thoughts",
+  "private": true,
+  "scripts": {
+    "test:mcp:stdio": "python3 scripts/mcp_inspector_executor.py stdio",
+    "test:mcp:http": "python3 scripts/mcp_inspector_executor.py http",
+    "test:mcp:all": "python3 scripts/mcp_inspector_executor.py all",
+    "install:mcp-inspector": "npm install @modelcontextprotocol/inspector"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/inspector": "^0.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
