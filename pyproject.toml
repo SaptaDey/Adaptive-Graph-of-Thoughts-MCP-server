@@ -26,7 +26,7 @@ python = "^3.11" #  Python 3.11 or higher, now supports Python 3.13
 fastapi = "^0.115.0"
 uvicorn = {extras = ["standard"], version = "^0.32.0"} # For running the FastAPI app
 pydantic = "^2.10.0"
-pydantic-settings = "^2.3.0" # For loading settings from files/env vars
+pydantic-settings = "^2.6.0" # For loading settings from files/env vars
 networkx = "^3.3"          # For graph data structures and algorithms
 httpx = "^0.28.0"          # For making HTTP requests (e.g., to external services)
 python-dotenv = "^1.0.1"   # For loading .env files
