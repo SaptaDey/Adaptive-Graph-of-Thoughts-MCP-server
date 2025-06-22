@@ -312,11 +312,13 @@ async def validate_connection() -> bool:
 
 
 async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Record]:
-    results: list[Record] = []
-    for props in nodes:
-        res = await create_node(label, props)
-        results.extend(res)
-    return results
+    # Validate label to prevent injection
+    if not label.replace('_', '').replace('-', '').isalnum():
+        raise ValueError(f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only.")
+    
+    # Use UNWIND for efficient bulk creation
+    query = f"UNWIND $nodes AS nodeData CREATE (n:{label}) SET n = nodeData RETURN n"
+    return await execute_query(query, {"nodes": nodes}, tx_type="write")
 
 
 async def execute_cypher_file(path: str) -> list[Record]:
