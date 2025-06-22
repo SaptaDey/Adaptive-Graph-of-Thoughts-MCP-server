@@ -86,7 +86,8 @@ warn_return_any = true
 warn_unused_configs = true
 ignore_missing_imports = true # Start with this, can be made stricter later
 # Add paths for mypy to check, typically your source directory
-files = "src/"
+files = "src/adaptive_graph_of_thoughts"
+mypy_path = "src"
 
 [tool.pytest.ini_options]
 pythonpath = ["src"] # Add src to pythonpath for tests

@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from loguru import logger
 from pydantic import ValidationError
 
-from src.adaptive_graph_of_thoughts.api.schemas import (
+from adaptive_graph_of_thoughts.api.schemas import (
     GraphStateSchema,
     JSONRPCErrorObject,
     JSONRPCRequest,
@@ -17,8 +17,8 @@ from src.adaptive_graph_of_thoughts.api.schemas import (
     MCPInitializeResult,
     ShutdownParams,
 )
-from src.adaptive_graph_of_thoughts.config import settings  # Import settings
-from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
+from adaptive_graph_of_thoughts.config import settings  # Import settings
+from adaptive_graph_of_thoughts.domain.services.got_processor import (
     GoTProcessor,
     GoTProcessorSessionData,
 )
@@ -43,7 +43,7 @@ async def verify_token(http_request: Request):
     if os.getenv("SMITHERY_MODE", "false").lower() == "true":
         logger.debug("Smithery mode: skipping token verification")
         return True
-    
+
     if settings.app.auth_token:
         auth_header = http_request.headers.get("Authorization")
         if not auth_header:

@@ -16,20 +16,20 @@ from fastapi.templating import Jinja2Templates
 from loguru import logger  # type: ignore
 from neo4j import GraphDatabase
 
-from src.adaptive_graph_of_thoughts.api.routes.mcp import mcp_router
-from src.adaptive_graph_of_thoughts.api.routes.nlq import nlq_router
-from src.adaptive_graph_of_thoughts.api.routes.explorer import explorer_router
-from src.adaptive_graph_of_thoughts.api.routes.tools import tools_router
-from src.adaptive_graph_of_thoughts.api.routes.mcp_public import mcp_public_router
-from src.adaptive_graph_of_thoughts.config import (
+from adaptive_graph_of_thoughts.api.routes.mcp import mcp_router
+from adaptive_graph_of_thoughts.api.routes.nlq import nlq_router
+from adaptive_graph_of_thoughts.api.routes.explorer import explorer_router
+from adaptive_graph_of_thoughts.api.routes.tools import tools_router
+from adaptive_graph_of_thoughts.api.routes.mcp_public import mcp_public_router
+from adaptive_graph_of_thoughts.config import (
     RuntimeSettings,
     runtime_settings,
     settings,
 )
-from src.adaptive_graph_of_thoughts.domain.services.got_processor import (
+from adaptive_graph_of_thoughts.domain.services.got_processor import (
     GoTProcessor,
 )
-from src.adaptive_graph_of_thoughts.services.llm import LLM_QUERY_LOGS, ask_llm
+from adaptive_graph_of_thoughts.services.llm import LLM_QUERY_LOGS, ask_llm
 
 security = HTTPBasic()
 
