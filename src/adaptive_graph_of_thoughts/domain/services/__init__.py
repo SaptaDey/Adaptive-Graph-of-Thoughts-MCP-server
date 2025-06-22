@@ -2,6 +2,13 @@
 
 from .exceptions import ProcessingError, StageExecutionError
 from .got_processor import GoTProcessor, GoTProcessorSessionData
+from .graph_server import AdaptiveGraphServer
 
 # Control what gets imported with 'from .services import *'
-__all__ = ["GoTProcessor", "GoTProcessorSessionData", "ProcessingError", "StageExecutionError"]
+__all__ = [
+    "GoTProcessor",
+    "GoTProcessorSessionData",
+    "AdaptiveGraphServer",
+    "ProcessingError",
+    "StageExecutionError",
+]
