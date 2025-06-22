@@ -3,6 +3,8 @@ import atexit
 import threading
 from typing import Any, Optional
 
+import re
+
 from loguru import logger
 from dataclasses import dataclass
 from neo4j import (
@@ -74,6 +76,28 @@ if self._driver is not None:
 
 driver_manager = Neo4jDriverManager()
 
+# Allowed labels for node creation to mitigate injection attacks
+ALLOWED_LABELS = {"User", "Document", "Hypothesis", "Evidence"}
+
+
+def sanitize_cypher_input(value: str) -> str:
+    """Remove potentially dangerous characters from a Cypher identifier."""
+    # Allow alphanumeric, underscore, hyphen, and dot (for namespaces)
+    return re.sub(r"[^\w.-]", "", value)
+
+def mask_uri(uri: str) -> str:
+    """Mask sensitive parts of a URI for logging."""
+    import re
+
+    return re.sub(r"://([^:]+):([^@]+)@", r"://\1:***@", uri)
+
+
+def mask_username(username: str) -> str:
+    """Mask a username for logging."""
+    if len(username) <= 2:
+        return "***"
+    return username[:2] + "*" * (len(username) - 2)
+
 
 @dataclass
 class Neo4jConnection:
@@ -124,7 +148,10 @@ def get_neo4j_settings() -> GlobalSettings:
         logger.info("Initializing Neo4j settings.")
         _neo4j_settings = GlobalSettings()
         logger.debug(
-            f"Neo4j Settings loaded: URI='{_neo4j_settings.neo4j.uri}', User='{_neo4j_settings.neo4j.user}', Default DB='{_neo4j_settings.neo4j.database}'"
+            "Neo4j Settings loaded: URI='%s', User='%s', Default DB='%s'",
+            mask_uri(_neo4j_settings.neo4j.uri),
+            mask_username(_neo4j_settings.neo4j.user),
+            _neo4j_settings.neo4j.database,
         )
     return _neo4j_settings
 
@@ -238,6 +265,7 @@ async def execute_query(
 
 
 async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
+
     # Validate label to prevent injection
     if not label.replace("_", "").replace("-", "").isalnum():
         raise ValueError(
@@ -252,6 +280,10 @@ async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
     return await execute_query(query, properties, tx_type="write")
 
 
+    query = f"CREATE (n:{clean_label}) SET n = $props RETURN n"
+    return await execute_query(query, {"props": properties}, tx_type="write")
+
+
 async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
     # Validate property names to prevent injection
     for key in updates:
@@ -260,12 +292,15 @@ async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
                 f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only."
             )
 
-    set_clause = ", ".join(f"n.{k} = ${k}" for k in updates)
-    query = f"MATCH (n) WHERE id(n) = $id SET {set_clause} RETURN n"
+
+async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
     try:
-        params = {"id": int(node_id), **updates}
+        node_id_int = int(node_id)
     except ValueError:
         raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
+
+    query = "MATCH (n) WHERE id(n) = $id SET n += $props RETURN n"
+    params = {"id": node_id_int, "props": updates}
     return await execute_query(query, params, tx_type="write")
 
 
@@ -280,6 +315,7 @@ async def delete_node(node_id: str) -> list[Record]:
 
 
 async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
+
     # Validate label to prevent injection
     if not label.replace("_", "").replace("-", "").isalnum():
         raise ValueError(
@@ -298,15 +334,19 @@ async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
     return await execute_query(query, filters)
 
 
+
 async def create_relationship(
     from_id: str, to_id: str, rel_type: str, properties: dict[str, Any]
 ) -> list[Record]:
+
     # Validate relationship type to prevent injection
     if not rel_type.replace("_", "").replace("-", "").isalnum():
+
         raise ValueError(
             f"Invalid relationship type: {rel_type}. "
             "Must be alphanumeric with underscores/hyphens only."
         )
+
 
     # Validate property names to prevent injection
     for key in properties:
@@ -315,6 +355,7 @@ async def create_relationship(
                 f"Invalid property name: {key}. "
                 "Property names must be alphanumeric with underscores/hyphens only."
             )
+
 
     # Validate node IDs
     try:
@@ -325,12 +366,11 @@ async def create_relationship(
             "Invalid node IDs. Both from_id and to_id must be valid integers."
         )
 
-    props = ", ".join(f"{k}: ${k}" for k in properties)
     query = (
-        "MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
-        f"CREATE (a)-[r:{rel_type} {{{props}}}]->(b) RETURN r"
+        f"MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
+        f"CREATE (a)-[r:{clean_rel_type}]->(b) SET r = $props RETURN r"
     )
-    params = {"from": from_id_int, "to": to_id_int, **properties}
+    params = {"from": from_id_int, "to": to_id_int, "props": properties}
     return await execute_query(query, params, tx_type="write")
 
 
@@ -348,6 +388,7 @@ async def validate_connection() -> bool:
 
 
 async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Record]:
+
     # Validate label to prevent injection
     if not label.replace("_", "").replace("-", "").isalnum():
         raise ValueError(
@@ -356,6 +397,7 @@ async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Rec
 
     # Use UNWIND for efficient bulk creation
     query = f"UNWIND $nodes AS nodeData CREATE (n:{label}) SET n = nodeData RETURN n"
+
     return await execute_query(query, {"nodes": nodes}, tx_type="write")
 
 
