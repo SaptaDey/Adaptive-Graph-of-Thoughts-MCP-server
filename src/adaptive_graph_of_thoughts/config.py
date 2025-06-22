@@ -317,12 +317,8 @@ class LegacyConfig:
         cls,
         base_file: str,
         override_file: str,
-    def load_with_overrides(
-        base_path: Path,
-        override_path: Path,
         *,
         _loading_stack: Optional[set[Path]] = None,
-    ) -> Config:
     ) -> "LegacyConfig":
         """Load config with hierarchical overrides.
 
