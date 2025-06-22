@@ -98,14 +98,14 @@ class TestValidationFunctions:
         validate_learning_rate(0.001)
 
     def test_validate_learning_rate_invalid(self):
-        """Test invalid learning rates raise ValueError."""
-        with pytest.raises(ValueError, match="Learning rate must be between 0 and 1.0"):
+        """Test invalid learning rates raise errors."""
+        with pytest.raises(ValueError, match="Learning rate must be between 0.0 and 1.0"):
             validate_learning_rate(0)
-        with pytest.raises(ValueError, match="Learning rate must be between 0 and 1.0"):
+        with pytest.raises(ValueError, match="Learning rate must be between 0.0 and 1.0"):
             validate_learning_rate(-0.1)
-        with pytest.raises(ValueError, match="Learning rate must be between 0 and 1.0"):
+        with pytest.raises(ValueError, match="Learning rate must be between 0.0 and 1.0"):
             validate_learning_rate(1.1)
-        with pytest.raises(ValueError, match="Learning rate must be between 0 and 1.0"):
+        with pytest.raises(TypeError, match="Learning rate must be a number"):
             validate_learning_rate("0.1")
 
     def test_validate_batch_size_valid(self):
@@ -115,14 +115,14 @@ class TestValidationFunctions:
         validate_batch_size(1000)
 
     def test_validate_batch_size_invalid(self):
-        """Test invalid batch sizes raise ValueError."""
-        with pytest.raises(ValueError, match="Batch size must be a positive integer"):
+        """Test invalid batch sizes raise errors."""
+        with pytest.raises(ValueError, match="Batch size must be between"):
             validate_batch_size(0)
-        with pytest.raises(ValueError, match="Batch size must be a positive integer"):
+        with pytest.raises(ValueError, match="Batch size must be between"):
             validate_batch_size(-1)
-        with pytest.raises(ValueError, match="Batch size must be a positive integer"):
+        with pytest.raises(TypeError, match="Batch size must be an integer"):
             validate_batch_size(1.5)
-        with pytest.raises(ValueError, match="Batch size must be a positive integer"):
+        with pytest.raises(TypeError, match="Batch size must be an integer"):
             validate_batch_size("32")
 
     def test_validate_max_steps_valid(self):
@@ -132,14 +132,14 @@ class TestValidationFunctions:
         validate_max_steps(10000)
 
     def test_validate_max_steps_invalid(self):
-        """Test invalid max steps raise ValueError."""
-        with pytest.raises(ValueError, match="Max steps must be a positive integer"):
+        """Test invalid max steps raise errors."""
+        with pytest.raises(ValueError, match="Max steps must be between"):
             validate_max_steps(0)
-        with pytest.raises(ValueError, match="Max steps must be a positive integer"):
+        with pytest.raises(ValueError, match="Max steps must be between"):
             validate_max_steps(-1)
-        with pytest.raises(ValueError, match="Max steps must be a positive integer"):
+        with pytest.raises(TypeError, match="Max steps must be an integer"):
             validate_max_steps(1.5)
-        with pytest.raises(ValueError, match="Max steps must be a positive integer"):
+        with pytest.raises(TypeError, match="Max steps must be an integer"):
             validate_max_steps("1000")
 
     def test_validate_config_schema(self):
