@@ -272,12 +272,12 @@ async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
 async def create_relationship(
     from_id: str, to_id: str, rel_type: str, properties: dict[str, Any]
 ) -> list[Record]:
-    clean_rel_type = sanitize_cypher_input(rel_type)
-    if clean_rel_type != rel_type:
+    if not re.fullmatch(r"[\w-]+", rel_type):
         raise ValueError(
             f"Invalid relationship type: {rel_type}. "
             "Must be alphanumeric with underscores/hyphens only."
         )
+    clean_rel_type = rel_type
 
     # Validate node IDs
     try:
