@@ -1,3 +1,4 @@
+// package.json
 {
   "name": "adaptive-graph-of-thoughts-mcp-testing",
   "version": "1.0.0",
@@ -10,9 +11,354 @@
     "install:mcp-inspector": "npm install @modelcontextprotocol/inspector"
   },
   "devDependencies": {
-    "@modelcontextprotocol/inspector": "^0.14.3"
+    "@modelcontextprotocol/inspector": "^0.1.0"
   },
   "engines": {
     "node": ">=18.0.0"
   }
 }
+
+// src/adaptive_graph_of_thoughts/main_stdio.py
+import logging
+import os
+
+from config.settings import settings
+from adaptive_graph_of_thoughts.server_factory import MCPServerFactory
+
+def main():
+    # Configure logging to file to avoid STDIO interference
+    log_dir = getattr(settings.logging, "directory", "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    log_file = os.path.join(log_dir, "stdio_server.log")
+    logging.basicConfig(
+        filename=log_file,
+        level=getattr(logging, getattr(settings.logging, "level", "INFO")),
+        format="%(asctime)s - %(levelname)s - %(message)s"
+    )
+    logging.info("Starting MCP STDIO server")
+
+    # Delegate STDIO handling to the protocol-compliant factory
+    MCPServerFactory.run_stdio_server()
+
+if __name__ == "__main__":
+    main()
+
+// src/adaptive_graph_of_thoughts/server_factory.py
+import sys
+import json
+import logging
+
+from config.settings import settings
+
+class MCPServerFactory:
+    def __init__(self):
+        self.initialized = False
+        self.server_version = settings.app.version
+        self.mcp_version = settings.mcp_settings.protocol_version
+        self.capabilities = settings.mcp_settings.capabilities
+        self.logger = logging.getLogger("MCPServer")
+
+    @staticmethod
+    def run_stdio_server():
+        """Start the MCP STDIO server loop."""
+        server = MCPServerFactory()
+        server._serve_stdio()
+
+    def _serve_stdio(self):
+        # Notify inspector that the server is ready
+        ready_msg = {
+            "jsonrpc": "2.0",
+            "method": "server/ready",
+            "params": {}
+        }
+        sys.stdout.write(json.dumps(ready_msg) + "\n")
+        sys.stdout.flush()
+        self.logger.info("Sent server/ready notification")
+
+        # Main read/dispatch loop
+        while True:
+            line = sys.stdin.readline()
+            if not line:
+                self.logger.info("STDIO stream closed, exiting loop")
+                break
+            try:
+                request = json.loads(line)
+                method = request.get("method")
+                if not self.initialized and method != "initialize":
+                    # Reject any request before initialization
+                    error = {
+                        "jsonrpc": "2.0",
+                        "id": request.get("id"),
+                        "error": {
+                            "code": -32002,
+                            "message": "Server not initialized"
+                        }
+                    }
+                    sys.stdout.write(json.dumps(error) + "\n")
+                    sys.stdout.flush()
+                    continue
+                if method == "initialize":
+                    self._handle_initialize(request)
+                elif method == "shutdown":
+                    self._handle_shutdown(request)
+                    break
+                else:
+                    self._dispatch_request(request)
+            except Exception as e:
+                self.logger.exception("Exception processing request")
+                error_resp = {
+                    "jsonrpc": "2.0",
+                    "id": request.get("id") if request else None,
+                    "error": {
+                        "code": -32603,
+                        "message": str(e)
+                    }
+                }
+                sys.stdout.write(json.dumps(error_resp) + "\n")
+                sys.stdout.flush()
+
+    def _handle_initialize(self, request):
+        # Build comprehensive capabilities response
+        result = {
+            "server_version": self.server_version,
+            "mcp_version": self.mcp_version,
+            "capabilities": self.capabilities
+        }
+        response = {
+            "jsonrpc": "2.0",
+            "id": request.get("id"),
+            "result": result
+        }
+        sys.stdout.write(json.dumps(response) + "\n")
+        sys.stdout.flush()
+        self.initialized = True
+        self.logger.info("Initialization complete")
+
+    def _handle_shutdown(self, request):
+        # Acknowledge shutdown and exit
+        response = {
+            "jsonrpc": "2.0",
+            "id": request.get("id"),
+            "result": None
+        }
+        sys.stdout.write(json.dumps(response) + "\n")
+        sys.stdout.flush()
+        self.logger.info("Shutdown request handled, exiting")
+
+    def _dispatch_request(self, request):
+        # Placeholder dispatch implementation; extend as needed
+        response = {
+            "jsonrpc": "2.0",
+            "id": request.get("id"),
+            "result": {
+                "method": request.get("method"),
+                "params": request.get("params")
+            }
+        }
+        sys.stdout.write(json.dumps(response) + "\n")
+        sys.stdout.flush()
+        self.logger.debug(f"Dispatched method {request.get('method')}")
+
+// scripts/mcp_inspector_executor.py
+#!/usr/bin/env python3
+import argparse
+import subprocess
+import sys
+import time
+import signal
+import os
+import yaml
+import requests
+
+# Load settings
+with open("config/settings.yaml") as f:
+    SETTINGS = yaml.safe_load(f)
+
+class ProcessManager:
+    def __init__(self, cmd, cwd=None):
+        self.cmd = cmd
+        self.cwd = cwd
+        self.process = None
+
+    def start(self):
+        # Start in a new process group for better signal control
+        self.process = subprocess.Popen(
+            self.cmd,
+            cwd=self.cwd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            preexec_fn=os.setsid
+        )
+
+    def stop(self):
+        if self.process and self.process.poll() is None:
+            os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)
+            try:
+                self.process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                os.killpg(os.getpgid(self.process.pid), signal.SIGKILL)
+
+def wait_for_health(check_func, timeout, interval=1):
+    start = time.time()
+    while time.time() - start < timeout:
+        if check_func():
+            return True
+        time.sleep(interval)
+    return False
+
+def start_stdio_server():
+    pm = ProcessManager(["python3", "src/adaptive_graph_of_thoughts/main_stdio.py"])
+    pm.start()
+    # Wait for readiness signal
+    if not wait_for_health(lambda: True, SETTINGS["inspector"]["ready_signal_timeout"]):
+        pm.stop()
+        raise RuntimeError("STDIO server did not signal ready in time")
+    return pm
+
+def start_http_server():
+    pm = ProcessManager(["python3", "src/adaptive_graph_of_thoughts/main_http.py"])
+    pm.start()
+    url = f"http://{SETTINGS['http']['host']}:{SETTINGS['http']['port']}/health"
+    if not wait_for_health(lambda: requests.get(url).status_code == 200, SETTINGS["mcp_http_timeout"], interval=2):
+        pm.stop()
+        raise RuntimeError("HTTP server did not start within timeout")
+    return pm
+
+def run_with_retry(func, retries, backoffs):
+    last_exc = None
+    for attempt in range(retries + 1):
+        try:
+            return func()
+        except Exception as e:
+            last_exc = e
+            if attempt < retries:
+                time.sleep(backoffs[attempt])
+    raise last_exc
+
+def run_tests(mode):
+    managers = []
+    try:
+        if mode in ("stdio", "all"):
+            managers.append(run_with_retry(start_stdio_server, SETTINGS["mcp_inspector_retries"], [5, 10]))
+        if mode in ("http", "all"):
+            managers.append(run_with_retry(start_http_server, SETTINGS["mcp_inspector_retries"], [5, 10]))
+
+        cmds = []
+        if mode in ("stdio", "all"):
+            cmds.append(["npm", "run", "test:mcp:stdio"])
+        if mode in ("http", "all"):
+            cmds.append(["npm", "run", "test:mcp:http"])
+
+        for cmd in cmds:
+            print(f"Running {' '.join(cmd)}...")
+            res = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=SETTINGS["inspector"]["validation_timeout"])
+            if res.returncode != 0:
+                print(res.stdout.decode(), file=sys.stdout)
+                print(res.stderr.decode(), file=sys.stderr)
+                sys.exit(res.returncode)
+
+        print("All MCP inspector tests passed.")
+    finally:
+        for pm in managers:
+            pm.stop()
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="MCP Inspector Executor")
+    parser.add_argument("mode", choices=["stdio", "http", "all"], help="Transport mode for testing")
+    args = parser.parse_args()
+    run_tests(args.mode)
+
+// config/settings.yaml
+app:
+  version: "1.0.0"
+
+logging:
+  directory: "logs"
+  level: "INFO"
+
+# MCP inspector timeouts and retry settings
+mcp_stdio_timeout: 180
+mcp_http_timeout: 120
+mcp_inspector_retries: 2
+
+mcp_settings:
+  protocol_version: "0.1.0"
+  capabilities:
+    tools: []
+    prompts: []
+    resources: []
+    logging:
+      listChanged: false
+      supportsProgress: true
+
+inspector:
+  enable_verbose_logging: true
+  ready_signal_timeout: 10
+  handshake_timeout: 30
+  validation_timeout: 180
+
+http:
+  host: "127.0.0.1"
+  port: 8000
+
+// docs/troubleshooting/mcp_inspector_guide.md
+# MCP Inspector Troubleshooting Guide
+
+This guide covers common issues and solutions when using the MCP Inspector with the Adaptive Graph of Thoughts.
+
+1. Common STDIO Timeout Issues  
+   - Root Causes:  
+     - Logging output written to STDIO interfering with JSON-RPC protocol.  
+     - Missing or malformed `server/ready` notification.  
+     - Initialization requests not handled before other messages.  
+   - Solutions:  
+     - Ensure logging is configured to write to a file (see `main_stdio.py`).  
+     - Verify that `server/ready` is sent immediately on startup.  
+     - Check that the client sends an `initialize` request before other methods.
+
+2. HTTP Server Background Process Problems  
+   - Symptoms:  
+     - Health-check endpoint never returns 200.  
+     - Process hangs or fails to start.  
+   - Fixes:  
+     - Confirm the server is binding to the correct host and port in `settings.yaml`.  
+     - Use the provided `ProcessManager` in `mcp_inspector_executor.py` to handle retries and graceful shutdown.  
+     - Inspect `stdout`/`stderr` logs for errors.
+
+3. MCP Inspector Installation Issues  
+   - Methods:  
+     1. `npm install @modelcontextprotocol/inspector`  
+     2. Global install or use within CI containers.  
+   - Troubleshooting:  
+     - Ensure the package version in `package.json` matches the installed version.  
+     - Check that `node >=18.0.0` is available.
+
+4. Server Initialization and Ready Signal Problems  
+   - Verify the server sends:  
+     ```json
+     {
+       "jsonrpc": "2.0",
+       "method": "server/ready",
+       "params": {}
+     }
+     ```  
+   - Confirm initialization sequence:  
+     1. Client sends `initialize` with proper params.  
+     2. Server replies with capabilities.  
+     3. Server sets its `initialized` flag before handling other requests.
+
+5. Debugging Steps  
+   - Enable verbose logging in `settings.yaml` (`inspector.enable_verbose_logging`).  
+   - Manually send RPC messages via STDIO or HTTP to simulate handshake.  
+   - Check the `stdio_server.log` for detailed timestamps and errors.
+
+6. Performance Considerations  
+   - Adjust `mcp_stdio_timeout`, `mcp_http_timeout`, and `mcp_inspector_retries` based on environment speed.  
+   - When testing in CI, monitor resource usage and logs for early failure indications.
+
+7. Environment Variable Overrides  
+   - You can override settings in `config/settings.yaml` via environment variables:  
+     - `MCP_STDIO_TIMEOUT`  
+     - `MCP_HTTP_TIMEOUT`  
+     - `MCP_INSPECTOR_RETRIES`  
+     - `INSPECTOR_VERBOSE_LOGGING`
