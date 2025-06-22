@@ -43,38 +43,43 @@ _neo4j_settings: Optional[GlobalSettings] = None
 _driver: Optional[Driver] = None  # Backwards compatibility for tests
 
 
-class Neo4jDriverManager:
-    """Thread-safe manager for the Neo4j driver."""
+class Neo4jDriverPool:
+    """Thread-safe pool managing a single Neo4j driver instance."""
 
     def __init__(self) -> None:
         self._driver: Optional[Driver] = None
         self._lock = threading.Lock()
         atexit.register(self.cleanup)
 
-    def _create_driver(self) -> Driver:
+    def _create_new_driver(self) -> Driver:
         settings = get_neo4j_settings().neo4j
         return create_neo4j_driver(settings)
+
+    def _cleanup_old_driver(self) -> None:
+        if self._driver and not self._driver.closed:
+            try:
+                self._driver.close()
+            except Exception as exc:  # pragma: no cover - log and continue
+                logger.warning(f"Error closing old driver: {exc}")
 
     def get_driver(self) -> Driver:
         with self._lock:
             if self._driver is None or self._driver.closed:
-                self._driver = self._create_driver()
-if self._driver:
-    global _driver
-    _driver = self._driver
+                self._cleanup_old_driver()
+                self._driver = self._create_new_driver()
+            global _driver
+            _driver = self._driver
             return self._driver
 
     def cleanup(self) -> None:
-        if self._driver and not self._driver.closed:
-            logger.info("Closing Neo4j driver.")
-            self._driver.close()
+        with self._lock:
+            self._cleanup_old_driver()
             self._driver = None
-if self._driver is not None:
-    global _driver
-    _driver = None
+        global _driver
+        _driver = None
 
 
-driver_manager = Neo4jDriverManager()
+driver_pool = Neo4jDriverPool()
 
 # Allowed labels for node creation to mitigate injection attacks
 ALLOWED_LABELS = {"User", "Document", "Hypothesis", "Evidence"}
@@ -161,9 +166,8 @@ def get_neo4j_settings() -> GlobalSettings:
 def get_neo4j_driver() -> Driver:
     """Return a singleton Neo4j driver instance."""
 
-
     try:
-        return driver_manager.get_driver()
+        return driver_pool.get_driver()
     except ServiceUnavailable:
         raise
     except Exception as e:
@@ -173,7 +177,7 @@ def get_neo4j_driver() -> Driver:
 
 def close_neo4j_driver() -> None:
     """Close the Neo4j driver if it is open."""
-    driver_manager.cleanup()
+    driver_pool.cleanup()
 
 
 # --- Query Execution ---
@@ -267,7 +271,6 @@ async def execute_query(
 
 
 async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
-
     # Validate label to prevent injection
     if not label.replace("_", "").replace("-", "").isalnum():
         raise ValueError(
@@ -280,10 +283,6 @@ async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
         + "}) RETURN n"
     )
     return await execute_query(query, properties, tx_type="write")
-
-
-    query = f"CREATE (n:{clean_label}) SET n = $props RETURN n"
-    return await execute_query(query, {"props": properties}, tx_type="write")
 
 
 async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
@@ -315,13 +314,11 @@ async def delete_node(node_id: str) -> list[Record]:
     except ValueError:
         raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
 
-
     query = "MATCH (n) WHERE id(n) = $id DETACH DELETE n RETURN count(n)"
     return await execute_query(query, {"id": node_id_int}, tx_type="write")
 
 
 async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
-
     # Validate label to prevent injection
     if not label.replace("_", "").replace("-", "").isalnum():
         raise ValueError(
@@ -340,19 +337,15 @@ async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
     return await execute_query(query, filters)
 
 
-
 async def create_relationship(
     from_id: str, to_id: str, rel_type: str, properties: dict[str, Any]
 ) -> list[Record]:
-
     # Validate relationship type to prevent injection
     if not rel_type.replace("_", "").replace("-", "").isalnum():
-
         raise ValueError(
             f"Invalid relationship type: {rel_type}. "
             "Must be alphanumeric with underscores/hyphens only."
         )
-
 
     # Validate property names to prevent injection
     for key in properties:
@@ -361,7 +354,6 @@ async def create_relationship(
                 f"Invalid property name: {key}. "
                 "Property names must be alphanumeric with underscores/hyphens only."
             )
-
 
     # Validate node IDs
     try:
@@ -373,7 +365,7 @@ async def create_relationship(
             "Invalid node IDs. Both from_id and to_id must be valid integers."
         )
 
-
+    clean_rel_type = sanitize_cypher_input(rel_type)
     query = (
         f"MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
         f"CREATE (a)-[r:{clean_rel_type}]->(b) SET r = $props RETURN r"
@@ -396,8 +388,6 @@ async def validate_connection() -> bool:
 
 
 async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Record]:
-
-
     # Validate label to prevent injection
     if not label.replace("_", "").replace("-", "").isalnum():
         raise ValueError(
@@ -406,7 +396,6 @@ async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Rec
 
     # Use UNWIND for efficient bulk creation
     query = f"UNWIND $nodes AS nodeData CREATE (n:{label}) SET n = nodeData RETURN n"
-
 
     return await execute_query(query, {"nodes": nodes}, tx_type="write")
 
@@ -465,7 +454,6 @@ async def ensure_indexes() -> None:
 
 async def execute_cypher_file(path: str) -> list[Record]:
     try:
-
         with open(path, "r", encoding="utf-8") as f:
             query = f.read()
     except FileNotFoundError as exc:

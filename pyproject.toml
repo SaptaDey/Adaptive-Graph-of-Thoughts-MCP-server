@@ -131,8 +131,10 @@ ignore_missing_imports = true # Start with this, can be made stricter later
 explicit_package_bases = true
 namespace_packages = true
 # Add paths for mypy to check, typically your source directory
-files = "src/adaptive_graph_of_thoughts"
-mypy_path = "src"
+# Specify the package rather than the path to avoid duplicate-module errors
+files = "adaptive_graph_of_thoughts"
+# mypy_path is unnecessary when explicit_package_bases is enabled
+# Removing it avoids duplicate module discovery
 
 [tool.pytest.ini_options]
 pythonpath = ["src"] # Add src to pythonpath for tests
