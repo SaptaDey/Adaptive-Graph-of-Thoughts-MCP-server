@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 
 TOOLS_LIST = [
     {
@@ -27,6 +27,10 @@ tools_router = APIRouter()
 
 
 @tools_router.get("/tools", tags=["Tools"])
-async def list_tools() -> dict[str, list[dict[str, str]]]:
-    """Return a list of available MCP tools."""
+async def list_tools(request: Request) -> dict[str, list[dict[str, str]]]:
+    """Return a list of available MCP tools only when ready."""
+    got_processor = getattr(request.app.state, "got_processor", None)
+    if got_processor and not getattr(got_processor, "models_loaded", True):
+        return {"tools": []}
+
     return {"tools": TOOLS_LIST}
