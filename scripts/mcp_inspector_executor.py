@@ -17,7 +17,23 @@ if __name__ == "__main__":
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
         )
-        time.sleep(2)
+        
+        # Wait for server to be ready with retries
+        import requests
+        max_retries = 10
+        for i in range(max_retries):
+            time.sleep(0.5)
+            try:
+                response = requests.get("http://localhost:8000/health", timeout=1)
+                if response.status_code == 200:
+                    break
+            except (requests.RequestException, requests.ConnectionError):
+                if i == max_retries - 1:
+                    server_proc.terminate()
+                    server_proc.wait()
+                    raise RuntimeError("HTTP server failed to start within timeout")
+                continue
+
         command = [
             "mcp-inspector",
             "--cli",
