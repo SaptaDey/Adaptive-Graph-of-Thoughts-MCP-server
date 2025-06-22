@@ -52,10 +52,7 @@ async def verify_token(http_request: Request):
 
     token = auth_header[7:]
 
-    expected_hash = hashlib.sha256(settings.app.auth_token.encode()).hexdigest()
-    provided_hash = hashlib.sha256(token.encode()).hexdigest()
-
-    if not hmac.compare_digest(expected_hash, provided_hash):
+    if not hmac.compare_digest(settings.app.auth_token.encode(), token.encode()):
         raise HTTPException(status_code=403, detail="Invalid token")
 
     return True
