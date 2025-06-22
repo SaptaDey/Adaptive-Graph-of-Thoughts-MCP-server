@@ -23,7 +23,7 @@ def create_checkpoint(session_data: GoTProcessorSessionData) -> GoTProcessorSess
     return session_data.copy(deep=True)
 
 
-async def restore_checkpoint(
+def restore_checkpoint(
     session_data: GoTProcessorSessionData,
     checkpoint: GoTProcessorSessionData,
 ) -> None:
