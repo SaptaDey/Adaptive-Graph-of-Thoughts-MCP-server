@@ -57,8 +57,9 @@ class Neo4jDriverManager:
         with self._lock:
             if self._driver is None or self._driver.closed:
                 self._driver = self._create_driver()
-            global _driver
-            _driver = self._driver
+if self._driver:
+    global _driver
+    _driver = self._driver
             return self._driver
 
     def cleanup(self) -> None:
