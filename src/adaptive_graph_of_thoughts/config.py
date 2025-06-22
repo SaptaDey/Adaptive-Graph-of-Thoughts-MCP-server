@@ -29,7 +29,6 @@ class AGoTSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
 
-
 class EnvSettings(AGoTSettings):
     """Backward-compatible alias used in tests."""
 
@@ -314,10 +313,47 @@ class LegacyConfig:
         return cls(**data)
 
     @classmethod
-    def load_with_overrides(cls, base_file: str, override_file: str) -> "LegacyConfig":
-        """Load config with hierarchical overrides."""
-        # Load base config normally
-        base_config = cls.load(base_file)
+    def load_with_overrides(
+        cls,
+        base_file: str,
+        override_file: str,
+        _loading_stack: set[Path] | None = None,
+    ) -> "LegacyConfig":
+        """Load config with hierarchical overrides.
+
+        Parameters
+        ----------
+        base_file:
+            Path to the base configuration file.
+        override_file:
+            Path to the file containing values that override the base
+            configuration.
+        _loading_stack:
+            Internal set used to detect circular dependencies when configuration
+            files reference each other recursively.
+        """
+
+        if _loading_stack is None:
+            _loading_stack = set()
+
+        base_path = Path(base_file).resolve()
+        override_path = Path(override_file).resolve()
+
+        if (
+            base_path == override_path
+            or base_path in _loading_stack
+            or override_path in _loading_stack
+        ):
+            raise ValueError(
+                f"Circular dependency detected in config files: {', '.join(str(p) for p in _loading_stack)}"
+            )
+
+        _loading_stack.add(base_path)
+        try:
+            # Load base config normally
+            base_config = cls.load(str(base_path))
+        finally:
+            _loading_stack.remove(base_path)
 
         # Load override data without validation
         path = Path(override_file)
