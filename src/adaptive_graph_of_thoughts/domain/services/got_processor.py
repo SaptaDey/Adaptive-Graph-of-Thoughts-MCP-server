@@ -94,11 +94,18 @@ class GoTProcessor:
         Initializes a GoTProcessor instance with the provided settings.
         """
         self.settings = settings
+        # Flag used by health checks to determine if the processor is ready to
+        # handle requests. It starts as False and is set to True once all stages
+        # (and implicitly any required models) are loaded.
+        self.models_loaded = False
+
         logger.info("Initializing GoTProcessor")
         self.stages = self._initialize_stages()
         logger.info(
             f"GoTProcessor initialized with {len(self.stages)} configured and enabled stages."
         )
+        # Mark the processor as ready for use
+        self.models_loaded = True
 
     def _initialize_stages(self) -> list[BaseStage]:
         """
