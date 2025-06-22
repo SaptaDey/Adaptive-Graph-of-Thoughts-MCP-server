@@ -59,9 +59,9 @@ class Neo4jDriverManager:
         with self._lock:
             if self._driver is None or self._driver.closed:
                 self._driver = self._create_driver()
-if self._driver:
-    global _driver
-    _driver = self._driver
+                if self._driver:
+                    global _driver
+                    _driver = self._driver
             return self._driver
 
     def cleanup(self) -> None:
@@ -69,9 +69,9 @@ if self._driver:
             logger.info("Closing Neo4j driver.")
             self._driver.close()
             self._driver = None
-if self._driver is not None:
-    global _driver
-    _driver = None
+        if self._driver is not None:
+            global _driver
+            _driver = None
 
 
 driver_manager = Neo4jDriverManager()
@@ -282,10 +282,6 @@ async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
     return await execute_query(query, properties, tx_type="write")
 
 
-    query = f"CREATE (n:{clean_label}) SET n = $props RETURN n"
-    return await execute_query(query, {"props": properties}, tx_type="write")
-
-
 async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
     # Validate property names to prevent injection
     for key in updates:
@@ -293,9 +289,6 @@ async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
             raise ValueError(
                 f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only."
             )
-
-
-async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
     try:
         node_id_int = int(node_id)
     except ValueError as exc:
