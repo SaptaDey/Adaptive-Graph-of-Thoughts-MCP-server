@@ -59,9 +59,9 @@ class Neo4jDriverManager:
         with self._lock:
             if self._driver is None or self._driver.closed:
                 self._driver = self._create_driver()
-if self._driver:
-    global _driver
-    _driver = self._driver
+                if self._driver:
+                    global _driver
+                    _driver = self._driver
             return self._driver
 
     def cleanup(self) -> None:
@@ -69,9 +69,9 @@ if self._driver:
             logger.info("Closing Neo4j driver.")
             self._driver.close()
             self._driver = None
-if self._driver is not None:
-    global _driver
-    _driver = None
+        if self._driver is not None:
+            global _driver
+            _driver = None
 
 
 driver_manager = Neo4jDriverManager()
@@ -282,10 +282,6 @@ async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
     return await execute_query(query, properties, tx_type="write")
 
 
-    query = f"CREATE (n:{clean_label}) SET n = $props RETURN n"
-    return await execute_query(query, {"props": properties}, tx_type="write")
-
-
 async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
     # Validate property names to prevent injection
     for key in updates:
@@ -347,11 +343,11 @@ async def create_relationship(
 
     # Validate relationship type to prevent injection
     if not rel_type.replace("_", "").replace("-", "").isalnum():
-
         raise ValueError(
             f"Invalid relationship type: {rel_type}. "
             "Must be alphanumeric with underscores/hyphens only."
         )
+    clean_rel_type = sanitize_cypher_input(rel_type)
 
 
     # Validate property names to prevent injection
