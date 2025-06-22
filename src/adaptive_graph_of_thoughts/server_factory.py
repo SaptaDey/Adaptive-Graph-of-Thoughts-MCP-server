@@ -20,6 +20,7 @@ from adaptive_graph_of_thoughts.api.schemas import (
     create_jsonrpc_error,
 )
 from adaptive_graph_of_thoughts.config import settings
+from adaptive_graph_of_thoughts.services.resource_monitor import ResourceMonitor
 
 # Using lazy imports to avoid circular dependencies
 
@@ -78,7 +79,8 @@ class MCPServerFactory:
         )
 
         # Initialize GoT processor
-        got_processor = GoTProcessor(settings=settings)
+        resource_monitor = ResourceMonitor()
+        got_processor = GoTProcessor(settings=settings, resource_monitor=resource_monitor)
         read_transport: Optional[asyncio.Transport] = None
 
         try:

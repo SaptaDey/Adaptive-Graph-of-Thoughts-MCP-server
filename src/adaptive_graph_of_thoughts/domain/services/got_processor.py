@@ -3,6 +3,8 @@ import time
 import uuid
 from typing import Any, Optional
 
+from adaptive_graph_of_thoughts.services.resource_monitor import ResourceMonitor
+
 from loguru import logger
 from pydantic import ValidationError
 
@@ -89,11 +91,12 @@ async def execute_stage_with_recovery(
 
 
 class GoTProcessor:
-    def __init__(self, settings):
+    def __init__(self, settings, resource_monitor: Optional[ResourceMonitor] = None):
         """
         Initializes a GoTProcessor instance with the provided settings.
         """
         self.settings = settings
+        self.resource_monitor = resource_monitor or ResourceMonitor()
         logger.info("Initializing GoTProcessor")
         self.stages = self._initialize_stages()
         logger.info(
@@ -241,6 +244,16 @@ class GoTProcessor:
         logger.info(f"Executing {len(self.stages)} configured processing stages.")
 
         for i, stage_instance in enumerate(self.stages):
+            if self.resource_monitor and not await self.resource_monitor.check_resources():
+                logger.error(
+                    "Resource limits exceeded; halting processing before stage %s",
+                    stage_instance.__class__.__name__,
+                )
+                current_session_data.final_answer = (
+                    "Processing halted due to server resource limits."
+                )
+                current_session_data.final_confidence_vector = [0.0, 0.0, 0.0, 0.0]
+                break
             stage_start_time = time.time()
 
             stage_module_path = f"{stage_instance.__class__.__module__}.{stage_instance.__class__.__name__}"
