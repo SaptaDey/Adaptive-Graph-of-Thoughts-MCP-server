@@ -4,6 +4,7 @@ import uuid
 from typing import Any, Optional
 
 from loguru import logger
+from pydantic import ValidationError
 
 from ..models.common_types import (
     ComposedOutput,
@@ -14,6 +15,38 @@ from ..models.common_types import (
 from ..stages import import_stages
 from ..stages.base_stage import BaseStage, StageOutput
 from ..stages.exceptions import StageInitializationError
+from .exceptions import StageExecutionError
+
+
+async def cleanup_stage_resources(stage_instance: BaseStage) -> None:
+    """Attempt to cleanup resources for a stage instance."""
+    if hasattr(stage_instance, "cleanup"):
+        try:
+            await stage_instance.cleanup()  # type: ignore[attr-defined]
+        except Exception as cleanup_error:  # pragma: no cover - best effort
+            logger.warning(
+                f"Cleanup failed for {stage_instance.__class__.__name__}: {cleanup_error}"
+            )
+
+
+async def execute_stage_safely(
+    stage_instance: BaseStage, session_data: GoTProcessorSessionData
+) -> StageOutput:
+    """Execute a stage with error handling and cleanup."""
+    try:
+        return await stage_instance.execute(current_session_data=session_data)
+    except StageInitializationError as e:
+        logger.error(f"Stage initialization failed: {e}")
+        raise StageExecutionError(stage_instance.__class__.__name__, e) from e
+    except ValidationError as e:
+        logger.error(f"Stage validation failed: {e}")
+        raise StageExecutionError(stage_instance.__class__.__name__, e) from e
+    except Exception as e:  # pragma: no cover - unexpected errors
+        logger.exception(
+            f"Unexpected error in stage {stage_instance.__class__.__name__}"
+        )
+        await cleanup_stage_resources(stage_instance)
+        raise StageExecutionError(stage_instance.__class__.__name__, e) from e
 
 
 class GoTProcessor:
@@ -207,8 +240,8 @@ class GoTProcessor:
             logger.debug(f"--- End Preparing for Stage: {stage_name_for_log} ---")
 
             try:
-                stage_result = await stage_instance.execute(
-                    current_session_data=current_session_data
+                stage_result = await execute_stage_safely(
+                    stage_instance, current_session_data
                 )
 
                 logger.debug(f"--- Output from Stage: {stage_name_for_log} ---")
@@ -402,18 +435,20 @@ class GoTProcessor:
                             "no_subgraph_extracted"
                         ] = True
 
-            except Exception as e:
+            except StageExecutionError as e:
                 logger.exception(
-                    f"Unhandled critical error during execution of stage {stage_name_for_log}: {e!s}"
+                    f"Critical error during execution of stage {stage_name_for_log}: {e.original_error!s}"
                 )
-                halt_msg = f"A critical unhandled error occurred during the '{stage_name_for_log}' stage. Processing cannot continue."
+                halt_msg = (
+                    f"A critical error occurred during the '{stage_name_for_log}' stage. Processing cannot continue."
+                )
                 current_session_data.final_answer = halt_msg
                 current_session_data.final_confidence_vector = [0.0, 0.0, 0.0, 0.0]
 
                 critical_error_trace = {
                     "stage_number": i + 1,
                     "stage_name": stage_name_for_log,
-                    "error": f"Unhandled Critical Exception: {e!s}",
+                    "error": f"StageExecutionError: {e.original_error!s}",
                     "summary": halt_msg,
                     "duration_ms": int((time.time() - stage_start_time) * 1000),
                 }
