@@ -59,9 +59,9 @@ class Neo4jDriverManager:
         with self._lock:
             if self._driver is None or self._driver.closed:
                 self._driver = self._create_driver()
-if self._driver:
-    global _driver
-    _driver = self._driver
+                if self._driver:
+                    global _driver
+                    _driver = self._driver
             return self._driver
 
     def cleanup(self) -> None:
@@ -69,9 +69,9 @@ if self._driver:
             logger.info("Closing Neo4j driver.")
             self._driver.close()
             self._driver = None
-if self._driver is not None:
-    global _driver
-    _driver = None
+        if self._driver is not None:
+            global _driver
+            _driver = None
 
 
 driver_manager = Neo4jDriverManager()
@@ -133,9 +133,14 @@ def create_neo4j_driver(settings: Neo4jSettings) -> Driver:
     driver = GraphDatabase.driver(
         settings.uri,
         auth=(settings.user, settings.password),
-        max_connection_lifetime=3600,
+        max_connection_lifetime=3600,  # 1 hour
         max_connection_pool_size=50,
         connection_acquisition_timeout=60,
+        connection_timeout=30,
+        max_retry_time=30,
+        initial_retry_delay=1.0,
+        retry_delay_multiplier=2.0,
+        retry_delay_jitter_factor=0.2,
     )
     driver.verify_connectivity()
     logger.info("Neo4j driver initialized and connectivity verified.")
@@ -441,7 +446,8 @@ async def bulk_create_nodes_optimized(
             tx_type="write",
         )
         all_results.extend(batch_results)
-        await asyncio.sleep(0.01)
+        if i + batch_size < len(nodes):
+            await asyncio.sleep(0.01)
 
     return all_results
 
