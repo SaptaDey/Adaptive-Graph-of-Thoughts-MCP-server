@@ -40,7 +40,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /tmp/* /var/tmp/*
 
 # Environment variables for Python and MCP transport default
-ENV PYTHONUNBUFFERED=1 \
+ENV SMITHERY_MODE=true
+    PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH="/app" \
     APP_HOME=/app \
@@ -74,7 +75,7 @@ USER appuser
 # Expose the FastAPI port
 EXPOSE 8000
 
-# Add a health check for the application
+# Ensure health check works without auth
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
