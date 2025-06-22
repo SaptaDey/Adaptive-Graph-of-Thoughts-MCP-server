@@ -232,8 +232,13 @@ async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
 
 
 async def delete_node(node_id: str) -> list[Record]:
+    try:
+        node_id_int = int(node_id)
+    except ValueError:
+        raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
+    
     query = "MATCH (n) WHERE id(n) = $id DETACH DELETE n RETURN count(n)"
-    return await execute_query(query, {"id": int(node_id)}, tx_type="write")
+    return await execute_query(query, {"id": node_id_int}, tx_type="write")
 
 
 async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
