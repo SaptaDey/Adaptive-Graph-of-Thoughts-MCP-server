@@ -20,6 +20,7 @@ from src.adaptive_graph_of_thoughts.api.routes.mcp import mcp_router
 from src.adaptive_graph_of_thoughts.api.routes.nlq import nlq_router
 from src.adaptive_graph_of_thoughts.api.routes.explorer import explorer_router
 from src.adaptive_graph_of_thoughts.api.routes.tools import tools_router
+from src.adaptive_graph_of_thoughts.api.routes.mcp_public import mcp_public_router
 from src.adaptive_graph_of_thoughts.config import (
     RuntimeSettings,
     runtime_settings,
@@ -443,6 +444,12 @@ def create_app() -> FastAPI:
         mcp_public_router,
         prefix="/mcp",
         tags=["MCP"],
+    )
+    app.include_router(
+        mcp_router,
+        prefix="/admin/mcp",
+        tags=["Admin MCP"],
+        dependencies=[Depends(get_basic_auth)],
     )
     app.include_router(nlq_router, dependencies=[Depends(get_basic_auth)])
     app.include_router(explorer_router, dependencies=[Depends(get_basic_auth)])
