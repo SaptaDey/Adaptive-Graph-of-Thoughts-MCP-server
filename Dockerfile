@@ -66,7 +66,7 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy application code and configuration
 COPY --chown=appuser:appuser --chmod=755 ./src ./src
-COPY --chown=appuser:appuser --chmod=600 ./config ./config
+COPY --chown=appuser:appuser --chmod=700 ./config ./config
 
 # Copy and enable entrypoint script
 COPY ./scripts/docker-entrypoint.sh /entrypoint.sh
