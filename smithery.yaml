@@ -2,22 +2,24 @@ runtime: "container"
 build:
   dockerfile: "Dockerfile"
   dockerBuildPath: "."
+
 startCommand:
   type: "http"
   containerPort: 8000
+  healthCheckPath: "/health"
+  mcpEndpoint: "/mcp"  # ✅ Specify MCP endpoint
   command:
     - "/entrypoint.sh"
     - "http"
+  
   configSchema:
     type: "object"
     properties:
-      apiKey:
-        type: "string"
-        description: "Your API key"
+      # ✅ Remove apiKey requirement for MCP access
       NEO4J_URI:
         type: "string"
-        description: "Neo4j connection URI"
-        default: "bolt://localhost:7687"
+        description: "Neo4j connection URI (use embedded for testing)"
+        default: "bolt://neo4j:7687"
       NEO4J_USER:
         type: "string"
         description: "Neo4j username"
@@ -25,48 +27,54 @@ startCommand:
       NEO4J_PASSWORD:
         type: "string"
         description: "Neo4j password"
+        default: "password"
       NEO4J_DATABASE:
         type: "string"
         description: "Neo4j database name"
         default: "neo4j"
-      GOOGLE_SCHOLAR_API_KEY:
+      BASIC_AUTH_USER:
         type: "string"
-        description: "API key for Google Scholar/SerpApi"
-      PUBMED_API_KEY:
+        description: "Admin dashboard username"
+        default: "admin"
+      BASIC_AUTH_PASS:
         type: "string"
-        description: "API key for PubMed"
-      EXA_SEARCH_API_KEY:
-        type: "string"
-        description: "API key for Exa Search"
-      CLAUDE_API_KEY:
-        type: "string"
-        description: "API key for Claude"
+        description: "Admin dashboard password"
+        default: "changeme"
       PORT:
         type: "integer"
-        description: "Port for the HTTP server"
+        description: "HTTP server port"
         default: 8000
     required:
-      - apiKey
       - NEO4J_URI
       - NEO4J_USER
       - NEO4J_PASSWORD
-      - NEO4J_DATABASE
+
   exampleConfig:
-    apiKey: "sk-example123"
-    NEO4J_URI: "bolt://localhost:7687"
+    NEO4J_URI: "bolt://neo4j:7687"
     NEO4J_USER: "neo4j"
-    NEO4J_PASSWORD: "changeme"
+    NEO4J_PASSWORD: "password"
     NEO4J_DATABASE: "neo4j"
+    BASIC_AUTH_USER: "admin"
+    BASIC_AUTH_PASS: "changeme"
     PORT: 8000
 
+# ✅ Properly define MCP tools
 tools:
-  - name: "initialize"
-    description: "Initialize connection with the MCP server"
   - name: "asr_got.query"
-    description: "Execute an Adaptive Graph of Thoughts reasoning query"
-  - name: "shutdown"
-    description: "Shut down the MCP server"
-  - name: "nlq"
-    description: "Translate natural language questions into Cypher"
-  - name: "graph_explorer"
-    description: "Retrieve graph data for visualization"
+    description: "Execute an Adaptive Graph of Thoughts reasoning query for complex scientific problems"
+    inputSchema:
+      type: "object"
+      properties:
+        query:
+          type: "string"
+          description: "The scientific question or problem to analyze"
+        parameters:
+          type: "object"
+          properties:
+            include_reasoning_trace:
+              type: "boolean"
+              default: true
+            include_graph_state:
+              type: "boolean"
+              default: false
+      required: ["query"]
