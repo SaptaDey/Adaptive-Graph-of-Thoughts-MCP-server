@@ -16,6 +16,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.templating import Jinja2Templates
 from loguru import logger  # type: ignore
 from neo4j import GraphDatabase
+from neo4j.exceptions import ServiceUnavailable, AuthError, Neo4jError
 
 
 from src.adaptive_graph_of_thoughts.api.routes.explorer import explorer_router
@@ -76,8 +77,17 @@ def _test_conn(uri: str, user: str, password: str, database: str) -> bool:
             session.run("RETURN 1")
         driver.close()
         return True
+    except ServiceUnavailable as e:
+        logger.warning(f"Neo4j connection failed: Service unavailable. Error: {e}")
+        return False
+    except AuthError as e:
+        logger.warning(f"Neo4j connection failed: Authentication error. Error: {e}")
+        return False
+    except Neo4jError as e:
+        logger.warning(f"Neo4j connection failed: {e}")
+        return False
     except Exception as e:
-        logger.warning(f"Neo4j connection failed during test: {e}")
+        logger.error(f"An unexpected error occurred during Neo4j connection test: {e}")
         return False
 
 
