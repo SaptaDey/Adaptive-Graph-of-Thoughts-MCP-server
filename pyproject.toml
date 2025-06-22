@@ -48,6 +48,21 @@ prometheus-client = "^0.21.0"
 structlog = "^24.4.0"
 sentry-sdk = {extras = ["fastapi"], version = "^2.17.0"}
 
+[tool.poetry.scripts]
+# Existing scripts...
+mcp-server = "adaptive_graph_of_thoughts.main:main"
+mcp-stdio = "adaptive_graph_of_thoughts.main_stdio:main"
+setup-mcp-client = "adaptive_graph_of_thoughts.setup.client_setup:main"
+
+[tool.poetry.extras]
+mcp = ["mcp-sdk", "stdio-transport"]
+clients = ["claude-desktop", "vscode-mcp"]
+
+[project.urls]
+"MCP Tools" = "https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/blob/main/config/mcp_tools_definition.json"
+"Client Configurations" = "https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/tree/main/config/client_configurations"
+"Smithery" = "https://smithery.ai/server/@SaptaDey/graph-of-thought-mcp"
+
 # Optional for graph visualization utils later, uncomment if needed
 # matplotlib = "^3.8.0"
 
