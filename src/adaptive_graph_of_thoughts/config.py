@@ -29,7 +29,6 @@ class AGoTSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
 
-
 class EnvSettings(AGoTSettings):
     """Backward-compatible alias used in tests."""
 
@@ -314,10 +313,53 @@ class LegacyConfig:
         return cls(**data)
 
     @classmethod
-    def load_with_overrides(cls, base_file: str, override_file: str) -> "LegacyConfig":
-        """Load config with hierarchical overrides."""
-        # Load base config normally
-        base_config = cls.load(base_file)
+    def load_with_overrides(
+        cls,
+        base_file: str,
+        override_file: str,
+    def load_with_overrides(
+        base_path: Path,
+        override_path: Path,
+        *,
+        _loading_stack: Optional[set[Path]] = None,
+    ) -> Config:
+    ) -> "LegacyConfig":
+        """Load config with hierarchical overrides.
+
+        Parameters
+        ----------
+        base_file:
+            Path to the base configuration file.
+        override_file:
+            Path to the file containing values that override the base
+            configuration.
+        _loading_stack:
+            Internal set used to detect circular dependencies when configuration
+            files reference each other recursively.
+        """
+
+        if _loading_stack is None:
+            _loading_stack = set()
+
+        base_path = Path(base_file).resolve()
+        override_path = Path(override_file).resolve()
+
+        if base_path == override_path:
+            raise ValueError(f"Circular dependency detected: config file '{base_path}' cannot override itself.")
+
+        if base_path in _loading_stack or override_path in _loading_stack:
+            # Add current base_path to the stack for a more informative error message
+            current_chain = list(_loading_stack) + [base_path]
+            raise ValueError(
+                f"Circular dependency detected in config files: {' -> '.join(map(str, current_chain))}"
+            )
+
+        _loading_stack.add(base_path)
+        try:
+            # Load base config normally
+            base_config = cls.load(str(base_path))
+        finally:
+            _loading_stack.remove(base_path)
 
         # Load override data without validation
         path = Path(override_file)

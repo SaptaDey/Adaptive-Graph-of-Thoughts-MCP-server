@@ -580,6 +580,11 @@ class TestLegacyConfigEnvironment:
             if os.path.exists(override_path):
                 os.unlink(override_path)
 
+    def test_load_with_overrides_circular(self, temp_config_file):
+        """Circular references should raise an error."""
+        with pytest.raises(ValueError, match="Circular dependency"):
+            LegacyConfig.load_with_overrides(temp_config_file, temp_config_file)
+
 
 class TestDataclassConfigurations:
     """Test dataclass-based configuration classes."""
