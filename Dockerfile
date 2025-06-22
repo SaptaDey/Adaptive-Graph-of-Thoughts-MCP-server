@@ -41,6 +41,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
+# Copy MCP configuration files
+COPY config/mcp_tools_definition.json /app/config/
+COPY config/client_configurations/ /app/config/client_configurations/
+
+# Set MCP-specific environment variables
+ENV MCP_TOOLS_CONFIG=/app/config/mcp_tools_definition.json
+ENV MCP_CLIENT_CONFIGS=/app/config/client_configurations
+
 # Environment variables for Python and MCP transport default
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
