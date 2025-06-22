@@ -40,14 +40,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /tmp/* /var/tmp/*
 
 # Environment variables for Python and MCP transport default
-ENV SMITHERY_MODE=true
-    PYTHONUNBUFFERED=1 \
+ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH="/app" \
     APP_HOME=/app \
     PYTHONHASHSEED=random \
     MCP_TRANSPORT_TYPE=http \
     PORT=8000
+
+ENV SMITHERY_MODE=true
 
 WORKDIR ${APP_HOME}
 
