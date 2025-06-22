@@ -12,6 +12,7 @@ from ...services.api_clients.exa_search_client import (
 )
 from ...services.api_clients.google_scholar_client import (
     GoogleScholarClient,
+    GoogleScholarClientError,
     UnexpectedResponseStructureError,
 )
 

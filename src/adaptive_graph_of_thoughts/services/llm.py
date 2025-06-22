@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 import os
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Optional
 
 from loguru import logger
-
-from dataclasses import dataclass, asdict, field
-from typing import Any, Dict, List, Optional
 
 from ..config import env_settings
 
@@ -87,6 +86,7 @@ class LLMService:
         }
 
     # Utility methods used in tests
+    def _validate_messages(self, messages: List[Dict[str, str]]) -> None:
         if not messages:
             raise ValueError("Messages cannot be empty")
         for msg in messages:
@@ -96,7 +96,7 @@ class LLMService:
                 raise ValueError("Each message must have 'role' and 'content' keys")
             if msg["role"] not in {"system", "user", "assistant"}:
                 raise ValueError("Message role must be 'system', 'user', or 'assistant'")
-            if len(msg["content"]) > 1000: # Limit content length
+            if len(msg["content"]) > 1000:  # Limit content length
                 raise ValueError("Message content exceeds maximum length")
 
     def _generate_cache_key(self, messages: List[Dict[str, str]], **kwargs: Any) -> str:
