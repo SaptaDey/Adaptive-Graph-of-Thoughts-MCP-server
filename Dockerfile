@@ -29,13 +29,14 @@ RUN poetry config virtualenvs.create false && \
 FROM python:3.13.3-slim-bookworm@sha256:914bf5c12ea40a97a78b2bff97fbdb766cc36ec903bfb4358faf2b74d73b555b AS runtime
 
 # Install only essential runtime dependencies including Node.js for Inspector
+# libcap2-bin provides the `setcap` utility
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi8 \
     wget \
     curl \
     nodejs \
     npm \
-    libcap2-bin \  # provides setcap
+    libcap2-bin \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
