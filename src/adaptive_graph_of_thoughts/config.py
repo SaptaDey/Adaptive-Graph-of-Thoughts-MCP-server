@@ -28,7 +28,12 @@ class AGoTSettings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
 
-env_settings = AGoTSettings()
+
+class EnvSettings(AGoTSettings):
+    """Backward-compatible alias used in tests."""
+
+
+env_settings = EnvSettings()
 
 # Thread safety lock
 _config_lock = Lock()

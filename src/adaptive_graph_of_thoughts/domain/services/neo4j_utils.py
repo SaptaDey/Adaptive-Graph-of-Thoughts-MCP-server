@@ -2,11 +2,13 @@ import asyncio
 from typing import Any, Optional
 
 from loguru import logger
+from dataclasses import dataclass
 from neo4j import (
     Driver,
     GraphDatabase,
     Record,
     Result,
+    Session,
     Transaction,
     unit_of_work,
 )
@@ -35,6 +37,28 @@ class GlobalSettings:
 
 _neo4j_settings: Optional[GlobalSettings] = None
 _driver: Optional[Driver] = None
+
+
+@dataclass
+class Neo4jConnection:
+    """Lightweight Neo4j connection wrapper used in unit tests."""
+
+    uri: str
+    user: str
+    password: str
+    database: str = "neo4j"
+
+    def __post_init__(self) -> None:
+        self._driver: Driver | None = None
+
+    def connect(self) -> None:
+        if self._driver is None:
+            self._driver = GraphDatabase.driver(self.uri, auth=(self.user, self.password))
+
+    def close(self) -> None:
+        if self._driver:
+            self._driver.close()
+            self._driver = None
 
 
 def create_neo4j_driver(settings: Neo4jSettings) -> Driver:
@@ -191,6 +215,129 @@ async def execute_query(
         raise  # Re-raise any other unexpected exception
 
     return records
+
+
+async def create_node(label: str, properties: dict[str, Any]) -> list[Record]:
+    # Validate label to prevent injection
+    if not label.replace('_', '').replace('-', '').isalnum():
+        raise ValueError(f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only.")
+    
+    query = (
+        f"CREATE (n:{label} {{" + ", ".join(f"{k}: ${k}" for k in properties) + "}) RETURN n"
+    )
+    return await execute_query(query, properties, tx_type="write")
+
+
+async def update_node(node_id: str, updates: dict[str, Any]) -> list[Record]:
+    # Validate property names to prevent injection
+    for key in updates:
+        if not key.replace('_', '').replace('-', '').isalnum():
+            raise ValueError(f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only.")
+
+    set_clause = ", ".join(f"n.{k} = ${k}" for k in updates)
+    query = f"MATCH (n) WHERE id(n) = $id SET {set_clause} RETURN n"
+    try:
+        params = {"id": int(node_id), **updates}
+    except ValueError:
+        raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
+    return await execute_query(query, params, tx_type="write")
+
+
+async def delete_node(node_id: str) -> list[Record]:
+    try:
+        node_id_int = int(node_id)
+    except ValueError:
+        raise ValueError(f"Invalid node_id: {node_id}. Must be a valid integer.")
+    
+    query = "MATCH (n) WHERE id(n) = $id DETACH DELETE n RETURN count(n)"
+    return await execute_query(query, {"id": node_id_int}, tx_type="write")
+
+
+async def find_nodes(label: str, filters: dict[str, Any]) -> list[Record]:
+    # Validate label to prevent injection
+    if not label.replace('_', '').replace('-', '').isalnum():
+        raise ValueError(f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only.")
+
+    # Validate property names to prevent injection
+    for key in filters:
+        if not key.replace('_', '').replace('-', '').isalnum():
+            raise ValueError(f"Invalid property name: {key}. Property names must be alphanumeric with underscores/hyphens only.")
+
+    where = " AND ".join(f"n.{k} = ${k}" for k in filters)
+    query = f"MATCH (n:{label}) WHERE {where} RETURN n"
+    return await execute_query(query, filters)
+
+
+async def create_relationship(
+    from_id: str, to_id: str, rel_type: str, properties: dict[str, Any]
+) -> list[Record]:
+    # Validate relationship type to prevent injection
+    if not rel_type.replace('_', '').replace('-', '').isalnum():
+        raise ValueError(
+            f"Invalid relationship type: {rel_type}. "
+            "Must be alphanumeric with underscores/hyphens only."
+        )
+
+    # Validate property names to prevent injection
+    for key in properties:
+        if not key.replace('_', '').replace('-', '').isalnum():
+            raise ValueError(
+                f"Invalid property name: {key}. "
+                "Property names must be alphanumeric with underscores/hyphens only."
+            )
+
+    # Validate node IDs
+    try:
+        from_id_int = int(from_id)
+        to_id_int = int(to_id)
+    except ValueError:
+        raise ValueError("Invalid node IDs. Both from_id and to_id must be valid integers.")
+
+    props = ", ".join(f"{k}: ${k}" for k in properties)
+    query = (
+        "MATCH (a),(b) WHERE id(a)=$from AND id(b)=$to "
+        f"CREATE (a)-[r:{rel_type} {{{props}}}]->(b) RETURN r"
+    )
+    params = {"from": from_id_int, "to": to_id_int, **properties}
+    return await execute_query(query, params, tx_type="write")
+
+
+async def get_database_info() -> list[Record]:
+    query = "CALL db.info()"
+    return await execute_query(query)
+
+
+async def validate_connection() -> bool:
+    try:
+        await get_database_info()
+        return True
+    except Exception:
+        return False
+
+
+async def bulk_create_nodes(label: str, nodes: list[dict[str, Any]]) -> list[Record]:
+    # Validate label to prevent injection
+    if not label.replace('_', '').replace('-', '').isalnum():
+        raise ValueError(f"Invalid label: {label}. Labels must be alphanumeric with underscores/hyphens only.")
+    
+    # Use UNWIND for efficient bulk creation
+    query = f"UNWIND $nodes AS nodeData CREATE (n:{label}) SET n = nodeData RETURN n"
+    return await execute_query(query, {"nodes": nodes}, tx_type="write")
+
+
+async def execute_cypher_file(path: str) -> list[Record]:
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            query = f.read()
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Cypher file not found: {path}")
+    except IOError as e:
+        raise IOError(f"Error reading Cypher file {path}: {e}")
+
+    if not query.strip():
+        raise ValueError(f"Cypher file {path} is empty or contains only whitespace")
+
+    return await execute_query(query, tx_type="write")
 
 
 # Example of how to use (optional, for testing or demonstration)

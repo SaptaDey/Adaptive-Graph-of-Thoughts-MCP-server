@@ -7,7 +7,7 @@ from typing import Dict
 import re
 import logging
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter, Body, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 
 from ..schemas import NLQPayload

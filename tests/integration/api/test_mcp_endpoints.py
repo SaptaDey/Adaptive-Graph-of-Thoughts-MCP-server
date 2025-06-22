@@ -3,7 +3,7 @@ import types
 from collections.abc import Generator
 
 import pytest
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.testclient import TestClient
 
 # ---------------------------------------------------------------------------
@@ -22,6 +22,18 @@ def create_app() -> FastAPI:
     """Return a minimal FastAPI app exposing the /mcp endpoint."""
     app = FastAPI()
     router = APIRouter()
+
+    @router.get("")
+    async def get_config(request: Request):
+        host = request.query_params.get("server.host", "127.0.0.1")
+        port = request.query_params.get("server.port", "8000")
+        cleanup = request.query_params.get("cleanup")
+        return {
+            "config": {
+                "server": {"host": host, "port": port},
+                **({"cleanup": cleanup} if cleanup is not None else {}),
+            }
+        }
 
     @router.post("")
     async def mcp_endpoint(payload: dict) -> dict:
@@ -58,6 +70,10 @@ def create_app() -> FastAPI:
             "id": req_id,
             "error": {"code": -32601, "message": "Method not found"},
         }
+
+    @router.delete("")
+    async def delete_endpoint(cleanup: str = None):
+        return {"config": {"cleanup": cleanup}}
 
     app.include_router(router, prefix="/mcp")
     return app
