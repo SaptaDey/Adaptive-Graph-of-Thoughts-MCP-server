@@ -440,10 +440,9 @@ def create_app() -> FastAPI:
 
     # Include routers
     app.include_router(
-        mcp_router,
+        mcp_public_router,
         prefix="/mcp",
         tags=["MCP"],
-        dependencies=[Depends(get_basic_auth)],
     )
     app.include_router(nlq_router, dependencies=[Depends(get_basic_auth)])
     app.include_router(explorer_router, dependencies=[Depends(get_basic_auth)])
