@@ -1,6 +1,7 @@
 import asyncio
 import importlib
 import os
+import stat
 import sys
 import time
 from contextlib import asynccontextmanager
@@ -19,12 +20,12 @@ from neo4j import GraphDatabase
 from neo4j.exceptions import ServiceUnavailable, AuthError, Neo4jError
 
 
-from src.adaptive_graph_of_thoughts.api.routes.explorer import explorer_router
-from src.adaptive_graph_of_thoughts.api.routes.mcp import mcp_router
-from src.adaptive_graph_of_thoughts.api.routes.mcp_public import mcp_public_router
-from src.adaptive_graph_of_thoughts.api.routes.nlq import nlq_router
-from src.adaptive_graph_of_thoughts.api.routes.tools import tools_router
-from src.adaptive_graph_of_thoughts.config import (
+from adaptive_graph_of_thoughts.api.routes.explorer import explorer_router
+from adaptive_graph_of_thoughts.api.routes.mcp import mcp_router
+from adaptive_graph_of_thoughts.api.routes.mcp_public import mcp_public_router
+from adaptive_graph_of_thoughts.api.routes.nlq import nlq_router
+from adaptive_graph_of_thoughts.api.routes.tools import tools_router
+from adaptive_graph_of_thoughts.config import (
 
     RuntimeSettings,
     runtime_settings,
@@ -253,12 +254,14 @@ def create_app() -> FastAPI:
             )
 
         env_path = Path(".env")
-        env_path.touch(mode=0o600, exist_ok=True)
+        env_path.touch(exist_ok=True)
+        env_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
+        os.chown(env_path, os.getuid(), os.getgid())
         set_key(str(env_path), "NEO4J_URI", uri)
         set_key(str(env_path), "NEO4J_USER", user)
         set_key(str(env_path), "NEO4J_PASSWORD", password)
         set_key(str(env_path), "NEO4J_DATABASE", database)
-        env_path.chmod(0o600)
+        env_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
         return RedirectResponse("/setup/settings", status_code=303)
 
     yaml_path = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
