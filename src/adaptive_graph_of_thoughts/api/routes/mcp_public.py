@@ -22,7 +22,7 @@ from pydantic import ValidationError
 # Public MCP router without authentication for Smithery
 mcp_public_router = APIRouter()
 
-@mcp_public_router.post("/mcp")
+@mcp_public_router.post("/")
 async def public_mcp_endpoint(
     request_payload: JSONRPCRequest[dict[str, Any]],
     http_request: Request
@@ -74,7 +74,7 @@ async def public_mcp_endpoint(
             data={"details": str(e), "method": method},
         )
 
-@mcp_public_router.get("/mcp/tools")
+@mcp_public_router.get("/tools")
 async def public_get_available_tools() -> Dict[str, Any]:
     """Public endpoint to get available MCP tools for client discovery."""
     # Load tools definition from smithery.yaml or tools definition file
@@ -128,7 +128,7 @@ async def public_get_available_tools() -> Dict[str, Any]:
             "prompts": []
         }
 
-@mcp_public_router.get("/mcp/capabilities")
+@mcp_public_router.get("/capabilities")
 async def public_get_server_capabilities() -> Dict[str, Any]:
     """Public endpoint to get server capabilities for MCP client negotiation."""
     return {
@@ -150,7 +150,7 @@ async def public_get_server_capabilities() -> Dict[str, Any]:
         "evidence_sources": ["pubmed", "google_scholar", "exa_search"]
     }
 
-@mcp_public_router.get("/mcp/info")
+@mcp_public_router.get("/info")
 async def public_mcp_server_info() -> Dict[str, Any]:
     """MCP server discovery endpoint for Smithery."""
     return {
