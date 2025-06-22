@@ -46,8 +46,8 @@ ALLOWED_LABELS = {"User", "Document", "Hypothesis", "Evidence"}
 
 def sanitize_cypher_input(value: str) -> str:
     """Remove potentially dangerous characters from a Cypher identifier."""
-    return re.sub(r"[^\w\s-]", "", value)
-
+    # Allow alphanumeric, underscore, hyphen, and dot (for namespaces)
+    return re.sub(r"[^\w.-]", "", value)
 
 @dataclass
 class Neo4jConnection:
