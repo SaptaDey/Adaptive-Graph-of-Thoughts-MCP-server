@@ -19,23 +19,29 @@ from src.adaptive_graph_of_thoughts.domain.services.neo4j_utils import (
     close_neo4j_driver,
     execute_query,
     _neo4j_settings,
-    _driver
+    _driver,
 )
+
 
 @pytest.fixture
 def mock_runtime_settings():
     """Mock runtime settings for Neo4j configuration."""
-    with patch('src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.runtime_settings') as mock_settings:
+    with patch(
+        "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.runtime_settings"
+    ) as mock_settings:
         mock_settings.neo4j.uri = "bolt://localhost:7687"
         mock_settings.neo4j.user = "neo4j"
         mock_settings.neo4j.password = "password"
         mock_settings.neo4j.database = "neo4j"
         yield mock_settings
 
+
 @pytest.fixture
 def mock_neo4j_driver():
     """Mock Neo4j GraphDatabase driver."""
-    with patch('src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.GraphDatabase.driver') as mock_driver:
+    with patch(
+        "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.GraphDatabase.driver"
+    ) as mock_driver:
         mock_instance = Mock(spec=Driver)
         mock_instance.closed = False
         mock_instance.verify_connectivity.return_value = None
@@ -43,20 +49,25 @@ def mock_neo4j_driver():
         mock_driver.return_value = mock_instance
         yield mock_driver, mock_instance
 
+
 @pytest.fixture(autouse=True)
 def reset_global_state():
     """Reset global state before each test."""
     import src.adaptive_graph_of_thoughts.domain.services.neo4j_utils as neo4j_utils
+
     neo4j_utils._neo4j_settings = None
     neo4j_utils._driver = None
     yield
     neo4j_utils._neo4j_settings = None
     neo4j_utils._driver = None
 
+
 @pytest.fixture
 def mock_logger():
     """Mock logger to avoid log output during tests."""
-    with patch('src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.logger') as mock_log:
+    with patch(
+        "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.logger"
+    ) as mock_log:
         yield mock_log
 
 
@@ -97,7 +108,7 @@ class TestGlobalSettings:
     def test_global_settings_neo4j_attribute(self, mock_runtime_settings):
         """Test that GlobalSettings properly initializes neo4j attribute."""
         settings = GlobalSettings()
-        assert hasattr(settings, 'neo4j')
+        assert hasattr(settings, "neo4j")
         assert isinstance(settings.neo4j, Neo4jSettings)
 
 
@@ -113,7 +124,9 @@ class TestGetNeo4jSettings:
         mock_logger.info.assert_called_with("Initializing Neo4j settings.")
         mock_logger.debug.assert_called_once()
 
-    def test_get_neo4j_settings_singleton_behavior(self, mock_runtime_settings, mock_logger):
+    def test_get_neo4j_settings_singleton_behavior(
+        self, mock_runtime_settings, mock_logger
+    ):
         """Test that get_neo4j_settings returns the same instance on subsequent calls."""
         settings1 = get_neo4j_settings()
         settings2 = get_neo4j_settings()
@@ -124,6 +137,7 @@ class TestGetNeo4jSettings:
     def test_get_neo4j_settings_global_state(self, mock_runtime_settings):
         """Test that get_neo4j_settings properly sets global state."""
         import src.adaptive_graph_of_thoughts.domain.services.neo4j_utils as neo4j_utils
+
         assert neo4j_utils._neo4j_settings is None
 
         settings = get_neo4j_settings()
@@ -134,7 +148,9 @@ class TestGetNeo4jSettings:
 class TestGetNeo4jDriver:
     """Test cases for get_neo4j_driver function."""
 
-    def test_get_neo4j_driver_success(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    def test_get_neo4j_driver_success(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test successful driver initialization."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -143,13 +159,22 @@ class TestGetNeo4jDriver:
         assert driver is mock_driver_instance
         mock_driver_class.assert_called_once_with(
             "bolt://localhost:7687",
-            auth=("neo4j", "password")
+            auth=("neo4j", "password"),
+            max_connection_lifetime=3600,
+            max_connection_pool_size=50,
+            connection_acquisition_timeout=60,
         )
         mock_driver_instance.verify_connectivity.assert_called_once()
-        mock_logger.info.assert_any_call("Initializing Neo4j driver for URI: bolt://localhost:7687")
-        mock_logger.info.assert_any_call("Neo4j driver initialized and connectivity verified.")
+        mock_logger.info.assert_any_call(
+            "Initializing Neo4j driver for URI: bolt://localhost:7687"
+        )
+        mock_logger.info.assert_any_call(
+            "Neo4j driver initialized and connectivity verified."
+        )
 
-    def test_get_neo4j_driver_singleton_behavior(self, mock_runtime_settings, mock_neo4j_driver):
+    def test_get_neo4j_driver_singleton_behavior(
+        self, mock_runtime_settings, mock_neo4j_driver
+    ):
         """Test that get_neo4j_driver returns the same instance on subsequent calls."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -160,7 +185,9 @@ class TestGetNeo4jDriver:
         assert driver1 is mock_driver_instance
         assert mock_driver_class.call_count == 1  # only first call creates driver
 
-    def test_get_neo4j_driver_closed_driver_reinitializes(self, mock_runtime_settings, mock_neo4j_driver):
+    def test_get_neo4j_driver_closed_driver_reinitializes(
+        self, mock_runtime_settings, mock_neo4j_driver
+    ):
         """Test that a closed driver gets reinitialized."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -171,10 +198,14 @@ class TestGetNeo4jDriver:
         assert mock_driver_class.call_count == 2
         assert driver2 is mock_driver_instance
 
-    def test_get_neo4j_driver_service_unavailable_on_connectivity_check(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    def test_get_neo4j_driver_service_unavailable_on_connectivity_check(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test ServiceUnavailable exception during connectivity verification."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
-        mock_driver_instance.verify_connectivity.side_effect = ServiceUnavailable("Connection failed")
+        mock_driver_instance.verify_connectivity.side_effect = ServiceUnavailable(
+            "Connection failed"
+        )
 
         with pytest.raises(ServiceUnavailable):
             get_neo4j_driver()
@@ -183,35 +214,51 @@ class TestGetNeo4jDriver:
             "Failed to connect to Neo4j at bolt://localhost:7687: Connection failed"
         )
         import src.adaptive_graph_of_thoughts.domain.services.neo4j_utils as neo4j_utils
+
         assert neo4j_utils._driver is None
 
-    def test_get_neo4j_driver_missing_neo4j_config(self, mock_runtime_settings, mock_logger):
+    def test_get_neo4j_driver_missing_neo4j_config(
+        self, mock_runtime_settings, mock_logger
+    ):
         """Test ServiceUnavailable when Neo4j config is missing."""
-        with patch('src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.get_neo4j_settings') as mock_get_settings:
+        with patch(
+            "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.get_neo4j_settings"
+        ) as mock_get_settings:
             mock_settings = Mock()
             mock_settings.neo4j = None
             mock_get_settings.return_value = mock_settings
 
-            with pytest.raises(ServiceUnavailable, match="Neo4j configuration is not available"):
+            with pytest.raises(
+                ServiceUnavailable, match="Neo4j configuration is not available"
+            ):
                 get_neo4j_driver()
 
-            mock_logger.error.assert_called_with("Neo4j configuration is missing in global settings.")
+            mock_logger.error.assert_called_with(
+                "Neo4j configuration is missing in global settings."
+            )
 
-    @pytest.mark.parametrize("missing_field,uri,username,password", [
-        ("uri", "", "neo4j", "password"),
-        ("username", "bolt://localhost:7687", "", "password"),
-        ("password", "bolt://localhost:7687", "neo4j", ""),
-        ("uri", None, "neo4j", "password"),
-        ("username", "bolt://localhost:7687", None, "password"),
-        ("password", "bolt://localhost:7687", "neo4j", None),
-    ])
-    def test_get_neo4j_driver_incomplete_config(self, mock_runtime_settings, mock_logger, missing_field, uri, username, password):
+    @pytest.mark.parametrize(
+        "missing_field,uri,username,password",
+        [
+            ("uri", "", "neo4j", "password"),
+            ("username", "bolt://localhost:7687", "", "password"),
+            ("password", "bolt://localhost:7687", "neo4j", ""),
+            ("uri", None, "neo4j", "password"),
+            ("username", "bolt://localhost:7687", None, "password"),
+            ("password", "bolt://localhost:7687", "neo4j", None),
+        ],
+    )
+    def test_get_neo4j_driver_incomplete_config(
+        self, mock_runtime_settings, mock_logger, missing_field, uri, username, password
+    ):
         """Test ServiceUnavailable when connection details are incomplete."""
         mock_runtime_settings.neo4j.uri = uri
         mock_runtime_settings.neo4j.user = username
         mock_runtime_settings.neo4j.password = password
 
-        with pytest.raises(ServiceUnavailable, match="Neo4j connection details are incomplete"):
+        with pytest.raises(
+            ServiceUnavailable, match="Neo4j connection details are incomplete"
+        ):
             get_neo4j_driver()
 
         mock_logger.error.assert_called_with(
@@ -222,7 +269,9 @@ class TestGetNeo4jDriver:
 class TestCloseNeo4jDriver:
     """Test cases for close_neo4j_driver function."""
 
-    def test_close_neo4j_driver_success(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    def test_close_neo4j_driver_success(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test successful driver closure."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -234,9 +283,12 @@ class TestCloseNeo4jDriver:
         mock_logger.info.assert_any_call("Closing Neo4j driver.")
 
         import src.adaptive_graph_of_thoughts.domain.services.neo4j_utils as neo4j_utils
+
         assert neo4j_utils._driver is None
 
-    def test_close_neo4j_driver_already_closed(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    def test_close_neo4j_driver_already_closed(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test closing already closed driver."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -245,27 +297,36 @@ class TestCloseNeo4jDriver:
 
         close_neo4j_driver()
         mock_driver_instance.close.assert_not_called()
-        mock_logger.info.assert_any_call("Neo4j driver is already closed or not initialized.")
+        mock_logger.info.assert_any_call(
+            "Neo4j driver is already closed or not initialized."
+        )
 
     def test_close_neo4j_driver_not_initialized(self, mock_logger):
         """Test closing driver when not initialized."""
         close_neo4j_driver()
-        mock_logger.info.assert_called_with("Neo4j driver is already closed or not initialized.")
+        mock_logger.info.assert_called_with(
+            "Neo4j driver is already closed or not initialized."
+        )
 
     def test_close_neo4j_driver_none_driver(self, mock_logger):
         """Test closing when driver is None."""
         import src.adaptive_graph_of_thoughts.domain.services.neo4j_utils as neo4j_utils
+
         neo4j_utils._driver = None
 
         close_neo4j_driver()
-        mock_logger.info.assert_called_with("Neo4j driver is already closed or not initialized.")
+        mock_logger.info.assert_called_with(
+            "Neo4j driver is already closed or not initialized."
+        )
 
 
 class TestExecuteQuery:
     """Test cases for execute_query async function."""
 
     @pytest.mark.asyncio
-    async def test_execute_query_read_success(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    async def test_execute_query_read_success(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test successful read query execution."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -281,10 +342,14 @@ class TestExecuteQuery:
         assert result == [mock_record]
         mock_driver_instance.session.assert_called_once_with(database="neo4j")
         mock_session.execute_read.assert_called_once()
-        mock_logger.info.assert_any_call("Query executed successfully on database 'neo4j'. Fetched 1 records.")
+        mock_logger.info.assert_any_call(
+            "Query executed successfully on database 'neo4j'. Fetched 1 records."
+        )
 
     @pytest.mark.asyncio
-    async def test_execute_query_write_success(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    async def test_execute_query_write_success(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test successful write query execution."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -299,10 +364,14 @@ class TestExecuteQuery:
 
         assert result == [mock_record]
         mock_session.execute_write.assert_called_once()
-        mock_logger.info.assert_any_call("Query executed successfully on database 'neo4j'. Fetched 1 records.")
+        mock_logger.info.assert_any_call(
+            "Query executed successfully on database 'neo4j'. Fetched 1 records."
+        )
 
     @pytest.mark.asyncio
-    async def test_execute_query_with_parameters(self, mock_runtime_settings, mock_neo4j_driver):
+    async def test_execute_query_with_parameters(
+        self, mock_runtime_settings, mock_neo4j_driver
+    ):
         """Test query execution with parameters."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -312,12 +381,16 @@ class TestExecuteQuery:
         mock_session.execute_read.return_value = []
 
         parameters = {"name": "test", "age": 30}
-        await execute_query("MATCH (n) WHERE n.name = $name RETURN n", parameters=parameters)
+        await execute_query(
+            "MATCH (n) WHERE n.name = $name RETURN n", parameters=parameters
+        )
 
         mock_session.execute_read.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_execute_query_custom_database(self, mock_runtime_settings, mock_neo4j_driver):
+    async def test_execute_query_custom_database(
+        self, mock_runtime_settings, mock_neo4j_driver
+    ):
         """Test query execution with custom database."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -331,7 +404,9 @@ class TestExecuteQuery:
         mock_driver_instance.session.assert_called_once_with(database="custom_db")
 
     @pytest.mark.asyncio
-    async def test_execute_query_invalid_tx_type(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    async def test_execute_query_invalid_tx_type(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test query execution with invalid transaction type."""
         with pytest.raises(ValueError, match="Invalid transaction type: invalid"):
             await execute_query("MATCH (n) RETURN n", tx_type="invalid")
@@ -341,7 +416,9 @@ class TestExecuteQuery:
         )
 
     @pytest.mark.asyncio
-    async def test_execute_query_neo4j_error(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    async def test_execute_query_neo4j_error(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test query execution with Neo4j error."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -358,14 +435,18 @@ class TestExecuteQuery:
         )
 
     @pytest.mark.asyncio
-    async def test_execute_query_service_unavailable(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    async def test_execute_query_service_unavailable(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test query execution when service becomes unavailable."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
         mock_session = Mock()
         mock_driver_instance.session.return_value.__enter__.return_value = mock_session
         mock_driver_instance.session.return_value.__exit__.return_value = None
-        mock_session.execute_read.side_effect = ServiceUnavailable("Service unavailable")
+        mock_session.execute_read.side_effect = ServiceUnavailable(
+            "Service unavailable"
+        )
 
         with pytest.raises(ServiceUnavailable):
             await execute_query("MATCH (n) RETURN n")
@@ -375,7 +456,9 @@ class TestExecuteQuery:
         )
 
     @pytest.mark.asyncio
-    async def test_execute_query_unexpected_error(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    async def test_execute_query_unexpected_error(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test query execution with unexpected error."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -392,7 +475,9 @@ class TestExecuteQuery:
         )
 
     @pytest.mark.asyncio
-    async def test_execute_query_empty_result(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    async def test_execute_query_empty_result(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test query execution returning empty results."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -411,10 +496,14 @@ class TestExecuteQuery:
     @pytest.mark.asyncio
     async def test_execute_query_driver_not_available(self, mock_logger):
         """Test query execution when driver is not available."""
-        with patch('src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.get_neo4j_driver') as mock_get_driver:
+        with patch(
+            "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.get_neo4j_driver"
+        ) as mock_get_driver:
             mock_get_driver.return_value = None
 
-            with pytest.raises(ServiceUnavailable, match="Neo4j driver not initialized"):
+            with pytest.raises(
+                ServiceUnavailable, match="Neo4j driver not initialized"
+            ):
                 await execute_query("MATCH (n) RETURN n")
 
             mock_logger.error.assert_called_with(
@@ -426,7 +515,9 @@ class TestIntegrationScenarios:
     """Integration-style tests for complex scenarios."""
 
     @pytest.mark.asyncio
-    async def test_full_workflow_read_query(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    async def test_full_workflow_read_query(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test complete workflow from settings to query execution."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -447,7 +538,9 @@ class TestIntegrationScenarios:
         mock_session.execute_read.assert_called_once()
 
     @pytest.mark.asyncio
-    async def test_driver_reinitialization_after_close(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    async def test_driver_reinitialization_after_close(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         """Test that driver can be reinitialized after being closed."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -459,7 +552,9 @@ class TestIntegrationScenarios:
         assert driver2 is mock_driver_instance
 
     @pytest.mark.asyncio
-    async def test_concurrent_query_execution(self, mock_runtime_settings, mock_neo4j_driver):
+    async def test_concurrent_query_execution(
+        self, mock_runtime_settings, mock_neo4j_driver
+    ):
         """Test concurrent query execution using the same driver."""
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
@@ -467,7 +562,7 @@ class TestIntegrationScenarios:
         mock_session2 = Mock()
         mock_driver_instance.session.side_effect = [
             mock_session1.__enter__.return_value,
-            mock_session2.__enter__.return_value
+            mock_session2.__enter__.return_value,
         ]
 
         mock_session1.__enter__.return_value = mock_session1
@@ -480,7 +575,7 @@ class TestIntegrationScenarios:
 
         tasks = [
             execute_query("MATCH (n:User) RETURN n"),
-            execute_query("MATCH (n:Product) RETURN n")
+            execute_query("MATCH (n:Product) RETURN n"),
         ]
         results = await asyncio.gather(*tasks)
 
@@ -493,12 +588,17 @@ class TestEdgeCases:
     """Test edge cases and boundary conditions."""
 
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("query_input,expected_error", [
-        (None, AttributeError),
-        ("", None),
-        ("   ", None),
-    ])
-    async def test_execute_query_invalid_inputs(self, mock_runtime_settings, mock_neo4j_driver, query_input, expected_error):
+    @pytest.mark.parametrize(
+        "query_input,expected_error",
+        [
+            (None, AttributeError),
+            ("", None),
+            ("   ", None),
+        ],
+    )
+    async def test_execute_query_invalid_inputs(
+        self, mock_runtime_settings, mock_neo4j_driver, query_input, expected_error
+    ):
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
         mock_session = Mock()
@@ -514,7 +614,9 @@ class TestEdgeCases:
             assert result == []
 
     @pytest.mark.asyncio
-    async def test_execute_query_large_parameter_set(self, mock_runtime_settings, mock_neo4j_driver):
+    async def test_execute_query_large_parameter_set(
+        self, mock_runtime_settings, mock_neo4j_driver
+    ):
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
         mock_session = Mock()
@@ -542,7 +644,9 @@ class TestEdgeCases:
         assert settings.neo4j.database == "test-db_123"
 
     @pytest.mark.asyncio
-    async def test_transaction_timeout_handling(self, mock_runtime_settings, mock_neo4j_driver, mock_logger):
+    async def test_transaction_timeout_handling(
+        self, mock_runtime_settings, mock_neo4j_driver, mock_logger
+    ):
         mock_driver_class, mock_driver_instance = mock_neo4j_driver
 
         mock_session = Mock()
