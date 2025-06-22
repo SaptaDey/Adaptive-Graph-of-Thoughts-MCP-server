@@ -96,12 +96,16 @@ class GoTProcessor:
         Initializes a GoTProcessor instance with the provided settings.
         """
         self.settings = settings
+
         self.resource_monitor = resource_monitor or ResourceMonitor()
+
         logger.info("Initializing GoTProcessor")
         self.stages = self._initialize_stages()
         logger.info(
             f"GoTProcessor initialized with {len(self.stages)} configured and enabled stages."
         )
+        # Mark the processor as ready for use
+        self.models_loaded = True
 
     def _initialize_stages(self) -> list[BaseStage]:
         """
