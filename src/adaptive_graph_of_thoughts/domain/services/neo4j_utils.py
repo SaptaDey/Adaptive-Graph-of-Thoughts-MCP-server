@@ -43,8 +43,7 @@ _neo4j_settings: Optional[GlobalSettings] = None
 _driver: Optional[Driver] = None  # Backwards compatibility for tests
 
 
-class Neo4jDriverPool:
-    """Thread-safe pool managing a single Neo4j driver instance."""
+class Neo4jDriverManager:
 
     def __init__(self) -> None:
         self._driver: Optional[Driver] = None
