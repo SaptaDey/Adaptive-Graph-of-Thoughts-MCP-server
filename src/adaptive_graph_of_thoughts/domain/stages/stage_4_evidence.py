@@ -44,8 +44,8 @@ from .base_stage import BaseStage, StageOutput
 from .exceptions import StageInitializationError
 from .stage_3_hypothesis import HypothesisStage  # To access hypothesis_node_ids
 
-# Backward compatibility for tests expecting execute_query in this module
-execute_query = neo4j_execute_query
+## Backward compatibility for tests expecting execute_query in this module
+#execute_query = neo4j_execute_query
 
 if TYPE_CHECKING:
     from ...infrastructure.api_clients.pubmed_client import PubMedClient
