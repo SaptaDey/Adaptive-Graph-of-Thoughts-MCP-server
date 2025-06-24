@@ -10,9 +10,7 @@ from typing import TYPE_CHECKING, Any, Optional
 
 # Only for type hints, not actual imports
 if TYPE_CHECKING:
-    from adaptive_graph_of_thoughts.domain.services.got_processor import (
-        GoTProcessor,
-    )
+    from adaptive_graph_of_thoughts.application import GoTProcessor
 
 from loguru import logger
 
@@ -186,9 +184,7 @@ class MCPServerFactory:
         logger.info("Starting MCP STDIO server...")
 
         # Import GoTProcessor only when needed to avoid circular dependencies
-        from adaptive_graph_of_thoughts.domain.services.got_processor import (
-            GoTProcessor,
-        )
+        from adaptive_graph_of_thoughts.application import GoTProcessor
 
         # Initialize GoT processor
         resource_monitor = ResourceMonitor()

@@ -16,8 +16,8 @@ app:
   log_level: "INFO"           # Default log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
   # debug: false               # Set to true for development if needed, enables more verbose errors
 
-  # Adaptive Graph of Thoughts Core Parameters
-  asr_got:
+# Adaptive Graph of Thoughts Core Parameters
+asr_got:
     default_parameters:
       # Parameters for Stage 1: Initialization
       initial_confidence: [0.9, 0.9, 0.9, 0.9] # P1.5 via P1.1
@@ -119,8 +119,8 @@ app:
     # "molecular_perspective":
     #   description: "Nodes and analyses related to molecular biology aspects."
 
-  # Configuration for Model Context Protocol (MCP) Server behavior
-  mcp_settings:
+# Configuration for Model Context Protocol (MCP) Server behavior
+mcp_settings:
     protocol_version: "2024-11-05" # As per original claude_desktop_config.json
     server_name: "Adaptive Graph of Thoughts MCP Server"
     server_version: "0.1.0"        # Match app.version
@@ -142,44 +142,6 @@ app:
       ready_signal_timeout: 10    # Seconds to wait for ready signal
       handshake_timeout: 30       # Seconds for MCP handshake
       validation_timeout: 180     # Seconds for full validation
-  vendor_name: "Adaptive Graph of Thoughts Development Team"
-  # Enhanced capabilities for better inspector compatibility
-  capabilities:
-    tools:
-      listChanged: false
-      supportsProgress: true
-    prompts:
-      listChanged: false
-    resources:
-      subscribe: false
-      listChanged: false
-    logging: {}
-  # Inspector testing specific settings
-  inspector:
-    enable_verbose_logging: true
-    ready_signal_timeout: 10  # Seconds to wait for ready signal
-    handshake_timeout: 30     # Seconds for MCP handshake
-    validation_timeout: 180   # Seconds for full validation
-  vendor_name: "Adaptive Graph of Thoughts Development Team"
-  # Enhanced capabilities for better inspector compatibility
-  capabilities:
-    tools:
-      listChanged: false
-      supportsProgress: true
-    prompts:
-      listChanged: false
-    resources:
-      subscribe: false
-      listChanged: false
-    logging: {}
-  # Inspector testing specific settings
-  inspector:
-    enable_verbose_logging: true
-    ready_signal_timeout: 10  # Seconds to wait for ready signal
-    handshake_timeout: 30     # Seconds for MCP handshake
-    validation_timeout: 180   # Seconds for full validation
-  # display_name: "Adaptive Graph of Thoughts" # If needed by MCP client
-  # description: "Adaptive Graph of Thoughts provides advanced scientific reasoning capabilities." # If needed
   vendor_name: "Adaptive Graph of Thoughts Development Team"
   # Enhanced capabilities for better inspector compatibility
   capabilities:
@@ -256,58 +218,3 @@ knowledge_domains:
     description: "Large language models specialized for biomedical applications."
   # Add more domains based on Dr. Dey's profile (K3.3, K3.4) or general needs
 
-# MCP Server Configuration
-mcp:
-  server_name: "Adaptive Graph of Thoughts MCP Server"
-  server_version: "0.1.0"
-  protocol_version: "2024-11-05"
-  
-  # Tool Configuration
-  tools:
-    enabled: true
-    max_concurrent_queries: 5
-    default_reasoning_depth: 3
-    default_confidence_threshold: 0.7
-    
-  # Evidence Sources Configuration
-  evidence_sources:
-    pubmed:
-      enabled: true
-      max_results: 50
-      api_key: null  # Set via environment variable
-    google_scholar:
-      enabled: true
-      max_results: 30
-    exa_search:
-      enabled: true
-      max_results: 20
-      api_key: null  # Set via environment variable
-  
-  # Graph Processing Configuration
-  graph:
-    max_nodes_per_query: 1000
-    max_edges_per_query: 2000
-    enable_hyperedges: true
-    confidence_propagation: true
-    
-  # Session Management
-  sessions:
-    enable_persistence: false  # Future feature
-    max_session_duration: 3600  # seconds
-    cleanup_interval: 300  # seconds
-
-# Client Integration Settings
-client_integration:
-  supported_transports: ["stdio", "http"]
-  default_transport: "stdio"
-  
-  # Authentication (for HTTP mode)
-  auth:
-    require_token: false
-    token_header: "Authorization"
-    
-  # Rate Limiting
-  rate_limiting:
-    enabled: false
-    requests_per_minute: 60
-    burst_limit: 10

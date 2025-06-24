@@ -11,7 +11,7 @@ import pytest
 from neo4j import Driver, Record, Result, Transaction
 from neo4j.exceptions import Neo4jError, ServiceUnavailable
 
-from src.adaptive_graph_of_thoughts.domain.services.neo4j_utils import (
+from src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils import (
     Neo4jSettings,
     GlobalSettings,
     get_neo4j_settings,
@@ -27,7 +27,7 @@ from src.adaptive_graph_of_thoughts.domain.services.neo4j_utils import (
 def mock_runtime_settings():
     """Mock runtime settings for Neo4j configuration."""
     with patch(
-        "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.runtime_settings"
+        "src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils.runtime_settings"
     ) as mock_settings:
         mock_settings.neo4j.uri = "bolt://localhost:7687"
         mock_settings.neo4j.user = "neo4j"
@@ -40,7 +40,7 @@ def mock_runtime_settings():
 def mock_neo4j_driver():
     """Mock Neo4j GraphDatabase driver."""
     with patch(
-        "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.GraphDatabase.driver"
+        "src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils.GraphDatabase.driver"
     ) as mock_driver:
         mock_instance = Mock(spec=Driver)
         mock_instance.closed = False
@@ -53,7 +53,7 @@ def mock_neo4j_driver():
 @pytest.fixture(autouse=True)
 def reset_global_state():
     """Reset global state before each test."""
-    import src.adaptive_graph_of_thoughts.domain.services.neo4j_utils as neo4j_utils
+    import src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils as neo4j_utils
 
     neo4j_utils._neo4j_settings = None
     neo4j_utils._driver = None
@@ -66,7 +66,7 @@ def reset_global_state():
 def mock_logger():
     """Mock logger to avoid log output during tests."""
     with patch(
-        "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.logger"
+        "src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils.logger"
     ) as mock_log:
         yield mock_log
 
@@ -136,7 +136,7 @@ class TestGetNeo4jSettings:
 
     def test_get_neo4j_settings_global_state(self, mock_runtime_settings):
         """Test that get_neo4j_settings properly sets global state."""
-        import src.adaptive_graph_of_thoughts.domain.services.neo4j_utils as neo4j_utils
+        import src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils as neo4j_utils
 
         assert neo4j_utils._neo4j_settings is None
 
@@ -213,7 +213,7 @@ class TestGetNeo4jDriver:
         mock_logger.error.assert_called_with(
             "Failed to connect to Neo4j at bolt://localhost:7687: Connection failed"
         )
-        import src.adaptive_graph_of_thoughts.domain.services.neo4j_utils as neo4j_utils
+        import src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils as neo4j_utils
 
         assert neo4j_utils._driver is None
 
@@ -222,7 +222,7 @@ class TestGetNeo4jDriver:
     ):
         """Test ServiceUnavailable when Neo4j config is missing."""
         with patch(
-            "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.get_neo4j_settings"
+            "src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils.get_neo4j_settings"
         ) as mock_get_settings:
             mock_settings = Mock()
             mock_settings.neo4j = None
@@ -282,7 +282,7 @@ class TestCloseNeo4jDriver:
         mock_driver_instance.close.assert_called_once()
         mock_logger.info.assert_any_call("Closing Neo4j driver.")
 
-        import src.adaptive_graph_of_thoughts.domain.services.neo4j_utils as neo4j_utils
+        import src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils as neo4j_utils
 
         assert neo4j_utils._driver is None
 
@@ -310,7 +310,7 @@ class TestCloseNeo4jDriver:
 
     def test_close_neo4j_driver_none_driver(self, mock_logger):
         """Test closing when driver is None."""
-        import src.adaptive_graph_of_thoughts.domain.services.neo4j_utils as neo4j_utils
+        import src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils as neo4j_utils
 
         neo4j_utils._driver = None
 
@@ -497,7 +497,7 @@ class TestExecuteQuery:
     async def test_execute_query_driver_not_available(self, mock_logger):
         """Test query execution when driver is not available."""
         with patch(
-            "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.get_neo4j_driver"
+            "src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils.get_neo4j_driver"
         ) as mock_get_driver:
             mock_get_driver.return_value = None
 

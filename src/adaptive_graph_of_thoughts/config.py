@@ -7,6 +7,8 @@ import threading
 from contextlib import contextmanager
 from typing import Any, Optional, Union
 
+logger = logging.getLogger(__name__)
+
 import yaml
 from pydantic import BaseModel, Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -133,30 +135,55 @@ class ASRGoTDefaultParams:
         initial_confidence=0.8,
         confidence_threshold=0.75,
         max_iterations=10,
+        evidence_max_iterations=5,
         convergence_threshold=0.05,
     ):
         self.initial_confidence = initial_confidence
         self.confidence_threshold = confidence_threshold
         self.max_iterations = max_iterations
+        self.evidence_max_iterations = evidence_max_iterations
         self.convergence_threshold = convergence_threshold
 
 
 class PubMedConfig:
-    def __init__(self, api_key=None, max_results=20, rate_limit_delay=0.5):
+    def __init__(
+        self,
+        api_key=None,
+        base_url: str | None = None,
+        email: str | None = None,
+        max_results: int = 20,
+        rate_limit_delay: float = 0.5,
+    ):
         self.api_key = api_key
+        self.base_url = base_url
+        self.email = email
         self.max_results = max_results
         self.rate_limit_delay = rate_limit_delay
 
 
 class GoogleScholarConfig:
-    def __init__(self, max_results=10, rate_limit_delay=1.0):
+    def __init__(
+        self,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        max_results: int = 10,
+        rate_limit_delay: float = 1.0,
+    ):
+        self.api_key = api_key
+        self.base_url = base_url
         self.max_results = max_results
         self.rate_limit_delay = rate_limit_delay
 
 
 class ExaSearchConfig:
-    def __init__(self, api_key=None, max_results=10):
+    def __init__(
+        self,
+        api_key=None,
+        base_url: str | None = None,
+        max_results: int = 10,
+    ):
         self.api_key = api_key
+        self.base_url = base_url
         self.max_results = max_results
 
 
@@ -555,9 +582,13 @@ def load_runtime_settings() -> RuntimeSettings:
     yaml_path = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
     data: dict[str, Any] = {}
     if yaml_path.exists():
-        with open(yaml_path) as fh:
-            data = yaml.safe_load(fh) or {}
-        validate_config_schema(data)
+        try:
+            with open(yaml_path) as fh:
+                data = yaml.safe_load(fh) or {}
+            validate_config_schema(data)
+        except Exception as exc:  # pragma: no cover - config may be malformed in tests
+            logger.error(f"Failed to load configuration: {exc}")
+            data = {}
     return RuntimeSettings(**data)
 
 

@@ -31,9 +31,7 @@ from adaptive_graph_of_thoughts.config import (
     runtime_settings,
     settings,
 )
-from adaptive_graph_of_thoughts.domain.services.got_processor import (
-    GoTProcessor,
-)
+from adaptive_graph_of_thoughts.application import GoTProcessor
 from adaptive_graph_of_thoughts.services.resource_monitor import ResourceMonitor
 from adaptive_graph_of_thoughts.services.llm import LLM_QUERY_LOGS, ask_llm
 

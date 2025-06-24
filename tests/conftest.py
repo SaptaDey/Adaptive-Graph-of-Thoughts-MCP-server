@@ -19,3 +19,15 @@ warnings.filterwarnings(
     category=DeprecationWarning,
     module=r"adaptive_graph_of_thoughts\.api\.schemas",
 )
+
+
+@pytest.fixture(name="_sample_hypothesis_data")
+def _sample_hypothesis_data_fixture(sample_hypothesis_data):
+    """Alias for sample_hypothesis_data used by some tests."""
+    return sample_hypothesis_data
+
+
+@pytest.fixture(name="_monkeypatch")
+def _monkeypatch_fixture(monkeypatch):
+    """Alias for the standard monkeypatch fixture."""
+    return monkeypatch

@@ -1,6 +1,6 @@
 import pytest
 import asyncio
-from src.adaptive_graph_of_thoughts.domain.services.neo4j_utils import bulk_create_nodes_optimized
+from src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils import bulk_create_nodes_optimized
 
 class TestPerformance:
     @pytest.mark.asyncio

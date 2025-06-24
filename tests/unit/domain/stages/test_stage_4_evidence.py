@@ -22,13 +22,14 @@ from adaptive_graph_of_thoughts.domain.models.common_types import (
 )
 from adaptive_graph_of_thoughts.domain.stages.stage_3_hypothesis import HypothesisStage
 from adaptive_graph_of_thoughts.domain.stages.stage_4_evidence import EvidenceStage
-from adaptive_graph_of_thoughts.services.api_clients.exa_search_client import (
+from adaptive_graph_of_thoughts.infrastructure import Neo4jGraphRepository
+from adaptive_graph_of_thoughts.infrastructure.api_clients.exa_search_client import (
     ExaArticleResult,
 )
-from adaptive_graph_of_thoughts.services.api_clients.google_scholar_client import (
+from adaptive_graph_of_thoughts.infrastructure.api_clients.google_scholar_client import (
     GoogleScholarArticle,
 )
-from adaptive_graph_of_thoughts.services.api_clients.pubmed_client import (
+from adaptive_graph_of_thoughts.infrastructure.api_clients.pubmed_client import (
     PubMedArticle,
     PubMedClientError,
 )
@@ -104,19 +105,19 @@ def evidence_stage_all_clients(mock_settings_all_clients: Settings) -> EvidenceS
     """
     with (
         patch(
-            "adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient",
+            "adaptive_graph_of_thoughts.infrastructure.api_clients.pubmed_client.PubMedClient",
             new_callable=MagicMock,
         ),
         patch(
-            "adaptive_graph_of_thoughts.services.api_clients.google_scholar_client.GoogleScholarClient",
+            "adaptive_graph_of_thoughts.infrastructure.api_clients.google_scholar_client.GoogleScholarClient",
             new_callable=MagicMock,
         ),
         patch(
-            "adaptive_graph_of_thoughts.services.api_clients.exa_search_client.ExaSearchClient",
+            "adaptive_graph_of_thoughts.infrastructure.api_clients.exa_search_client.ExaSearchClient",
             new_callable=MagicMock,
         ),
     ):
-        stage = EvidenceStage(settings=mock_settings_all_clients)
+        stage = EvidenceStage(settings=mock_settings_all_clients, graph_repo=Neo4jGraphRepository())
         # Replace mocked instances with AsyncMock capable ones for their methods
         if stage.pubmed_client:
             stage.pubmed_client.search_articles = AsyncMock()
@@ -143,10 +144,10 @@ def evidence_stage_pubmed_only(mock_settings_pubmed_only: Settings) -> EvidenceS
     The returned EvidenceStage has its PubMed client's search and close methods replaced with AsyncMock to simulate asynchronous behavior. Other clients are not initialized.
     """
     with patch(
-        "adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient",
+        "adaptive_graph_of_thoughts.infrastructure.api_clients.pubmed_client.PubMedClient",
         new_callable=MagicMock,
     ):
-        stage = EvidenceStage(settings=mock_settings_pubmed_only)
+        stage = EvidenceStage(settings=mock_settings_pubmed_only, graph_repo=Neo4jGraphRepository())
         if stage.pubmed_client:
             stage.pubmed_client.search_articles = AsyncMock()
             stage.pubmed_client.close = AsyncMock()
@@ -283,16 +284,16 @@ def test_evidence_stage_initialization(
     """
     with (
         patch(
-            "adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient"
+            "adaptive_graph_of_thoughts.infrastructure.api_clients.pubmed_client.PubMedClient"
         ) as MockPubMed,
         patch(
-            "adaptive_graph_of_thoughts.services.api_clients.google_scholar_client.GoogleScholarClient"
+            "adaptive_graph_of_thoughts.infrastructure.api_clients.google_scholar_client.GoogleScholarClient"
         ) as MockGS,
         patch(
-            "adaptive_graph_of_thoughts.services.api_clients.exa_search_client.ExaSearchClient"
+            "adaptive_graph_of_thoughts.infrastructure.api_clients.exa_search_client.ExaSearchClient"
         ) as MockExa,
     ):
-        stage_all = EvidenceStage(settings=mock_settings_all_clients)
+        stage_all = EvidenceStage(settings=mock_settings_all_clients, graph_repo=Neo4jGraphRepository())
         MockPubMed.assert_called_once_with(mock_settings_all_clients)
         MockGS.assert_called_once_with(mock_settings_all_clients)
         MockExa.assert_called_once_with(mock_settings_all_clients)
@@ -302,16 +303,16 @@ def test_evidence_stage_initialization(
 
     with (
         patch(
-            "adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient"
+            "adaptive_graph_of_thoughts.infrastructure.api_clients.pubmed_client.PubMedClient"
         ) as MockPubMed,
         patch(
-            "adaptive_graph_of_thoughts.services.api_clients.google_scholar_client.GoogleScholarClient"
+            "adaptive_graph_of_thoughts.infrastructure.api_clients.google_scholar_client.GoogleScholarClient"
         ) as MockGS,
         patch(
-            "adaptive_graph_of_thoughts.services.api_clients.exa_search_client.ExaSearchClient"
+            "adaptive_graph_of_thoughts.infrastructure.api_clients.exa_search_client.ExaSearchClient"
         ) as MockExa,
     ):
-        stage_pubmed_only = EvidenceStage(settings=mock_settings_pubmed_only)
+        stage_pubmed_only = EvidenceStage(settings=mock_settings_pubmed_only, graph_repo=Neo4jGraphRepository())
         MockPubMed.assert_called_once_with(mock_settings_pubmed_only)
         MockGS.assert_not_called()
         MockExa.assert_not_called()
@@ -497,7 +498,7 @@ async def test_evidence_stage_execute_calls_close_clients(
         mock_gs_instance = MockGS.return_value
         mock_exa_instance = MockExa.return_value
 
-        stage = EvidenceStage(settings=mock_settings_all_clients)
+        stage = EvidenceStage(settings=mock_settings_all_clients, graph_repo=Neo4jGraphRepository())
 
         # Mock methods of the stage itself
         stage._select_hypothesis_to_evaluate_from_neo4j = AsyncMock(
@@ -736,7 +737,7 @@ async def test_execute_handles_client_init_failure(
     method logs the failure, continues execution, and ensures client resources are closed.
     """
     monkeypatch.setattr(
-        "adaptive_graph_of_thoughts.services.api_clients.pubmed_client.PubMedClient",
+        "adaptive_graph_of_thoughts.infrastructure.api_clients.pubmed_client.PubMedClient",
         lambda _: (_ for _ in ()).throw(Exception("boom")),
     )
     monkeypatch.setattr(
@@ -748,7 +749,7 @@ async def test_execute_handles_client_init_failure(
         MagicMock,
     )
 
-    stage = EvidenceStage(settings=mock_settings_all_clients)
+    stage = EvidenceStage(settings=mock_settings_all_clients, graph_repo=Neo4jGraphRepository())
     stage.close_clients = AsyncMock(wraps=stage.close_clients)
     # Short-circuit loop to exit quickly
     stage._select_hypothesis_to_evaluate_from_neo4j = AsyncMock(

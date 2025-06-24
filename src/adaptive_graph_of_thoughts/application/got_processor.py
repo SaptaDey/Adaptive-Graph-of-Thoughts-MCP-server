@@ -8,16 +8,16 @@ from adaptive_graph_of_thoughts.services.resource_monitor import ResourceMonitor
 from loguru import logger
 from pydantic import ValidationError
 
-from ..models.common_types import (
+from ..domain.models.common_types import (
     ComposedOutput,
     GoTProcessorSessionData,
 )
 
 # Import the import_stages function for lazy loading
-from ..stages import import_stages
-from ..stages.base_stage import BaseStage, StageOutput
-from ..stages.exceptions import StageInitializationError
-from .exceptions import StageExecutionError
+from ..domain.stages import import_stages
+from ..domain.stages.base_stage import BaseStage, StageOutput
+from ..domain.stages.exceptions import StageInitializationError
+from ..domain.services.exceptions import StageExecutionError
 
 
 def create_checkpoint(session_data: GoTProcessorSessionData) -> GoTProcessorSessionData:

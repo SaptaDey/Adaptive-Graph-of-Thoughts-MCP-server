@@ -5,11 +5,11 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from adaptive_graph_of_thoughts.config import ExaSearchConfig, Settings
-from adaptive_graph_of_thoughts.services.api_clients.base_client import (
+from adaptive_graph_of_thoughts.infrastructure.api_clients.base_client import (
     APIHTTPError,
     APIRequestError,
 )
-from adaptive_graph_of_thoughts.services.api_clients.exa_search_client import (
+from adaptive_graph_of_thoughts.infrastructure.api_clients.exa_search_client import (
     ExaSearchClient,
     ExaSearchClientError,
 )

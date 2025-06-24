@@ -8,7 +8,7 @@ import json
 from datetime import datetime
 
 # Import the module under test
-from adaptive_graph_of_thoughts.domain.services.neo4j_utils import (
+from adaptive_graph_of_thoughts.infrastructure.neo4j_utils import (
     Neo4jConnection,
     execute_query,
     create_node,
@@ -68,7 +68,7 @@ def sample_relationship_data():
 @pytest.fixture
 def neo4j_connection():
     """Fixture for Neo4jConnection instance with mocked driver."""
-    with patch('adaptive_graph_of_thoughts.domain.services.neo4j_utils.GraphDatabase.driver') as mock_driver_creator:
+    with patch('adaptive_graph_of_thoughts.infrastructure.neo4j_utils.GraphDatabase.driver') as mock_driver_creator:
         mock_driver = Mock(spec=Driver)
         mock_session = Mock(spec=Session)
         mock_session.__enter__ = Mock(return_value=mock_session)

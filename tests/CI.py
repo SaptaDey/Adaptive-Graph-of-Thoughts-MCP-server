@@ -2,7 +2,7 @@ import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
 from src.adaptive_graph_of_thoughts.config import RuntimeSettings
-from src.adaptive_graph_of_thoughts.domain.services.neo4j_utils import Neo4jConnection
+from src.adaptive_graph_of_thoughts.infrastructure.neo4j_utils import Neo4jConnection
 
 @pytest.fixture
 def mock_neo4j():

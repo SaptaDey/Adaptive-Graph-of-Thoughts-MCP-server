@@ -3,10 +3,10 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from adaptive_graph_of_thoughts.config import PubMedConfig, Settings
-from adaptive_graph_of_thoughts.services.api_clients.base_client import (
+from adaptive_graph_of_thoughts.infrastructure.api_clients.base_client import (
     APIRequestError,
 )
-from adaptive_graph_of_thoughts.services.api_clients.pubmed_client import (
+from adaptive_graph_of_thoughts.infrastructure.api_clients.pubmed_client import (
     PubMedClient,
     PubMedClientError,
 )
