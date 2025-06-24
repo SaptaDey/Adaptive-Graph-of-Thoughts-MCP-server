@@ -194,6 +194,22 @@ def create_app() -> FastAPI:
     )
     logger.info(f"CORS middleware configured with origins: {allowed_origins}")
 
+    # Optional rate limiting
+    if env_settings.rate_limit_enabled:
+        from adaptive_graph_of_thoughts.services.rate_limiter import (
+            RateLimitMiddleware,
+        )
+
+        app.add_middleware(
+            RateLimitMiddleware,
+            max_requests=env_settings.rate_limit_per_minute,
+            per_seconds=60,
+        )
+        logger.info(
+            "Rate limiting enabled: %s requests/minute",
+            env_settings.rate_limit_per_minute,
+        )
+
     # ----------------------- Setup Wizard -----------------------
     @app.get("/setup", response_class=HTMLResponse)
     async def setup_get(request: Request, _=Depends(get_basic_auth)):
