@@ -384,9 +384,8 @@ class EvidenceStage(BaseStage):
                 )
             except Exception as e:  # Catching broad Exception from client calls
                 logger.error(f"Error querying PubMed for '{search_query}': {e}")
-                logging.getLogger(__name__).error(
-                    "Error querying PubMed for '%s': %s", search_query, e
-                )
+             except Exception as e:  # Catching broad Exception from client calls
+                 logger.error(f"Error querying PubMed for '{search_query}': {e}")
 
         # --- Google Scholar Search ---
         if self.google_scholar_client:
