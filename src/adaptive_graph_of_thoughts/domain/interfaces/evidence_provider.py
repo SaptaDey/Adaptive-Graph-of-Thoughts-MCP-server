@@ -7,4 +7,4 @@ class EvidenceProvider(Protocol):
 
     async def search(self, query: str, num_results: int = 10) -> list[Any]:
         """Return search results for the given query."""
-        raise NotImplementedError
+        ...
