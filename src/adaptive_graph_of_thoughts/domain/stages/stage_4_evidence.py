@@ -666,7 +666,7 @@ class EvidenceStage(BaseStage):
             "timestamp": dt.now().isoformat(),
         }
         try:
-            await execute_query(update_query, params)
+            await self.graph_repo.execute_query(update_query, params, tx_type="write")
             return True
         except Neo4jError as e:
             logger.error(
