@@ -600,7 +600,7 @@ def load_runtime_settings() -> RuntimeSettings:
             with open(yaml_path) as fh:
                 data = yaml.safe_load(fh) or {}
             validate_config_schema(data)
-        except Exception as exc:  # pragma: no cover - config may be malformed in tests
+        except yaml.YAMLError as exc:  # pragma: no cover - config may be malformed in tests
             logger.error(f"Failed to load configuration: {exc}")
             data = {}
 
