@@ -571,6 +571,25 @@ def load_runtime_settings() -> RuntimeSettings:
     if yaml_path.exists():
         with open(yaml_path) as fh:
             data = yaml.safe_load(fh) or {}
+        if "app" in data:
+            app_section = data.get("app", {})
+            if "asr_got" in app_section and "asr_got" not in data:
+                data["asr_got"] = app_section["asr_got"]
+            if "mcp_settings" in app_section and "mcp_settings" not in data:
+                allowed = {
+                    "protocol_version",
+                    "server_name",
+                    "server_version",
+                    "vendor_name",
+                }
+                data["mcp_settings"] = {
+                    k: v for k, v in app_section["mcp_settings"].items() if k in allowed
+                }
+        # Strip unsupported top-level keys to appease strict validation
+        allowed_keys = set(SettingsFileModel.model_fields.keys())
+        keys_to_remove = set(data.keys()) - allowed_keys
+        for key in keys_to_remove:
+            data.pop(key, None)
         validate_config_schema(data)
     return RuntimeSettings(**data)
 
