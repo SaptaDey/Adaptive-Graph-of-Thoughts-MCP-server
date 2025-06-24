@@ -13,4 +13,4 @@ class GraphRepository(Protocol):
         tx_type: str = "read",
     ) -> Any:
         """Execute a Cypher query and return driver records."""
-        raise NotImplementedError
+        ...
