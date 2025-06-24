@@ -385,3 +385,509 @@ def test_article_repr():
     # __str__ should reflect the representation as well
     s = str(article)
     assert "T" in s
+
+
+# --- Additional Comprehensive Edge Cases and Error Handling Tests ---
+
+
+async def test_search_with_special_characters_and_encoding(gs_client_fixture, httpx_mock):
+    """
+    Tests that the search method properly handles queries with special characters, unicode, and encoding issues.
+    """
+    client = gs_client_fixture
+    httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR))
+    
+    special_queries = [
+        "machine learning & AI",
+        "résumé parsing algorithms",
+        "量子计算 quantum computing",
+        "search with \"quotes\" and 'apostrophes'",
+        "query with %20 encoding issues",
+        "newline\ncharacter\ttab",
+        "",  # Empty string
+        "   ",  # Only whitespace
+        "🤖 AI with emojis 🔬",
+        "symbols ©™® and math ∑∫∂",
+    ]
+    
+    for query in special_queries:
+        articles = await client.search(query)
+        assert isinstance(articles, list)
+        
+    # Verify all requests were made
+    assert len(httpx_mock.get_requests()) == len(special_queries)
+
+
+async def test_search_with_all_optional_parameters(gs_client_fixture, httpx_mock):
+    """
+    Tests that the search method correctly passes all optional parameters to the API.
+    """
+    client = gs_client_fixture
+    httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR))
+    
+    await client.search(
+        query="comprehensive query",
+        num_results=25,
+        lang="fr",
+        region="ca"
+    )
+    
+    request = httpx_mock.get_requests()[0]
+    assert request.url.params["num"] == "25"
+    assert request.url.params["hl"] == "fr"
+    assert request.url.params["gl"] == "ca"
+    assert request.url.params["q"] == "comprehensive query"
+    assert request.url.params["engine"] == "google_scholar"
+
+
+async def test_search_malformed_publication_info_structures(gs_client_fixture, httpx_mock):
+    """
+    Tests that the client handles malformed or missing publication_info gracefully.
+    """
+    malformed_response = {
+        "organic_results": [
+            {"title": "Paper 1", "publication_info": None},
+            {"title": "Paper 2", "publication_info": {"summary": None}},
+            {"title": "Paper 3", "publication_info": {"authors": []}},
+            {"title": "Paper 4", "publication_info": {"summary": "", "authors": []}},
+            {"title": "Paper 5"},  # Missing publication_info entirely
+            {"title": "Paper 6", "publication_info": {"authors": [{"invalid": "structure"}]}},
+            {"title": "Paper 7", "publication_info": {"authors": "string instead of list"}},
+        ]
+    }
+    
+    client = gs_client_fixture
+    httpx_mock.add_response(json=malformed_response)
+    
+    articles = await client.search("malformed publication info")
+    
+    assert len(articles) == 7
+    for article in articles:
+        assert article.title is not None
+        # All should handle missing/malformed publication_info gracefully
+        assert article.publication_info is None or isinstance(article.publication_info, str)
+        assert article.authors is None or isinstance(article.authors, str)
+
+
+async def test_search_malformed_inline_links_data(gs_client_fixture, httpx_mock):
+    """
+    Tests that the client handles malformed or missing inline_links data structures robustly.
+    """
+    malformed_response = {
+        "organic_results": [
+            {"title": "Paper 1", "inline_links": None},
+            {"title": "Paper 2", "inline_links": {}},
+            {"title": "Paper 3", "inline_links": {"cited_by": None}},
+            {"title": "Paper 4", "inline_links": {"cited_by": {"total": None}}},
+            {"title": "Paper 5", "inline_links": {"serpapi_cite_link": None}},
+            {"title": "Paper 6", "inline_links": {"versions": {"link": ""}, "cited_by": {"total": -1}}},
+            {"title": "Paper 7", "inline_links": {"cited_by": {"total": "invalid_number"}}},
+            {"title": "Paper 8", "inline_links": {"cited_by": {}}},  # Missing total key
+        ]
+    }
+    
+    client = gs_client_fixture
+    httpx_mock.add_response(json=malformed_response)
+    
+    articles = await client.search("malformed inline links")
+    
+    assert len(articles) == 8
+    for article in articles:
+        assert article.title is not None
+        # Should handle all malformed cases gracefully
+        assert article.cited_by_count is None or isinstance(article.cited_by_count, int)
+        assert article.citation_link is None or isinstance(article.citation_link, str)
+        assert article.versions_link is None or isinstance(article.versions_link, str)
+
+
+async def test_search_response_with_missing_titles(gs_client_fixture, httpx_mock, caplog):
+    """
+    Tests that the client skips articles with missing titles and logs warnings appropriately.
+    """
+    response_with_missing_titles = {
+        "organic_results": [
+            {"title": "Valid Paper 1", "link": "http://example1.com"},
+            {"title": None, "link": "http://example2.com"},  # Should be skipped
+            {"title": "", "link": "http://example3.com"},  # Empty title
+            {"link": "http://example4.com"},  # Missing title entirely
+            {"title": "Valid Paper 2", "link": "http://example5.com"},
+        ]
+    }
+    
+    client = gs_client_fixture
+    httpx_mock.add_response(json=response_with_missing_titles)
+    
+    articles = await client.search("missing titles query")
+    
+    # Should only include articles with valid titles
+    assert len(articles) <= 3  # At most 3 valid articles
+    
+    # Check that warning was logged for skipped articles
+    assert "Skipping a Google Scholar result due to missing title" in caplog.text
+    
+    # Verify all returned articles have titles
+    for article in articles:
+        assert article.title is not None
+        assert len(article.title.strip()) > 0
+
+
+async def test_client_context_manager_lifecycle(mock_gs_settings):
+    """
+    Tests the complete lifecycle of the client context manager including error scenarios.
+    """
+    client = GoogleScholarClient(settings=mock_gs_settings)
+    
+    # Test normal context manager usage
+    async with client as c:
+        assert c is not None
+        assert hasattr(c, 'search')
+        assert c is client  # Should return self
+    
+    # Test that client can be reused after context exit
+    async with client as c:
+        assert c is not None
+    
+    # Test context manager with exception
+    try:
+        async with client as c:
+            raise ValueError("Test exception")
+    except ValueError:
+        pass  # Expected
+    
+    # Client should still work after exception
+    async with client:
+        pass
+
+
+async def test_search_with_various_response_encodings(gs_client_fixture, httpx_mock):
+    """
+    Tests that the client handles various text encoding issues in API responses.
+    """
+    response_with_encoding = {
+        "organic_results": [
+            {
+                "title": "Résumé Analysis with Machine Lëarning",
+                "link": "https://example.com/résumé",
+                "snippet": "This paper discusses naïve approaches to résumé parsing using émojis 🤖 and symbols ©™®",
+                "publication_info": {"summary": "Journál of Artificiál Intelligence, 2023"},
+            },
+            {
+                "title": "中文标题 Chinese Title with 数学 Math",
+                "snippet": "Abstract with unicode: α, β, γ mathematical symbols",
+                "publication_info": {"summary": "会议论文集, 2023"},
+            }
+        ]
+    }
+    
+    client = gs_client_fixture
+    httpx_mock.add_response(json=response_with_encoding)
+    
+    articles = await client.search("encoding test")
+    
+    assert len(articles) == 2
+    
+    # Test first article with accented characters and emojis
+    article1 = articles[0]
+    assert "Résumé" in article1.title
+    assert "🤖" in article1.snippet
+    assert "©™®" in article1.snippet
+    
+    # Test second article with Chinese characters
+    article2 = articles[1]
+    assert "中文标题" in article2.title
+    assert "α, β, γ" in article2.snippet
+
+
+async def test_search_concurrent_requests_stress(gs_client_fixture, httpx_mock):
+    """
+    Tests that the client can handle multiple concurrent search requests without issues.
+    """
+    import asyncio
+    
+    client = gs_client_fixture
+    
+    # Add multiple responses for concurrent requests
+    for i in range(10):
+        httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_SUCCESS_JSON_STR))
+    
+    # Make concurrent requests
+    tasks = [
+        client.search(f"concurrent query {i}", num_results=5)
+        for i in range(10)
+    ]
+    
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    # All requests should succeed
+    assert len(results) == 10
+    for result in results:
+        assert not isinstance(result, Exception)
+        assert isinstance(result, list)
+        assert len(result) == 2  # Based on SAMPLE_GS_SEARCH_SUCCESS_JSON_STR
+
+
+async def test_search_with_none_and_empty_values_in_response(gs_client_fixture, httpx_mock):
+    """
+    Tests that the client handles None values and empty strings in various fields.
+    """
+    response_with_nones = {
+        "organic_results": [
+            {
+                "title": "",  # Empty string
+                "link": None,
+                "snippet": None,
+                "publication_info": {"summary": None, "authors": None},
+                "inline_links": {"cited_by": {"total": None}, "serpapi_cite_link": None}
+            },
+            {
+                "title": "Valid Title",
+                "link": "",  # Empty string
+                "snippet": "Valid snippet",
+                "publication_info": None,
+                "inline_links": None
+            }
+        ]
+    }
+    
+    client = gs_client_fixture
+    httpx_mock.add_response(json=response_with_nones)
+    
+    articles = await client.search("none values query")
+    
+    # Should handle empty/None values gracefully
+    assert len(articles) >= 1  # At least one article should be valid
+    
+    for article in articles:
+        # Check that None values are handled properly
+        if article.title is not None:
+            assert isinstance(article.title, str)
+        if article.link is not None:
+            assert isinstance(article.link, str)
+        if article.snippet is not None:
+            assert isinstance(article.snippet, str)
+
+
+async def test_search_very_large_response_handling(gs_client_fixture, httpx_mock):
+    """
+    Tests that the client can handle very large API responses with many articles.
+    """
+    # Create a large response with many articles
+    large_response = {
+        "organic_results": [
+            {
+                "title": f"Paper {i}",
+                "link": f"http://example.com/paper{i}",
+                "snippet": f"This is snippet for paper {i}" * 10,  # Long snippets
+                "publication_info": {"summary": f"Journal {i % 5}, 202{i % 4}"},
+                "inline_links": {"cited_by": {"total": i * 10}}
+            }
+            for i in range(100)  # 100 articles
+        ]
+    }
+    
+    client = gs_client_fixture
+    httpx_mock.add_response(json=large_response)
+    
+    articles = await client.search("large response query")
+    
+    assert len(articles) == 100
+    
+    # Verify that all articles are properly parsed
+    for i, article in enumerate(articles):
+        assert article.title == f"Paper {i}"
+        assert article.link == f"http://example.com/paper{i}"
+        assert article.cited_by_count == i * 10
+
+
+async def test_search_with_zero_and_negative_parameters(gs_client_fixture, httpx_mock):
+    """
+    Tests that the client handles edge cases for numeric parameters.
+    """
+    client = gs_client_fixture
+    
+    # Add responses for each test case
+    for _ in range(3):
+        httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR))
+    
+    # Test with zero num_results
+    articles1 = await client.search("zero num query", num_results=0)
+    assert isinstance(articles1, list)
+    
+    # Test with negative num_results
+    articles2 = await client.search("negative num query", num_results=-5)
+    assert isinstance(articles2, list)
+    
+    # Test with very large num_results
+    articles3 = await client.search("large num query", num_results=1000)
+    assert isinstance(articles3, list)
+    
+    # Verify API calls were made with the parameters
+    requests = httpx_mock.get_requests()
+    assert len(requests) == 3
+    assert requests[0].url.params["num"] == "0"
+    assert requests[1].url.params["num"] == "-5"
+    assert requests[2].url.params["num"] == "1000"
+
+
+async def test_search_very_long_query_handling(gs_client_fixture, httpx_mock):
+    """
+    Tests that the client handles very long search queries appropriately.
+    """
+    client = gs_client_fixture
+    httpx_mock.add_response(json=json.loads(SAMPLE_GS_SEARCH_EMPTY_RESULTS_JSON_STR))
+    
+    # Create a very long query (over 1000 characters)
+    long_query = "machine learning artificial intelligence deep learning neural networks " * 20
+    
+    articles = await client.search(long_query)
+    
+    assert isinstance(articles, list)
+    
+    request = httpx_mock.get_requests()[0]
+    assert request.url.params["q"] == long_query
+
+
+def test_article_model_comprehensive_field_validation():
+    """
+    Tests comprehensive field validation and behavior of the GoogleScholarArticle model.
+    """
+    # Test with all fields provided
+    article_full = GoogleScholarArticle(
+        title="Test Title",
+        link="http://test.com",
+        snippet="Test snippet",
+        authors="Test Authors",
+        publication_info="Test Publication, 2023",
+        cited_by_count=42,
+        citation_link="http://cite.test.com",
+        source="Google Scholar",
+        related_articles_link="http://related.com",
+        versions_link="http://versions.com",
+        cited_by_link="http://citedby.com",
+        raw_result="raw_data"
+    )
+    
+    assert article_full.title == "Test Title"
+    assert article_full.cited_by_count == 42
+    assert article_full.source == "Google Scholar"
+    
+    # Test with minimal fields (using defaults)
+    article_minimal = GoogleScholarArticle(title="Minimal Title")
+    
+    assert article_minimal.title == "Minimal Title"
+    assert article_minimal.link == ""  # Default empty string
+    assert article_minimal.cited_by_count == 0  # Default zero
+    assert article_minimal.source == "Google Scholar"  # Default value
+    
+    # Test string representation
+    repr_str = repr(article_full)
+    assert "GoogleScholarArticle" in repr_str
+    assert "Test Title" in repr_str
+
+
+async def test_search_response_with_deeply_nested_structures(gs_client_fixture, httpx_mock):
+    """
+    Tests that the client handles API responses with complex nested structures gracefully.
+    """
+    complex_nested_response = {
+        "organic_results": [
+            {
+                "title": "Complex Nested Paper",
+                "link": "http://example.com/complex",
+                "snippet": "Complex test snippet",
+                "publication_info": {
+                    "summary": "Advanced Journal of Complexity",
+                    "authors": [
+                        {
+                            "name": "Author One",
+                            "affiliations": [
+                                {"institution": "University A", "department": "CS"},
+                                {"institution": "University B", "department": "AI"}
+                            ],
+                            "author_id": "12345",
+                            "verified": True
+                        },
+                        {
+                            "name": "Author Two",
+                            "extra_data": {
+                                "h_index": 25,
+                                "publications": 150,
+                                "citations": {"total": 5000, "recent": 500}
+                            }
+                        }
+                    ],
+                    "venue": {
+                        "name": "ICML 2023",
+                        "type": "conference",
+                        "impact_factor": 4.5,
+                        "location": {"city": "Honolulu", "country": "USA"}
+                    },
+                    "publication_date": {"year": 2023, "month": 7, "day": 15}
+                },
+                "inline_links": {
+                    "cited_by": {
+                        "total": 25,
+                        "link": "http://cited.com",
+                        "breakdown": {
+                            "by_year": {"2023": 10, "2024": 15},
+                            "by_field": {"ML": 20, "AI": 5}
+                        }
+                    },
+                    "versions": {
+                        "cluster_id": "abcd1234",
+                        "link": "http://versions.com",
+                        "available_versions": [
+                            {"type": "preprint", "source": "arXiv", "date": "2023-01-15"},
+                            {"type": "published", "source": "journal", "date": "2023-07-15"}
+                        ]
+                    },
+                    "serpapi_cite_link": "http://cite.com/complex",
+                    "pdf_link": "http://pdf.example.com/paper.pdf",
+                    "supplementary": {
+                        "code": "http://github.com/author/code",
+                        "data": "http://dataset.com/data",
+                        "slides": "http://slides.com/presentation"
+                    }
+                },
+                "metrics": {
+                    "downloads": 1500,
+                    "views": 5000,
+                    "social_media": {
+                        "twitter_mentions": 25,
+                        "reddit_discussions": 5
+                    }
+                }
+            }
+        ],
+        "search_metadata": {
+            "id": "search_123",
+            "status": "Success",
+            "processed_at": "2024-01-15T10:30:00Z",
+            "total_time_taken": 0.45
+        },
+        "search_information": {
+            "query_displayed": "Complex Nested Paper",
+            "total_results": "About 1,250,000 results",
+            "results_state": "Fully displayed"
+        }
+    }
+    
+    client = gs_client_fixture
+    httpx_mock.add_response(json=complex_nested_response)
+    
+    articles = await client.search("complex nested response")
+    
+    assert len(articles) == 1
+    article = articles[0]
+    
+    # Verify that complex nested data is parsed correctly
+    assert article.title == "Complex Nested Paper"
+    assert article.authors == "Author One, Author Two"  # Should extract names from complex structure
+    assert article.publication_info == "Advanced Journal of Complexity"
+    assert article.cited_by_count == 25
+    assert article.citation_link == "http://cite.com/complex"
+    
+    # Verify the raw result contains the full complex structure
+    assert isinstance(article.raw_result, dict) or isinstance(article.raw_result, str)
+
+
