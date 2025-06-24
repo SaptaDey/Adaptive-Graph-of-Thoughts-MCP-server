@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "agot-server.fullname" . }}
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: {{ include "agot-server.name" . }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: 8000

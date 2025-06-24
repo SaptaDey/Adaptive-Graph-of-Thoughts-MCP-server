@@ -106,4 +106,6 @@ docker-compose -f docker-compose.prod.yml up -d
         MCP_TRANSPORT_TYPE: Transport mode ("stdio" or "http")
         LOG_LEVEL: Logging level
         ENABLE_EVIDENCE_SOURCES: Enable external evidence gathering
+        SECRETS_PROVIDER: aws | gcp | vault (optional)
+        OPENAI_API_KEY_SECRET_NAME: Secret name for OpenAI key
   

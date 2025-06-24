@@ -13,6 +13,8 @@ import yaml
 from pydantic import BaseModel, Field, ValidationError
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from adaptive_graph_of_thoughts.services.secret_manager import load_external_secrets
+
 
 class AGoTSettings(BaseSettings):
     """Application settings loaded from environment variables or `.env`."""
@@ -28,12 +30,24 @@ class AGoTSettings(BaseSettings):
         default=None, description="API key for Anthropic Claude"
     )
 
+    rate_limit_enabled: bool = Field(
+        default=False,
+        description="Enable basic API rate limiting",
+    )
+    rate_limit_per_minute: int = Field(
+        default=60,
+        description="Allowed requests per minute per client",
+    )
+
     model_config = SettingsConfigDict(env_file=".env")
 
 
 class EnvSettings(AGoTSettings):
     """Backward-compatible alias used in tests."""
 
+
+# Load secrets from external manager before reading environment variables
+load_external_secrets()
 
 env_settings = EnvSettings()
 
@@ -589,6 +603,7 @@ def load_runtime_settings() -> RuntimeSettings:
         except Exception as exc:  # pragma: no cover - config may be malformed in tests
             logger.error(f"Failed to load configuration: {exc}")
             data = {}
+
     return RuntimeSettings(**data)
 
 

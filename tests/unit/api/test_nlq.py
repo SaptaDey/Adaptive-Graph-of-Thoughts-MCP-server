@@ -1,16 +1,45 @@
 import pytest
 import threading
 import time
+import sys
+import types
 from fastapi import HTTPException, status
 from fastapi.testclient import TestClient
 from unittest.mock import MagicMock, patch
 
+stub_config = types.ModuleType("adaptive_graph_of_thoughts.config")
+stub_config.Settings = object
+stub_config.runtime_settings = types.SimpleNamespace(
+    neo4j=types.SimpleNamespace(
+        uri="bolt://localhost", user="neo4j", password="test", database="neo4j"
+    ),
+    app=types.SimpleNamespace(
+        log_level="INFO",
+        name="testapp",
+        version="0.1",
+        cors_allowed_origins_str="*",
+        auth_token=None,
+    ),
+    asr_got={},
+)
+stub_config.settings = stub_config.runtime_settings
+stub_config.env_settings = types.SimpleNamespace(
+    llm_provider="openai",
+    openai_api_key="test",
+    anthropic_api_key=None,
+)
+stub_config.RuntimeSettings = object
+sys.modules.setdefault("adaptive_graph_of_thoughts.config", stub_config)
+sys.modules.setdefault("src.adaptive_graph_of_thoughts.config", stub_config)
+
 from adaptive_graph_of_thoughts.app_setup import create_app
+from adaptive_graph_of_thoughts.api.routes.mcp import verify_token
 
 @pytest.fixture
 def client():
     """Create a test client for the FastAPI application."""
     app = create_app()
+    app.dependency_overrides[verify_token] = lambda: True
     return TestClient(app)
 
 @pytest.fixture
@@ -535,3 +564,37 @@ def test_nlq_endpoint_memory_usage_with_large_data(client, auth_headers, monkeyp
     resp = client.post("/nlq", json={"question": "memory test"}, headers=auth_headers)
     assert resp.status_code == 200
     assert "Successfully processed large dataset" in resp.text
+
+def test_nlq_endpoint_db_timeout(client, auth_headers, monkeypatch):
+    """Test NLQ endpoint when Neo4j query times out."""
+    def fake_llm(prompt: str) -> str:
+        return "MATCH (n) RETURN n" if "Convert" in prompt else "summary"
+
+    def timeout_query(query: str):
+        raise TimeoutError("db timeout")
+
+    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", fake_llm)
+    monkeypatch.setattr(
+        "adaptive_graph_of_thoughts.api.routes.nlq.ask_llm",
+        fake_llm,
+    )
+    monkeypatch.setattr(
+        "adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query",
+        timeout_query,
+    )
+    monkeypatch.setattr(
+        "src.adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query",
+        timeout_query,
+    )
+
+    resp = client.post("/nlq", json={"question": "timeout"}, headers=auth_headers)
+    lines = resp.text.strip().split("\n")
+    assert resp.status_code == 200
+    assert any("Query execution failed" in line for line in lines)
+
+
+def test_nlq_endpoint_boolean_question(client, auth_headers):
+    """Question provided as boolean should raise validation error."""
+    resp = client.post("/nlq", json={"question": True}, headers=auth_headers)
+    assert resp.status_code == 422
+

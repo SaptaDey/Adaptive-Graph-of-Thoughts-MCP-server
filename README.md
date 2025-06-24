@@ -147,6 +147,15 @@ Before running Adaptive Graph of Thoughts (either locally or via Docker if not u
    echo "API_PORT=8000" >> .env
    ```
 
+### Secret Management
+
+In production environments, set the `SECRETS_PROVIDER` environment variable to
+`aws`, `gcp`, or `vault` to fetch sensitive values from a supported secrets
+manager. Optionally provide `<VAR>_SECRET_NAME` variables (for example
+`OPENAI_API_KEY_SECRET_NAME`) to control the name of each secret. When a secrets
+provider is configured, values for `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, and
+`NEO4J_PASSWORD` are loaded automatically at startup.
+
 6. **Run the development server**:
    ```bash
    python src/adaptive_graph_of_thoughts/main.py
@@ -231,6 +240,18 @@ graph TB
    # Use production compose file
    docker-compose -f docker-compose.prod.yml up --build -d
    ```
+
+### Kubernetes Deployment (Helm)
+
+A minimal [Helm](https://helm.sh/) chart is provided under `helm/agot-server` for
+running Adaptive Graph of Thoughts on a Kubernetes cluster.
+
+```bash
+helm install agot helm/agot-server
+```
+
+Customize values in `helm/agot-server/values.yaml` to set the image repository,
+resource limits, and other options.
 
 ### Notes on Specific Deployment Platforms
 

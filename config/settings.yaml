@@ -1,20 +1,13 @@
 # Main Application Settings for Adaptive Graph of Thoughts
 app:
   name: "Adaptive Graph of Thoughts"
-  version: "0.1.0" # Should ideally match pyproject.toml
+  version: "0.1.0"
   host: "0.0.0.0"
-  port: 8000 # Default port for Uvicorn
-  # auth_token: "your_secret_token_here" # Optional API authentication token
-  # MCP Transport Configuration
-  mcp_transport_type: "http"  # Options: "http", "stdio", "both"
-  mcp_stdio_enabled: true     # Enable STDIO transport
-  mcp_http_enabled: true      # Enable HTTP transport
-  # MCP Inspector Testing Configuration
-  mcp_stdio_timeout: 180      # Timeout for STDIO operations in seconds
-  mcp_http_timeout: 120       # Timeout for HTTP operations in seconds
-  mcp_inspector_retries: 2    # Number of retries for failed tests
-  log_level: "INFO"           # Default log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-  # debug: false               # Set to true for development if needed, enables more verbose errors
+  port: 8000
+  mcp_transport_type: "http"
+  mcp_stdio_enabled: true
+  mcp_http_enabled: true
+  log_level: "INFO"
 
 # Adaptive Graph of Thoughts Core Parameters
 asr_got:
@@ -163,34 +156,24 @@ mcp_settings:
   # display_name: "Adaptive Graph of Thoughts" # If needed by MCP client
   # description: "Adaptive Graph of Thoughts provides advanced scientific reasoning capabilities." # If needed
 
-# Optional: Direct Claude API integration settings (if the app needs to call Claude API itself)
-# claude_api:
-#   api_key: "env_var:CLAUDE_API_KEY" # Example: Load from environment variable CLAUDE_API_KEY
-#   default_model: "claude-3-opus-20240229"
-#   timeout_seconds: 120
-#   max_retries: 2
 
-# Optional: Google Scholar API settings (e.g., via SerpApi)
+# Optional API configurations
 google_scholar:
-  api_key: "YOUR_GOOGLE_SCHOLAR_API_KEY_HERE" # Or from env: GOOGLE_SCHOLAR__API_KEY
+  api_key: "YOUR_GOOGLE_SCHOLAR_API_KEY_HERE"
   base_url: "https://serpapi.com/search"
 
-# Optional: PubMed API settings (NCBI E-utilities)
 pubmed:
-  api_key: "YOUR_PUBMED_API_KEY_HERE_IF_NEEDED" # Or from env: PUBMED__API_KEY
+  api_key: "YOUR_PUBMED_API_KEY_HERE_IF_NEEDED"
   base_url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-  email: "your_email@example.com" # Or from env: PUBMED__EMAIL (Recommended by NCBI)
+  email: "your_email@example.com"
 
-# Optional: Exa Search API settings
 exa_search:
-  api_key: "YOUR_EXA_SEARCH_API_KEY_HERE" # Or from env: EXA_SEARCH__API_KEY
+  api_key: "YOUR_EXA_SEARCH_API_KEY_HERE"
   base_url: "https://api.exa.ai"
 
-# Example of how to structure a list of predefined knowledge domains or disciplines
-# These could be used for tagging, IBN detection, etc. (Ref P1.8)
 knowledge_domains:
   - name: "Skin Immunology"
-    keywords: ["skin", "immune", "immunology", "dermatitis", "psoriasis"]
+    keywords: ["skin", "immune"]
     description: "Focuses on the immune responses and mechanisms within the skin."
   - name: "Dermatology"
     keywords: ["dermatology", "skin diseases", "cutaneous"]

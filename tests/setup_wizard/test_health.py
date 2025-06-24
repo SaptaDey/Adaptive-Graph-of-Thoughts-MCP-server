@@ -9,9 +9,37 @@ Testing Framework: pytest with FastAPI TestClient
 Mocking: Built-in monkeypatch fixture for dependency injection
 """
 import json
-import pytest
+import sys
+import types
 from unittest.mock import Mock, patch
+
+import pytest
 from fastapi.testclient import TestClient
+
+stub_config = types.ModuleType("adaptive_graph_of_thoughts.config")
+stub_config.Settings = object
+stub_config.runtime_settings = types.SimpleNamespace(
+    neo4j=types.SimpleNamespace(
+        uri="bolt://localhost", user="neo4j", password="test", database="neo4j"
+    ),
+    app=types.SimpleNamespace(
+        log_level="INFO",
+        name="testapp",
+        version="0.1",
+        cors_allowed_origins_str="*",
+        auth_token=None,
+    ),
+    asr_got={},
+)
+stub_config.settings = stub_config.runtime_settings
+stub_config.env_settings = types.SimpleNamespace(
+    llm_provider="openai",
+    openai_api_key="test",
+    anthropic_api_key=None,
+)
+stub_config.RuntimeSettings = object
+sys.modules.setdefault("adaptive_graph_of_thoughts.config", stub_config)
+sys.modules.setdefault("src.adaptive_graph_of_thoughts.config", stub_config)
 
 from adaptive_graph_of_thoughts.app_setup import create_app
 
@@ -54,7 +82,8 @@ def test_health_down(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: BadDriver())
-    resp = client.get("/health")
+    headers = {"Authorization": "Basic dGVzdDp0ZXN0"}
+    resp = client.get("/health", headers=headers)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -430,3 +459,19 @@ def test_health_service_unavailable_error(monkeypatch):
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
     assert resp.json()["status"] == "unhealthy"
+
+def test_health_driver_timeout(monkeypatch):
+    """Test health check when driver() call itself times out."""
+    app = create_app()
+    client = TestClient(app)
+
+    class TimeoutDriver:
+        def __init__(self, *a, **k):
+            raise TimeoutError("Timeout creating driver")
+
+    monkeypatch.setattr("neo4j.GraphDatabase.driver", TimeoutDriver)
+    headers = {"Authorization": "Basic dGVzdDp0ZXN0"}
+    resp = client.get("/health", headers=headers)
+    assert resp.status_code == 500
+    assert resp.json()["neo4j"] == "down"
+

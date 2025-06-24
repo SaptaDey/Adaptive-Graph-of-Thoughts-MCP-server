@@ -29,6 +29,9 @@ export NEO4J_PASSWORD="your_password"
 export NEO4J_DATABASE="neo4j"
 ```
 
+To load secrets from AWS, GCP or Vault set `SECRETS_PROVIDER` and provide
+`<VAR>_SECRET_NAME` environment variables as needed.
+
 ##Client-Specific Setup
 ###Claude Desktop
       1. Copy configuration from config/client_configurations/claude_desktop.json
@@ -48,6 +51,16 @@ docker-compose up --build
 # Production deployment
 docker-compose -f docker-compose.prod.yml up --build -d
 ```
+
+### Kubernetes (Helm)
+
+For production clusters, a simple Helm chart is provided under `helm/agot-server`.
+
+```bash
+helm install agot helm/agot-server
+```
+
+Adjust `values.yaml` for your image repository and resource requirements.
 ##Verification
 ###Test your setup:
 ```bash
