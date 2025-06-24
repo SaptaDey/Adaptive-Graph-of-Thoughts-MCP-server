@@ -110,11 +110,11 @@ class EvidenceStage(BaseStage):
                     if isinstance(client_cls, AsyncMock):
                         self.pubmed_client = client_cls.return_value
                     elif asyncio.get_event_loop().is_running():
-                        task = asyncio.create_task(maybe_client)
-                        task.add_done_callback(lambda t: setattr(self, "pubmed_client", t.result()))
+                        self.pubmed_client = await maybe_client
                     else:
                         self.pubmed_client = asyncio.run(maybe_client)
                 else:
+                    self.pubmed_client = maybe_client
                     self.pubmed_client = maybe_client
                 logger.info("PubMed client initialized for EvidenceStage.")
             except PubMedClientError as e:
