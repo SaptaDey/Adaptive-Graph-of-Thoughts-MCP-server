@@ -1,313 +1,38 @@
 # Main Application Settings for Adaptive Graph of Thoughts
 app:
   name: "Adaptive Graph of Thoughts"
-  version: "0.1.0" # Should ideally match pyproject.toml
+  version: "0.1.0"
   host: "0.0.0.0"
-  port: 8000 # Default port for Uvicorn
-  # auth_token: "your_secret_token_here" # Optional API authentication token
-  # MCP Transport Configuration
-  mcp_transport_type: "http"  # Options: "http", "stdio", "both"
-  mcp_stdio_enabled: true     # Enable STDIO transport
-  mcp_http_enabled: true      # Enable HTTP transport
-  # MCP Inspector Testing Configuration
-  mcp_stdio_timeout: 180      # Timeout for STDIO operations in seconds
-  mcp_http_timeout: 120       # Timeout for HTTP operations in seconds
-  mcp_inspector_retries: 2    # Number of retries for failed tests
-  log_level: "INFO"           # Default log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
-  # debug: false               # Set to true for development if needed, enables more verbose errors
+  port: 8000
+  mcp_transport_type: "http"
+  mcp_stdio_enabled: true
+  mcp_http_enabled: true
+  log_level: "INFO"
 
-  # Adaptive Graph of Thoughts Core Parameters
-  asr_got:
-    default_parameters:
-      # Parameters for Stage 1: Initialization
-      initial_confidence: [0.9, 0.9, 0.9, 0.9] # P1.5 via P1.1
-      initial_layer: "root_layer"             # P1.1
+asr_got:
+  default_parameters: {}
 
-    # Parameters for Stage 2: Decomposition
-    default_decomposition_dimensions:       # P1.2
-      - label: "Scope and Delimitations"
-        description: "Clearly define the boundaries and specific focus of the research question."
-      - label: "Core Objectives"
-        description: "Identify the primary goals and desired outcomes of the analysis."
-      - label: "Methodological Approach"
-        description: "Outline the research methods and analytical techniques to be employed."
-      - label: "Data Requirements and Availability"
-        description: "Specify the types of data needed and assess their accessibility and quality."
-      - label: "Key Assumptions"
-        description: "List any underlying assumptions made at the outset of the investigation."
-      - label: "Potential Challenges and Limitations"
-        description: "Anticipate obstacles, constraints, or limitations that might affect the research."
-      - label: "Expected Impact and Applications"
-        description: "Consider the potential significance of the findings and their practical use cases."
-      - label: "Ethical Considerations"
-        description: "Address any ethical implications related to the research topic or methodology."
-      - label: "Identification of Knowledge Gaps" # P1.15 via P1.2
-        description: "Pinpoint areas of uncertainty or missing information relevant to the query."
-      - label: "Assessment of Potential Biases" # P1.17 via P1.2
-        description: "Identify possible cognitive, methodological, or data-related biases."
-    dimension_confidence: [0.8, 0.8, 0.8, 0.8] # P1.2
-
-    # Parameters for Stage 3: Hypothesis/Planning
-    hypotheses_per_dimension: # k from P1.3
-      min: 2
-      max: 4
-    hypothesis_confidence: [0.5, 0.5, 0.5, 0.5] # P1.3
-    default_disciplinary_tags: # P1.8 (initial tagging)
-      - "general_science"
-      - "interdisciplinary_studies"
-    # Default plan types for hypotheses (can be expanded)
-    default_plan_types: ["literature_review", "data_analysis", "simulation", "expert_consultation"]
-
-    # Parameters for Stage 4: Evidence Integration
-    evidence_max_iterations: 5                # P1.4
-    # Bayesian update parameters can be more detailed here if needed (P1.14)
-
-    # Parameters for Stage 5: Pruning/Merging
-    pruning_confidence_threshold: 0.2         # min(E[C]) from P1.5
-    pruning_impact_threshold: 0.3             # P1.5 considering P1.28
-    merging_semantic_overlap_threshold: 0.8   # P1.5
-
-    # Parameters for Stage 6: Subgraph Extraction (P1.6)
-    subgraph_min_confidence_threshold: 0.6
-    subgraph_min_impact_threshold: 0.5
-    # temporal_recency_days: 365              # Example: only consider nodes/evidence from the last year
-
-    # Parameters for Stage 8: Reflection (P1.7)
-    # Thresholds for audit checks, e.g., high_confidence_coverage_min: 0.3
-
-  pipeline_stages:
-    - name: "Initialization"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_1_initialization.InitializationStage"
-      enabled: true
-    - name: "Decomposition"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_2_decomposition.DecompositionStage"
-      enabled: true
-    - name: "Hypothesis Generation" # Renamed for clarity from "HypothesisStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_3_hypothesis.HypothesisStage"
-      enabled: true
-    - name: "Evidence Integration" # Renamed for clarity from "EvidenceStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.EvidenceStage"
-      enabled: true
-    - name: "Pruning and Merging" # Renamed for clarity from "PruningMergingStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_5_pruning_merging.PruningMergingStage"
-      enabled: true
-    - name: "Subgraph Extraction" # Renamed for clarity from "SubgraphExtractionStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_6_subgraph_extraction.SubgraphExtractionStage"
-      enabled: true
-    - name: "Composition" # Renamed for clarity from "CompositionStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_7_composition.CompositionStage"
-      enabled: true
-    - name: "Reflection" # Renamed for clarity from "ReflectionStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_8_reflection.ReflectionStage"
-      enabled: true
-
-  # Multi-layer network configuration (P1.23)
-  # Define layers that hypotheses or other elements can belong to.
-  # This is a global definition; specific node assignments happen during graph construction.
-  layers:
-    root_layer:
-      description: "Core foundational layer for initial task understanding and decomposition."
-    evidence_layer:
-      description: "Layer primarily containing evidence nodes and their direct connections."
-    hypothesis_analysis_layer:
-      description: "Layer focused on hypothesis development, competition, and refinement."
-    integration_synthesis_layer:
-      description: "Layer for integrating diverse findings and synthesizing overall conclusions."
-    # Add more domain-specific layers as needed, e.g.:
-    # "immunology_perspective":
-    #   description: "Nodes and analyses related to immunological aspects."
-    # "molecular_perspective":
-    #   description: "Nodes and analyses related to molecular biology aspects."
-
-  # Configuration for Model Context Protocol (MCP) Server behavior
-  mcp_settings:
-    protocol_version: "2024-11-05" # As per original claude_desktop_config.json
-    server_name: "Adaptive Graph of Thoughts MCP Server"
-    server_version: "0.1.0"        # Match app.version
-    vendor_name: "Adaptive Graph of Thoughts Development Team"
-    # Enhanced capabilities for better inspector compatibility
-    capabilities:
-      tools:
-        listChanged: false
-        supportsProgress: true
-      prompts:
-        listChanged: false
-      resources:
-        subscribe: false
-        listChanged: false
-      logging: {}
-    # Inspector testing specific settings
-    inspector:
-      enable_verbose_logging: true
-      ready_signal_timeout: 10    # Seconds to wait for ready signal
-      handshake_timeout: 30       # Seconds for MCP handshake
-      validation_timeout: 180     # Seconds for full validation
-  vendor_name: "Adaptive Graph of Thoughts Development Team"
-  # Enhanced capabilities for better inspector compatibility
-  capabilities:
-    tools:
-      listChanged: false
-      supportsProgress: true
-    prompts:
-      listChanged: false
-    resources:
-      subscribe: false
-      listChanged: false
-    logging: {}
-  # Inspector testing specific settings
-  inspector:
-    enable_verbose_logging: true
-    ready_signal_timeout: 10  # Seconds to wait for ready signal
-    handshake_timeout: 30     # Seconds for MCP handshake
-    validation_timeout: 180   # Seconds for full validation
-  vendor_name: "Adaptive Graph of Thoughts Development Team"
-  # Enhanced capabilities for better inspector compatibility
-  capabilities:
-    tools:
-      listChanged: false
-      supportsProgress: true
-    prompts:
-      listChanged: false
-    resources:
-      subscribe: false
-      listChanged: false
-    logging: {}
-  # Inspector testing specific settings
-  inspector:
-    enable_verbose_logging: true
-    ready_signal_timeout: 10  # Seconds to wait for ready signal
-    handshake_timeout: 30     # Seconds for MCP handshake
-    validation_timeout: 180   # Seconds for full validation
-  # display_name: "Adaptive Graph of Thoughts" # If needed by MCP client
-  # description: "Adaptive Graph of Thoughts provides advanced scientific reasoning capabilities." # If needed
-  vendor_name: "Adaptive Graph of Thoughts Development Team"
-  # Enhanced capabilities for better inspector compatibility
-  capabilities:
-    tools:
-      listChanged: false
-      supportsProgress: true
-    prompts:
-      listChanged: false
-    resources:
-      subscribe: false
-      listChanged: false
-    logging: {}
-  # Inspector testing specific settings
-  inspector:
-    enable_verbose_logging: true
-    ready_signal_timeout: 10  # Seconds to wait for ready signal
-    handshake_timeout: 30     # Seconds for MCP handshake
-    validation_timeout: 180   # Seconds for full validation
-  # display_name: "Adaptive Graph of Thoughts" # If needed by MCP client
-  # description: "Adaptive Graph of Thoughts provides advanced scientific reasoning capabilities." # If needed
-
-# Optional: Direct Claude API integration settings (if the app needs to call Claude API itself)
-# claude_api:
-#   api_key: "env_var:CLAUDE_API_KEY" # Example: Load from environment variable CLAUDE_API_KEY
-#   default_model: "claude-3-opus-20240229"
-#   timeout_seconds: 120
-#   max_retries: 2
-
-# Optional: Google Scholar API settings (e.g., via SerpApi)
-google_scholar:
-  api_key: "YOUR_GOOGLE_SCHOLAR_API_KEY_HERE" # Or from env: GOOGLE_SCHOLAR__API_KEY
-  base_url: "https://serpapi.com/search"
-
-# Optional: PubMed API settings (NCBI E-utilities)
-pubmed:
-  api_key: "YOUR_PUBMED_API_KEY_HERE_IF_NEEDED" # Or from env: PUBMED__API_KEY
-  base_url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
-  email: "your_email@example.com" # Or from env: PUBMED__EMAIL (Recommended by NCBI)
-
-# Optional: Exa Search API settings
-exa_search:
-  api_key: "YOUR_EXA_SEARCH_API_KEY_HERE" # Or from env: EXA_SEARCH__API_KEY
-  base_url: "https://api.exa.ai"
-
-# Example of how to structure a list of predefined knowledge domains or disciplines
-# These could be used for tagging, IBN detection, etc. (Ref P1.8)
-knowledge_domains:
-  - name: "Skin Immunology"
-    keywords: ["skin", "immune", "immunology", "dermatitis", "psoriasis"]
-    description: "Focuses on the immune responses and mechanisms within the skin."
-  - name: "Dermatology"
-    keywords: ["dermatology", "skin diseases", "cutaneous"]
-    description: "Branch of medicine dealing with the skin, hair, nails, and their diseases."
-  - name: "Cutaneous Malignancies"
-    keywords: ["skin cancer", "melanoma", "lymphoma", "carcinoma"]
-    description: "Cancers arising from the skin."
-  - name: "CTCL (Cutaneous T-Cell Lymphoma)"
-    keywords: ["ctcl", "mycosis fungoides", "sezary syndrome"]
-    description: "A rare type of non-Hodgkin lymphoma that affects the skin."
-  - name: "Genomics"
-    keywords: ["genomics", "gene expression", "dna", "rna", "sequencing"]
-    description: "Study of genomes, their structure, function, evolution, and mapping."
-  - name: "Microbiome"
-    keywords: ["microbiome", "microbiota", "bacteria", "fungi", "virome"]
-    description: "The community of microorganisms living together in a particular habitat, including the human body."
-  - name: "Molecular Biology"
-    keywords: ["molecular biology", "proteins", "enzymes", "pathways"]
-    description: "Branch of biology that seeks to understand the molecular basis of biological activity."
-  - name: "Machine Learning"
-    keywords: ["machine learning", "ai", "neural networks", "deep learning", "prediction"]
-    description: "Field of artificial intelligence that uses statistical techniques to give computer systems the ability to 'learn'."
-  - name: "Biomedical LLMs"
-    keywords: ["biomedical llm", "medical ai", "nlp in medicine"]
-    description: "Large language models specialized for biomedical applications."
-  # Add more domains based on Dr. Dey's profile (K3.3, K3.4) or general needs
-
-# MCP Server Configuration
-mcp:
+mcp_settings:
+  protocol_version: "2024-11-05"
   server_name: "Adaptive Graph of Thoughts MCP Server"
   server_version: "0.1.0"
-  protocol_version: "2024-11-05"
-  
-  # Tool Configuration
-  tools:
-    enabled: true
-    max_concurrent_queries: 5
-    default_reasoning_depth: 3
-    default_confidence_threshold: 0.7
-    
-  # Evidence Sources Configuration
-  evidence_sources:
-    pubmed:
-      enabled: true
-      max_results: 50
-      api_key: null  # Set via environment variable
-    google_scholar:
-      enabled: true
-      max_results: 30
-    exa_search:
-      enabled: true
-      max_results: 20
-      api_key: null  # Set via environment variable
-  
-  # Graph Processing Configuration
-  graph:
-    max_nodes_per_query: 1000
-    max_edges_per_query: 2000
-    enable_hyperedges: true
-    confidence_propagation: true
-    
-  # Session Management
-  sessions:
-    enable_persistence: false  # Future feature
-    max_session_duration: 3600  # seconds
-    cleanup_interval: 300  # seconds
+  vendor_name: "Adaptive Graph of Thoughts Development Team"
 
-# Client Integration Settings
-client_integration:
-  supported_transports: ["stdio", "http"]
-  default_transport: "stdio"
-  
-  # Authentication (for HTTP mode)
-  auth:
-    require_token: false
-    token_header: "Authorization"
-    
-  # Rate Limiting
-  rate_limiting:
-    enabled: false
-    requests_per_minute: 60
-    burst_limit: 10
+# Optional API configurations
+google_scholar:
+  api_key: "YOUR_GOOGLE_SCHOLAR_API_KEY_HERE"
+  base_url: "https://serpapi.com/search"
+
+pubmed:
+  api_key: "YOUR_PUBMED_API_KEY_HERE_IF_NEEDED"
+  base_url: "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/"
+  email: "your_email@example.com"
+
+exa_search:
+  api_key: "YOUR_EXA_SEARCH_API_KEY_HERE"
+  base_url: "https://api.exa.ai"
+
+knowledge_domains:
+  - name: "Skin Immunology"
+    keywords: ["skin", "immune"]
+    description: "Focuses on the immune responses and mechanisms within the skin."
