@@ -21,7 +21,7 @@ COPY poetry.lock pyproject.toml ./
 # Configure and install dependencies without dev tools
 RUN poetry config virtualenvs.create false && \
     poetry lock --no-update && \
-    poetry install --only=main --no-interaction --no-ansi && \
+    poetry install --no-interaction --no-ansi && \
     poetry cache clear pypi --all && \
     pip uninstall -y poetry
 
