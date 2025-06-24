@@ -572,8 +572,10 @@ def load_runtime_settings() -> RuntimeSettings:
                     k: v for k, v in app_section["mcp_settings"].items() if k in allowed
                 }
         # Strip unsupported top-level keys to appease strict validation
-        for extra_key in ("mcp", "client_integration"):
-            data.pop(extra_key, None)
+        allowed_keys = set(SettingsFileModel.model_fields.keys())
+        keys_to_remove = set(data.keys()) - allowed_keys
+        for key in keys_to_remove:
+            data.pop(key, None)
         validate_config_schema(data)
     return RuntimeSettings(**data)
 
