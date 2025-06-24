@@ -45,7 +45,8 @@ check_dependencies() {
     
     # Check Poetry
     if ! command -v poetry &> /dev/null; then
-        print_warning "Poetry not found. Install with: curl -sSL https://install.python-poetry.org | python3 -"
+        print_error "Poetry is required but not installed. Install with: curl -sSL https://install.python-poetry.org | python3 -"
+        exit 1
     else
         print_success "Poetry found"
     fi
@@ -110,16 +111,11 @@ setup_docker() {
 
 install_dependencies() {
     echo "Installing project dependencies..."
-    
+
     cd "$PROJECT_ROOT"
-    
-    if command -v poetry &> /dev/null; then
-        poetry install
-        print_success "Dependencies installed with Poetry"
-    else
-        pip3 install -r requirements.txt
-        print_success "Dependencies installed with pip"
-    fi
+
+    poetry install
+    print_success "Dependencies installed with Poetry"
 }
 
 verify_installation() {
