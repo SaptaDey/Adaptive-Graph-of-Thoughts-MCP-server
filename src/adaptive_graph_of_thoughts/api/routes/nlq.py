@@ -11,7 +11,7 @@ from fastapi import APIRouter, Body, HTTPException, Depends
 from fastapi.responses import StreamingResponse
 
 from ..schemas import NLQPayload
-from ...domain.services.neo4j_utils import execute_query
+from ...infrastructure.neo4j_utils import execute_query
 from ...services.llm import LLM_QUERY_LOGS, ask_llm
 from .mcp import verify_token
 

@@ -23,7 +23,7 @@ from adaptive_graph_of_thoughts.domain.models.graph_elements import (
 )
 
 # from adaptive_graph_of_thoughts.domain.models.graph_state import ASRGoTGraph # No longer used
-from adaptive_graph_of_thoughts.domain.services.neo4j_utils import (
+from adaptive_graph_of_thoughts.infrastructure.neo4j_utils import (
     Neo4jError,
     execute_query,
 )

@@ -19,6 +19,7 @@ class StageOutput(BaseModel):
     metrics: dict[str, Any] = Field(default_factory=dict)
     error_message: Optional[str] = None
     next_stage_context_update: dict[str, Any] = Field(default_factory=dict)
+    logs: str = ""
 
 
 class BaseStage(ABC):

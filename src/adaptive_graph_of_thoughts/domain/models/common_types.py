@@ -3,6 +3,7 @@ Common type definitions to avoid circular imports.
 Provides type definitions used across multiple modules.
 """
 
+from typing import Any
 from pydantic import BaseModel, Field
 
 
@@ -13,8 +14,8 @@ class GoTProcessorSessionData(BaseModel):
     query: str = ""
     final_answer: str = ""
     final_confidence_vector: str = "0.5,0.5,0.5,0.5"  # Simplified as string
-    accumulated_context: str = ""  # Simplified as JSON string
-    stage_outputs_trace: str = ""  # Simplified as JSON string
+    accumulated_context: dict[str, Any] = Field(default_factory=dict)
+    stage_outputs_trace: list[dict[str, Any]] = Field(default_factory=list)
 
 
 # ASRGoTGraph import is not present in this file, so no removal needed here for that.

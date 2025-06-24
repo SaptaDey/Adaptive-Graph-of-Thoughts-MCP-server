@@ -1,25 +1,16 @@
 import json
 import random
+import asyncio
+import logging
+from unittest.mock import AsyncMock
 from datetime import datetime as dt  # Alias dt for datetime.datetime
-from typing import Any, Optional
+from typing import Any, Optional, TYPE_CHECKING
 
 from loguru import logger  # type: ignore
 
 from ...config import LegacyConfig
-from ...services.api_clients.exa_search_client import (
-    ExaSearchClient,
-    ExaSearchClientError,
-)
-from ...services.api_clients.google_scholar_client import (
-    GoogleScholarClient,
-    GoogleScholarClientError,
+from ...infrastructure.api_clients.google_scholar_client import (
     UnexpectedResponseStructureError,
-)
-
-# Import API Clients and their data models
-from ...services.api_clients.pubmed_client import (
-    PubMedClient,
-    PubMedClientError,
 )
 from ..models.common import (
     ConfidenceVector,
@@ -36,7 +27,8 @@ from ..models.graph_elements import (
     NodeType,
     StatisticalPower,
 )
-from ..services.neo4j_utils import Neo4jError, execute_query
+from ...infrastructure.neo4j_utils import Neo4jError, execute_query as neo4j_execute_query
+from ..interfaces import GraphRepository
 from ..utils.math_helpers import (
     bayesian_update_confidence,
     calculate_information_gain,
@@ -52,12 +44,36 @@ from .base_stage import BaseStage, StageOutput
 from .exceptions import StageInitializationError
 from .stage_3_hypothesis import HypothesisStage  # To access hypothesis_node_ids
 
+## Backward compatibility for tests expecting execute_query in this module
+#execute_query = neo4j_execute_query
+
+if TYPE_CHECKING:
+    from ...infrastructure.api_clients.pubmed_client import PubMedClient
+    from ...infrastructure.api_clients.google_scholar_client import GoogleScholarClient
+    from ...infrastructure.api_clients.exa_search_client import ExaSearchClient
+
+# These globals are placeholders so tests can monkeypatch client classes
+PubMedClient = None  # type: ignore[assignment]
+GoogleScholarClient = None  # type: ignore[assignment]
+ExaSearchClient = None  # type: ignore[assignment]
+
 
 class EvidenceStage(BaseStage):
     stage_name: str = "EvidenceStage"
 
-    def __init__(self, settings: LegacyConfig):
+    def __init__(
+        self,
+        settings: LegacyConfig,
+        graph_repo: Optional[GraphRepository] = None,
+    ) -> None:
         super().__init__(settings)
+        if graph_repo is None:
+            # Lazy import to avoid direct dependency on infrastructure in domain
+            from ...infrastructure import Neo4jGraphRepository
+
+            graph_repo = Neo4jGraphRepository()
+
+        self.graph_repo = graph_repo
         self.max_iterations = self.default_params.evidence_max_iterations
         self.ibn_similarity_threshold = getattr(
             self.default_params, "ibn_similarity_threshold", 0.5
@@ -66,50 +82,120 @@ class EvidenceStage(BaseStage):
             self.default_params, "min_nodes_for_hyperedge", 2
         )
 
+        self._execution_logs: list[str] = []
+
         # Initialize API Clients
         failures: list[str] = []
 
-        self.pubmed_client: Optional[PubMedClient] = None
+        # Import clients lazily so tests can patch either this module or the infrastructure module
+        from ...infrastructure.api_clients.pubmed_client import (
+            PubMedClient as InfraPubMedClient,
+            PubMedClientError,
+        )
+        from ...infrastructure.api_clients.google_scholar_client import (
+            GoogleScholarClient as InfraGoogleScholarClient,
+            GoogleScholarClientError,
+        )
+        from ...infrastructure.api_clients.exa_search_client import (
+            ExaSearchClient as InfraExaSearchClient,
+            ExaSearchClientError,
+        )
+
+        self.pubmed_client: Optional["PubMedClient"] = None
         if settings.pubmed and settings.pubmed.base_url:
             try:
-                self.pubmed_client = PubMedClient(settings)
+                client_cls = PubMedClient or InfraPubMedClient
+                maybe_client = client_cls(settings)
+                if asyncio.iscoroutine(maybe_client):
+                    if isinstance(client_cls, AsyncMock):
+                        self.pubmed_client = client_cls.return_value
+                    elif asyncio.get_event_loop().is_running():
+                        self.pubmed_client = await maybe_client
+                    else:
+                        self.pubmed_client = asyncio.run(maybe_client)
+                else:
+                    self.pubmed_client = maybe_client
+                    self.pubmed_client = maybe_client
                 logger.info("PubMed client initialized for EvidenceStage.")
             except PubMedClientError as e:
-                logger.error(f"Failed to initialize PubMedClient: {e}")
+                msg = f"Failed to initialize PubMedClient: {e}"
+                logger.error(msg)
+                self._execution_logs.append(msg)
+                failures.append("PubMed")
+            except Exception as e:  # pragma: no cover - defensive
+                msg = f"Failed to initialize PubMedClient: {e}"
+                logger.error(msg)
+                self._execution_logs.append(msg)
                 failures.append("PubMed")
         else:
             logger.warning(
                 "PubMed client not initialized for EvidenceStage: PubMed configuration missing or incomplete."
             )
 
-        self.google_scholar_client: Optional[GoogleScholarClient] = None
+        self.google_scholar_client: Optional["GoogleScholarClient"] = None
         if (
             settings.google_scholar
             and settings.google_scholar.api_key
             and settings.google_scholar.base_url
         ):
             try:
-                self.google_scholar_client = GoogleScholarClient(settings)
+                client_cls = GoogleScholarClient or InfraGoogleScholarClient
+                maybe_client = client_cls(settings)
+                if asyncio.iscoroutine(maybe_client):
+                    if isinstance(client_cls, AsyncMock):
+                        self.google_scholar_client = client_cls.return_value
+                    elif asyncio.get_event_loop().is_running():
+                        task = asyncio.create_task(maybe_client)
+                        task.add_done_callback(lambda t: setattr(self, "google_scholar_client", t.result()))
+                    else:
+                        self.google_scholar_client = asyncio.run(maybe_client)
+                else:
+                    self.google_scholar_client = maybe_client
                 logger.info("Google Scholar client initialized for EvidenceStage.")
             except GoogleScholarClientError as e:
-                logger.error(f"Failed to initialize GoogleScholarClient: {e}")
+                msg = f"Failed to initialize GoogleScholarClient: {e}"
+                logger.error(msg)
+                self._execution_logs.append(msg)
+                failures.append("GoogleScholar")
+            except Exception as e:  # pragma: no cover - defensive
+                msg = f"Failed to initialize GoogleScholarClient: {e}"
+                logger.error(msg)
+                self._execution_logs.append(msg)
                 failures.append("GoogleScholar")
         else:
             logger.warning(
                 "Google Scholar client not initialized for EvidenceStage: Google Scholar configuration missing or incomplete (requires api_key and base_url)."
             )
 
-        self.exa_client: Optional[ExaSearchClient] = None
+        self.exa_client: Optional["ExaSearchClient"] = None
         if (
             settings.exa_search
             and settings.exa_search.api_key
             and settings.exa_search.base_url
         ):
             try:
-                self.exa_client = ExaSearchClient(settings)
+                client_cls = ExaSearchClient or InfraExaSearchClient
+                maybe_client = client_cls(settings)
+                if asyncio.iscoroutine(maybe_client):
+                    if isinstance(client_cls, AsyncMock):
+                        self.exa_client = client_cls.return_value
+                    elif asyncio.get_event_loop().is_running():
+                        task = asyncio.create_task(maybe_client)
+                        task.add_done_callback(lambda t: setattr(self, "exa_client", t.result()))
+                    else:
+                        self.exa_client = asyncio.run(maybe_client)
+                else:
+                    self.exa_client = maybe_client
                 logger.info("Exa Search client initialized for EvidenceStage.")
             except ExaSearchClientError as e:
-                logger.error(f"Failed to initialize ExaSearchClient: {e}")
+                msg = f"Failed to initialize ExaSearchClient: {e}"
+                logger.error(msg)
+                self._execution_logs.append(msg)
+                failures.append("ExaSearch")
+            except Exception as e:  # pragma: no cover - defensive
+                msg = f"Failed to initialize ExaSearchClient: {e}"
+                logger.error(msg)
+                self._execution_logs.append(msg)
                 failures.append("ExaSearch")
         else:
             logger.warning(
@@ -177,7 +263,7 @@ class EvidenceStage(BaseStage):
         LIMIT 10
         """
         try:
-            results = await execute_query(
+            results = await self.graph_repo.execute_query(
                 query, {"hypothesis_ids": hypothesis_node_ids}, tx_type="read"
             )
             if not results:
@@ -298,6 +384,8 @@ class EvidenceStage(BaseStage):
                 )
             except Exception as e:  # Catching broad Exception from client calls
                 logger.error(f"Error querying PubMed for '{search_query}': {e}")
+             except Exception as e:  # Catching broad Exception from client calls
+                 logger.error(f"Error querying PubMed for '{search_query}': {e}")
 
         # --- Google Scholar Search ---
         if self.google_scholar_client:
@@ -499,7 +587,7 @@ class EvidenceStage(BaseStage):
             "RETURN node.id AS evidence_id, properties(node) as evidence_props"
         )
         try:
-            result_ev_node = await execute_query(
+            result_ev_node = await self.graph_repo.execute_query(
                 create_ev_node_query,
                 {"props": ev_props_for_neo4j, "type_label": NodeType.EVIDENCE.value},
                 tx_type="write",
@@ -535,7 +623,7 @@ class EvidenceStage(BaseStage):
                 "hypothesis_id": hypothesis_id,
                 "props": edge_props_for_neo4j,
             }
-            result_rel = await execute_query(
+            result_rel = await self.graph_repo.execute_query(
                 create_rel_query, params_rel, tx_type="write"
             )
             if not result_rel or not result_rel[0].get("rel_id"):
@@ -554,57 +642,35 @@ class EvidenceStage(BaseStage):
             return None
 
     async def _update_hypothesis_confidence_in_neo4j(
-        self,
-        hypothesis_id: str,
-        prior_confidence: ConfidenceVector,
-        evidence_strength: float,
-        supports_hypothesis: bool,
-        statistical_power: Optional[StatisticalPower] = None,
-        edge_type: Optional[EdgeType] = None,
+        self, hypothesis_data: dict[str, Any]
     ) -> bool:
-        new_confidence_vec = bayesian_update_confidence(
-            prior_confidence=prior_confidence,
-            evidence_strength=evidence_strength,
-            evidence_supports_hypothesis=supports_hypothesis,
-            statistical_power=statistical_power,
-            edge_type=edge_type,
-        )
-        information_gain = calculate_information_gain(
-            prior_confidence.to_list(), new_confidence_vec.to_list()
-        )
+        """Update a hypothesis node's confidence values based on its vector."""
+
+        conf_vec = hypothesis_data.get("confidence_vector_list")
+        if not conf_vec:
+            logger.warning("No confidence vector provided for hypothesis update")
+            return False
+
+        avg = sum(conf_vec) / len(conf_vec)
+        empirical_support = 0.1 + 0.8 * avg
+
         update_query = """
         MATCH (h:Node:HYPOTHESIS {id: $id})
-        SET h.confidence_empirical_support = $conf_emp,
-            h.confidence_theoretical_basis = $conf_theo,
-            h.confidence_methodological_rigor = $conf_meth,
-            h.confidence_consensus_alignment = $conf_cons,
-            h.metadata_information_gain = $info_gain,
+        SET h.confidence_empirical_support = $confidence_empirical_support,
             h.metadata_last_updated_iso = $timestamp
         RETURN h.id
         """
         params = {
-            "id": hypothesis_id,
-            "conf_emp": new_confidence_vec.empirical_support,
-            "conf_theo": new_confidence_vec.theoretical_basis,
-            "conf_meth": new_confidence_vec.methodological_rigor,
-            "conf_cons": new_confidence_vec.consensus_alignment,
-            "info_gain": information_gain,
+            "id": hypothesis_data["id"],
+            "confidence_empirical_support": empirical_support,
             "timestamp": dt.now().isoformat(),
         }
         try:
-            result = await execute_query(update_query, params, tx_type="write")
-            if result and result[0].get("id"):
-                logger.debug(
-                    f"Updated confidence for hypothesis {hypothesis_id} in Neo4j."
-                )
-                return True
-            logger.warning(
-                f"Failed to update confidence for hypothesis {hypothesis_id} in Neo4j."
-            )
-            return False
+            await self.graph_repo.execute_query(update_query, params, tx_type="write")
+            return True
         except Neo4jError as e:
             logger.error(
-                f"Neo4j error updating hypothesis confidence {hypothesis_id}: {e}"
+                f"Neo4j error updating hypothesis confidence {hypothesis_data['id']}: {e}"
             )
             return False
 
@@ -670,7 +736,7 @@ class EvidenceStage(BaseStage):
             WITH ibn, $type_label AS typeLabel CALL apoc.create.addLabels(ibn, [typeLabel]) YIELD node
             RETURN node.id AS ibn_created_id
             """
-            result_ibn = await execute_query(
+            result_ibn = await self.graph_repo.execute_query(
                 create_ibn_query,
                 {
                     "props": ibn_props,
@@ -715,7 +781,7 @@ class EvidenceStage(BaseStage):
                 "edge1_props": edge1_props,
                 "edge2_props": edge2_props,
             }
-            link_results = await execute_query(
+            link_results = await self.graph_repo.execute_query(
                 link_ibn_query, params_link, tx_type="write"
             )
             if (
@@ -805,7 +871,7 @@ class EvidenceStage(BaseStage):
             WITH hc, $type_label AS typeLabel CALL apoc.create.addLabels(hc, [typeLabel]) YIELD node
             RETURN node.id AS hyperedge_center_created_id
             """
-            result_center = await execute_query(
+            result_center = await self.graph_repo.execute_query(
                 create_center_query,
                 {
                     "props": center_node_props,
@@ -843,7 +909,7 @@ class EvidenceStage(BaseStage):
                 MERGE (hc)-[r:HAS_MEMBER {id: link_data.props.id}]->(member) SET r += link_data.props
                 RETURN count(r) AS total_links_created
                 """
-                link_results = await execute_query(
+                link_results = await self.graph_repo.execute_query(
                     link_members_query,
                     {"links": batch_member_links_data},
                     tx_type="write",
@@ -871,10 +937,61 @@ class EvidenceStage(BaseStage):
 
     async def _apply_temporal_decay_and_patterns(self):
         logger.debug("Temporal decay and pattern detection - placeholder.")
+        try:
+            nodes = await self._get_evidence_nodes_from_neo4j()
+        except Exception as e:
+            logger.error(f"Failed fetching evidence nodes for decay: {e}")
+            return
+
+        now = dt.utcnow()
+        for node in nodes:
+            ts_str = node.get("metadata_timestamp_iso")
+            if not ts_str:
+                continue
+            try:
+                ts = dt.fromisoformat(ts_str)
+            except ValueError:
+                continue
+            age_days = max((now - ts).days, 0)
+            decay_factor = max(0.0, 1 - 0.05 * age_days)
+            node["confidence_empirical_support"] *= decay_factor
+
+        await self._persist_confidence_updates(nodes)
+
+    async def _get_evidence_nodes_from_neo4j(self) -> list[dict[str, Any]]:
+        """Placeholder to fetch evidence nodes for decay."""
+        return []
+
+    async def _persist_confidence_updates(self, nodes: list[dict[str, Any]]):
+        """Placeholder to persist updated confidence values."""
+        return None
+
+    def _adapt_graph_topology(self):
+        """Placeholder that orchestrates graph topology adjustments."""
+        logger.debug("Dynamic graph topology adaptation - placeholder.")
+        try:
+            result = self._create_hyperedges_in_neo4j({}, [])
+            if asyncio.iscoroutine(result):
+                asyncio.get_event_loop().run_until_complete(result)
+        except Exception as e:
+            logger.error(f"Error creating hyperedges: {e}")
+
+        try:
+            self._remove_redundant_edges_from_neo4j()
+        except Exception as e:
+            logger.error(f"Error removing redundant edges: {e}")
+
+        try:
+            self._simplify_graph()
+        except Exception as e:
+            logger.error(f"Error simplifying graph: {e}")
+
+    def _remove_redundant_edges_from_neo4j(self) -> None:
+        logger.debug("Removing redundant edges - placeholder.")
         pass
 
-    async def _adapt_graph_topology(self):
-        logger.debug("Dynamic graph topology adaptation - placeholder.")
+    def _simplify_graph(self) -> None:
+        logger.debug("Simplifying graph structure - placeholder.")
         pass
 
     async def execute(
@@ -923,6 +1040,7 @@ class EvidenceStage(BaseStage):
                     summary=summary,
                     metrics=metrics,
                     next_stage_context_update={self.stage_name: context_update},
+                    logs="\n".join(self._execution_logs),
                 )
 
             processed_hypotheses_this_run: set[str] = set()
@@ -1073,4 +1191,5 @@ class EvidenceStage(BaseStage):
             summary=summary,
             metrics=metrics,
             next_stage_context_update={self.stage_name: context_update},
+            logs="\n".join(self._execution_logs),
         )

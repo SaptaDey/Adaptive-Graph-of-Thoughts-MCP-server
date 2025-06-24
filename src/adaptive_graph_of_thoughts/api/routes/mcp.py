@@ -20,8 +20,8 @@ from adaptive_graph_of_thoughts.api.schemas import (
     ShutdownParams,
 )
 from adaptive_graph_of_thoughts.config import settings  # Import settings
-from adaptive_graph_of_thoughts.domain.services.got_processor import (
-    GoTProcessor,
+from adaptive_graph_of_thoughts.application import GoTProcessor
+from adaptive_graph_of_thoughts.domain.models.common_types import (
     GoTProcessorSessionData,
 )
 

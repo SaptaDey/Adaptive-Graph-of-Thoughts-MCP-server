@@ -5,11 +5,11 @@ import pytest
 from pytest_httpx import HTTPXMock
 
 from adaptive_graph_of_thoughts.config import GoogleScholarConfig, Settings
-from adaptive_graph_of_thoughts.services.api_clients.base_client import (
+from adaptive_graph_of_thoughts.infrastructure.api_clients.base_client import (
     APIHTTPError,
     APIRequestError,
 )
-from adaptive_graph_of_thoughts.services.api_clients.google_scholar_client import (
+from adaptive_graph_of_thoughts.infrastructure.api_clients.google_scholar_client import (
     GoogleScholarArticle,
     GoogleScholarClient,
     GoogleScholarClientError,

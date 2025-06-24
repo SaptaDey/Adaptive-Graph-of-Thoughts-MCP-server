@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from ...domain.services.neo4j_utils import execute_query
+from ...infrastructure.neo4j_utils import execute_query
 from .mcp import verify_token
 
 explorer_router = APIRouter()
