@@ -10,8 +10,8 @@ repos:
     hooks:
       - id: mypy
         args: ["--config-file=mypy.ini"]
-  -   repo: https://github.com/fsouza/mirrors-pyright
+  - repo: https://github.com/fsouza/mirrors-pyright
     rev: v1.1.402
     hooks:
-    -   id: pyright
+      - id: pyright
         args: ["--project=pyrightconfig.json"]
