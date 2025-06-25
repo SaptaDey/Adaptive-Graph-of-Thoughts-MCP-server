@@ -93,7 +93,8 @@ def test_health_down(monkeypatch):
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: BadDriver())
     headers = {"Authorization": "Basic dGVzdDp0ZXN0"}
-    resp = client.get("/health", auth=AUTH, headers=headers)
+    monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: BadDriver())
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
