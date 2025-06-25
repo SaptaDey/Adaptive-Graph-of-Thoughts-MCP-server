@@ -10,6 +10,7 @@ pytestmark = pytest.mark.skipif(
 from dataclasses import dataclass
 import sys
 import types
+from typing import Generator
 
 class DummyDefaultParams:
     initial_confidence = [0.9, 0.9, 0.9, 0.9]
@@ -20,17 +21,27 @@ class DummyDefaultParams:
 class DummySettings:
     asr_got: type = type("obj", (), {"default_parameters": DummyDefaultParams()})
 
-stub_pkg = types.ModuleType("adaptive_graph_of_thoughts.async_server")
-stub_pkg.AdaptiveGraphServer = object
-sys.modules["adaptive_graph_of_thoughts.async_server"] = stub_pkg
-stub_pkg2 = types.ModuleType("src.adaptive_graph_of_thoughts.async_server")
-stub_pkg2.AdaptiveGraphServer = object
-sys.modules["src.adaptive_graph_of_thoughts.async_server"] = stub_pkg2
-stub_config = types.ModuleType("adaptive_graph_of_thoughts.config")
-stub_config.Settings = DummySettings
-stub_config.runtime_settings = types.SimpleNamespace(neo4j=types.SimpleNamespace(uri="bolt://localhost", user="neo4j", password="test", database="neo4j"))
-sys.modules["adaptive_graph_of_thoughts.config"] = stub_config
-sys.modules["src.adaptive_graph_of_thoughts.config"] = stub_config
+@pytest.fixture(scope="module", autouse=True)
+def stub_modules(monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, None]:
+    """Provide minimal stubs for modules imported by the stage."""
+
+    stub_pkg = types.ModuleType("adaptive_graph_of_thoughts.async_server")
+    stub_pkg.AdaptiveGraphServer = object
+    monkeypatch.setitem(sys.modules, "adaptive_graph_of_thoughts.async_server", stub_pkg)
+
+    stub_pkg2 = types.ModuleType("src.adaptive_graph_of_thoughts.async_server")
+    stub_pkg2.AdaptiveGraphServer = object
+    monkeypatch.setitem(sys.modules, "src.adaptive_graph_of_thoughts.async_server", stub_pkg2)
+
+    stub_config = types.ModuleType("adaptive_graph_of_thoughts.config")
+    stub_config.Settings = DummySettings
+    stub_config.runtime_settings = types.SimpleNamespace(
+        neo4j=types.SimpleNamespace(uri="bolt://localhost", user="neo4j", password="test", database="neo4j")
+    )
+    monkeypatch.setitem(sys.modules, "adaptive_graph_of_thoughts.config", stub_config)
+    monkeypatch.setitem(sys.modules, "src.adaptive_graph_of_thoughts.config", stub_config)
+
+    yield
 
 from src.adaptive_graph_of_thoughts.domain.models.common_types import GoTProcessorSessionData
 from src.adaptive_graph_of_thoughts.domain.stages.stage_1_initialization import InitializationStage

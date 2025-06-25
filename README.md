@@ -101,7 +101,7 @@ Before running Adaptive Graph of Thoughts (either locally or via Docker if not u
 -   **A running Neo4j Instance**: Adaptive Graph of Thoughts requires a connection to a Neo4j graph database.
     -   **APOC Library**: Crucially, the Neo4j instance **must** have the APOC (Awesome Procedures On Cypher) library installed. Several Cypher queries within the application's reasoning stages utilize APOC procedures (e.g., `apoc.create.addLabels`, `apoc.merge.node`). Without APOC, the application will not function correctly. You can find installation instructions on the [official APOC website](https://neo4j.com/labs/apoc/installation/).
     -   **Configuration**: Ensure that your `config/settings.yaml` (or corresponding environment variables) correctly points to your Neo4j instance URI, username, and password.
-    -   **Indexing**: For optimal performance, ensure appropriate Neo4j indexes are created. See [Neo4j Indexing Strategy](docs_src/neo4j_indexing.md) for details.
+    -   **Indexing**: For optimal performance, ensure appropriate Neo4j indexes are created. You can run `python scripts/run_cypher_migrations.py` to apply the provided Cypher migrations automatically. See [Neo4j Indexing Strategy](docs_src/neo4j_indexing.md) for details.
 
     *Note: The provided `docker-compose.yml` (for development) and `docker-compose.prod.yml` (for production) already include a Neo4j service with the APOC library pre-configured, satisfying this requirement when using Docker Compose.*
 
