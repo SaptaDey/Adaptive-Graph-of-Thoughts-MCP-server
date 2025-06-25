@@ -658,7 +658,7 @@ def test_nlq_endpoint_llm_query_logs_management(client, auth_headers, monkeypatc
     
     def tracking_llm(prompt: str) -> str:
         if "Convert" in prompt:
-            return f"MATCH (n) RETURN n // Query for test"
+            return "MATCH (n) RETURN n // Query for test"
         return "Test response"
 
     monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", tracking_llm)

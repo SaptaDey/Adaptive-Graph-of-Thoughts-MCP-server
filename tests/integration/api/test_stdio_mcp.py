@@ -77,7 +77,10 @@ def test_stdio_initialize(stdio_process):
     assert "mcp_version" in result_data and isinstance(result_data["mcp_version"], str)
 
 
-@pytest.mark.parametrize("query", ["test question"])
+@pytest.mark.parametrize(
+    "query",
+    ["test question"],
+)
 def test_stdio_call_tool(stdio_process, query):
     """Test calling the asr_got_query tool over STDIO."""
     request = {
