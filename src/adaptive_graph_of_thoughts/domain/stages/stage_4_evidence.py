@@ -109,12 +109,9 @@ class EvidenceStage(BaseStage):
                 if asyncio.iscoroutine(maybe_client):
                     if isinstance(client_cls, AsyncMock):
                         self.pubmed_client = client_cls.return_value
-                    elif asyncio.get_event_loop().is_running():
-                        self.pubmed_client = await maybe_client
                     else:
                         self.pubmed_client = asyncio.run(maybe_client)
                 else:
-                    self.pubmed_client = maybe_client
                     self.pubmed_client = maybe_client
                 logger.info("PubMed client initialized for EvidenceStage.")
             except PubMedClientError as e:
@@ -384,8 +381,6 @@ class EvidenceStage(BaseStage):
                 )
             except Exception as e:  # Catching broad Exception from client calls
                 logger.error(f"Error querying PubMed for '{search_query}': {e}")
-             except Exception as e:  # Catching broad Exception from client calls
-                 logger.error(f"Error querying PubMed for '{search_query}': {e}")
 
         # --- Google Scholar Search ---
         if self.google_scholar_client:
