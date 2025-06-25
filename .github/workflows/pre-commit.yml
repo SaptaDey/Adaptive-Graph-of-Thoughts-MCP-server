@@ -11,6 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Disable git credential prompting
+        run: git config --global credential.helper '!f() { exit 0; }; f'
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
