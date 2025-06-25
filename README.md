@@ -27,7 +27,7 @@
 [![Codacy Security Scan](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/codacy.yml/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/codacy.yml)
 [![CodeQL Advanced](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/codeql.yml/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/codeql.yml)
 [![Dependabot Updates](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/dependabot/dependabot-updates)
-
+[![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/b56538c9-7a30-45b3-851c-447fe2eb24a6)
 
 
 </div>
