@@ -11,11 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Disable git credential prompting
-        run: git config --global credential.helper '!f() { exit 0; }; f'
       - uses: actions/setup-python@v4
         with:
           python-version: '3.11'
+      - name: Set up git credentials for private repos
+        run: git config --global url."https://${{ secrets.TOKEN_GITHUB }}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
       - uses: pre-commit/action@v3.0.1
