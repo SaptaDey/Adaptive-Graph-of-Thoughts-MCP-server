@@ -17,8 +17,13 @@ async def run_migrations(directory: str) -> None:
 
     for cypher_file in files:
         print(f"Applying {cypher_file.name}...")
-        await execute_cypher_file(str(cypher_file))
-        print(f"Applied {cypher_file.name}")
+        try:
+            await execute_cypher_file(str(cypher_file))
+            print(f"✓ Applied {cypher_file.name}")
+            # TODO: Track applied migrations to prevent re-running
+        except Exception as e:
+            print(f"✗ Failed to apply {cypher_file.name}: {e}")
+            raise  # Re-raise to stop further migrations
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run Cypher migrations")
