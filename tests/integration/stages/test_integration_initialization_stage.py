@@ -10,16 +10,19 @@ pytestmark = pytest.mark.skipif(
 from dataclasses import dataclass
 import sys
 import types
-from typing import Generator
+from typing import ClassVar, Generator
 
 class DummyDefaultParams:
-    initial_confidence = [0.9, 0.9, 0.9, 0.9]
-    initial_layer = "root_layer"
+    initial_confidence: ClassVar[list[float]] = [0.9, 0.9, 0.9, 0.9]
+    initial_layer: ClassVar[str] = "root_layer"
+
+
+DummyASRGot = type("obj", (), {"default_parameters": DummyDefaultParams()})
 
 
 @dataclass
 class DummySettings:
-    asr_got: type = type("obj", (), {"default_parameters": DummyDefaultParams()})
+    asr_got: type = DummyASRGot
 
 @pytest.fixture(scope="module", autouse=True)
 def stub_modules(monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, None]:
@@ -582,7 +585,7 @@ async def test_initialization_stage_concurrent_execution_safety(settings_instanc
 
     # Execute multiple times concurrently
     tasks = []
-    for i in range(5):
+    for _ in range(5):
         session_data = GoTProcessorSessionData(query=query)
         tasks.append(stage.execute(current_session_data=session_data))
     

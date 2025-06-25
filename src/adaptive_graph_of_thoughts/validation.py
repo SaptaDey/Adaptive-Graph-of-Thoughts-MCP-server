@@ -20,7 +20,7 @@ class QueryValidation(BaseModel):
         
         for pattern in dangerous_patterns:
             if re.search(pattern, v, re.IGNORECASE | re.DOTALL):
-                raise ValueError(f"Query contains potentially dangerous content")
+                raise ValueError("Query contains potentially dangerous content")
         
         return v.strip()
     

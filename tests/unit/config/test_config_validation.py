@@ -57,7 +57,10 @@ def test_minimal_config(minimal_config):
     assert "google_scholar" not in config_data_to_validate
 
 
-@pytest.mark.parametrize("missing_key", ["app", "asr_got", "mcp_settings"])
+@pytest.mark.parametrize(
+    "missing_key",
+    ["app", "asr_got", "mcp_settings"],
+)
 def test_missing_keys(tmp_path, base_config_dict, missing_key):
     cfg = copy.deepcopy(base_config_dict)
     cfg.pop(missing_key)
@@ -120,7 +123,10 @@ def test_unreadable_file(tmp_path):
         file_path.chmod(stat.S_IRUSR | stat.S_IWUSR)
 
 
-@pytest.mark.parametrize("port", [1, 65535])
+@pytest.mark.parametrize(
+    "port",
+    [1, 65535],
+)
 def test_boundary_values(tmp_path, port):
     cfg = copy.deepcopy(base_config_dict)
     cfg["app"]["port"] = port
