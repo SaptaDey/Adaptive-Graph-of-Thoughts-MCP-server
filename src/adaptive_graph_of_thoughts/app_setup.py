@@ -272,7 +272,7 @@ def create_app() -> FastAPI:
     yaml_path = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
     try:
         original_settings = yaml.safe_load(yaml_path.read_text()) or {}
-    except yaml.YAMLError as exc:  # pragma: no cover - malformed config in tests
+        logger.error(f"Failed to load YAML settings from {yaml_path}: {exc}")
         logger.error(f"Failed to load YAML settings: {exc}")
         original_settings = {}
 
