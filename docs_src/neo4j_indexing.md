@@ -1,6 +1,6 @@
 # Neo4j Indexing and Constraints Strategy for Adaptive Graph of Thoughts
 
-This document outlines the recommended Neo4j indexing and constraint strategy to ensure optimal performance for the Adaptive Graph of Thoughts application. These commands are typically run manually by a database administrator or as part of an initial database setup script.
+This document outlines the recommended Neo4j indexing and constraint strategy to ensure optimal performance for the Adaptive Graph of Thoughts application. These commands can be run manually, or you can execute `python scripts/run_cypher_migrations.py` to apply the versioned Cypher files found in the `database_migrations/` directory automatically.
 
 ## Rationale
 
