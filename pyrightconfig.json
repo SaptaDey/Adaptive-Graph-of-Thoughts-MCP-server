@@ -21,5 +21,6 @@
     "reportUnusedVariable": false,
     "reportDuplicateImport": true,
     "reportGeneralTypeIssues": false,
-    "reportPrivateImportUsage": false
+-    "reportPrivateImportUsage": false,
++    "reportPrivateImportUsage": false
 }

@@ -436,7 +436,7 @@ poetry run ruff format .                     # Format code
 
 # Pre-commit hooks (recommended)
 poetry run pre-commit install                # Install hooks
-poetry run pre-commit run --all-files       # Run all hooks
+poetry run pre-commit run --all-files       # Run all hooks (runs Ruff and MyPy)
 
 # See Makefile for other useful targets like 'make all-checks'.
 ```

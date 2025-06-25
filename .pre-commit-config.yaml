@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.4
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.10.0
+    hooks:
+      - id: mypy
+        args: ["--config-file=mypy.ini"]
+  - repo: https://github.com/pre-commit/mirrors-pyright
+    rev: v1.1.352
+    hooks:
+      - id: pyright
+        args: ["--project=pyrightconfig.json"]

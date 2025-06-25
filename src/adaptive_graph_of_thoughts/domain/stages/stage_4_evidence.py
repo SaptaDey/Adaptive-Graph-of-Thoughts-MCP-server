@@ -101,7 +101,7 @@ class EvidenceStage(BaseStage):
             ExaSearchClientError,
         )
 
-        self.pubmed_client: Optional["PubMedClient"] = None
+        self.pubmed_client: Optional[PubMedClient] = None
         if settings.pubmed and settings.pubmed.base_url:
             try:
                 client_cls = PubMedClient or InfraPubMedClient
@@ -129,7 +129,7 @@ class EvidenceStage(BaseStage):
                 "PubMed client not initialized for EvidenceStage: PubMed configuration missing or incomplete."
             )
 
-        self.google_scholar_client: Optional["GoogleScholarClient"] = None
+        self.google_scholar_client: Optional[GoogleScholarClient] = None
         if (
             settings.google_scholar
             and settings.google_scholar.api_key
@@ -164,7 +164,7 @@ class EvidenceStage(BaseStage):
                 "Google Scholar client not initialized for EvidenceStage: Google Scholar configuration missing or incomplete (requires api_key and base_url)."
             )
 
-        self.exa_client: Optional["ExaSearchClient"] = None
+        self.exa_client: Optional[ExaSearchClient] = None
         if (
             settings.exa_search
             and settings.exa_search.api_key

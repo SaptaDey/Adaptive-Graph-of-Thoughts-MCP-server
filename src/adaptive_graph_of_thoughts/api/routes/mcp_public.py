@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request
-from typing import Any, Dict
+from typing import Any
 import json
 import os
 from loguru import logger
@@ -75,7 +75,7 @@ async def public_mcp_endpoint(
         )
 
 @mcp_public_router.get("/tools")
-async def public_get_available_tools() -> Dict[str, Any]:
+async def public_get_available_tools() -> dict[str, Any]:
     """Public endpoint to get available MCP tools for client discovery."""
     # Load tools definition from smithery.yaml or tools definition file
     tools_file = os.path.join(os.path.dirname(__file__), "../../../config/mcp_tools_definition.json")
@@ -129,7 +129,7 @@ async def public_get_available_tools() -> Dict[str, Any]:
         }
 
 @mcp_public_router.get("/capabilities")
-async def public_get_server_capabilities() -> Dict[str, Any]:
+async def public_get_server_capabilities() -> dict[str, Any]:
     """Public endpoint to get server capabilities for MCP client negotiation."""
     return {
         "server_name": "Adaptive Graph of Thoughts MCP Server",
@@ -151,7 +151,7 @@ async def public_get_server_capabilities() -> Dict[str, Any]:
     }
 
 @mcp_public_router.get("/info")
-async def public_mcp_server_info() -> Dict[str, Any]:
+async def public_mcp_server_info() -> dict[str, Any]:
     """MCP server discovery endpoint for Smithery."""
     return {
         "name": "Adaptive Graph of Thoughts MCP Server",

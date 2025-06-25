@@ -14,6 +14,7 @@ from adaptive_graph_of_thoughts.api.schemas import (
     JSONRPCRequest,
     JSONRPCResponse,
     MCPASRGoTQueryParams,
+    MCPQueryOperationalParams,
     MCPASRGoTQueryResult,
     MCPInitializeParams,
     MCPInitializeResult,
