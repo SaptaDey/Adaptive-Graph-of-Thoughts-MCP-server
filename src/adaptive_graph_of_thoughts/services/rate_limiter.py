@@ -1,7 +1,11 @@
-# Then, in the RateLimiter class (around where _log is initialized), replace:
-#     self._log: DefaultDict[str, list[float]] = defaultdict(list)
-# with:
-    self._log: defaultdict[str, list[float]] = defaultdict(list)
+from collections import defaultdict
+from typing import DefaultDict
+import time
+
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+from starlette.responses import Response
+from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 
 class RateLimiter:

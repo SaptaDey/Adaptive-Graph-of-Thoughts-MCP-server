@@ -126,6 +126,15 @@ ignore = [
     "E401",
     "F811",
     "RUF100",
+    "UP038",
+    "UP041",
+    "RUF005",
+    "RUF022",
+    "B905",
+    "SIM105",
+    "SIM118",
+    "UP035",
+    "UP037",
 ]
 
 [tool.ruff.format]

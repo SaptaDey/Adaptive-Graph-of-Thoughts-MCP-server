@@ -10,7 +10,9 @@ from typing import TYPE_CHECKING, Any, Optional
 
 # Only for type hints, not actual imports
 if TYPE_CHECKING:
-    from adaptive_graph_of_thoughts.application import GoTProcessor
+    from adaptive_graph_of_thoughts.domain.services.got_processor import (
+        GoTProcessor,
+    )
 
 from loguru import logger
 
@@ -184,7 +186,9 @@ class MCPServerFactory:
         logger.info("Starting MCP STDIO server...")
 
         # Import GoTProcessor only when needed to avoid circular dependencies
-        from adaptive_graph_of_thoughts.application import GoTProcessor
+        from adaptive_graph_of_thoughts.domain.services.got_processor import (
+            GoTProcessor,
+        )
 
         # Initialize GoT processor
         resource_monitor = ResourceMonitor()
@@ -382,25 +386,6 @@ class MCPServerFactory:
             result = await got_processor.process_query(
                 query=parsed_params.query,
                 session_id=parsed_params.session_id,
-                operational_params=parsed_params.operational_params,
-            )
-            result_dict = result.model_dump()
-            mcp_result = MCPASRGoTQueryResult(
-                answer=result_dict.get("final_answer", ""),
-                reasoning_trace_summary=result_dict.get("reasoning_trace_summary"),
-                graph_state_full=result_dict.get("graph_state_full"),
-                confidence_vector=result_dict.get("final_confidence_vector"),
-                execution_time_ms=result_dict.get("execution_time_ms"),
-                session_id=result_dict.get("session_id"),
-            )
-            return JSONRPCResponse(id=request_id, result=mcp_result)
-        except Exception as e:
-            logger.exception("Error in ASR-GoT query handler: {}", e)
-            return create_jsonrpc_error(
-                request_id=request_id,
-                code=-32603,
-                message="Internal error processing query",
-            )
                 operational_params=parsed_params.operational_params,
             )
             result_dict = result.model_dump()

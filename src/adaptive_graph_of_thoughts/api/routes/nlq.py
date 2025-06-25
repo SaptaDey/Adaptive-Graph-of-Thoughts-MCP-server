@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import AsyncGenerator
-from typing import Dict
+
 import re
 import logging
 
@@ -54,13 +54,13 @@ def _log_query(prompt: str, response: str) -> None:
 
 
 @nlq_router.post("/nlq", dependencies=[Depends(verify_token)])
-async def nlq_endpoint(payload: Dict[str, str] = Body(...)) -> StreamingResponse:
+async def nlq_endpoint(payload: dict[str, str] = Body(...)) -> StreamingResponse:
 
     """
     Handles POST requests to the /nlq endpoint, translating a natural language question into a Cypher query, executing it, and streaming the Cypher query, results, and a concise summary as a JSON response.
     
     Parameters:
-        payload (Dict[str, str]): JSON body containing the "question" key with the user's natural language query.
+        payload (dict[str, str]): JSON body containing the "question" key with the user's natural language query.
     
     Returns:
         StreamingResponse: Streams JSON objects for the generated Cypher query, query results, and a summary answer.

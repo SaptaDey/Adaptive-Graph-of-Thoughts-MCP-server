@@ -31,7 +31,9 @@ from adaptive_graph_of_thoughts.config import (
     runtime_settings,
     settings,
 )
-from adaptive_graph_of_thoughts.application import GoTProcessor
+from adaptive_graph_of_thoughts.domain.services.got_processor import (
+    GoTProcessor,
+)
 from adaptive_graph_of_thoughts.services.resource_monitor import ResourceMonitor
 from adaptive_graph_of_thoughts.services.llm import LLM_QUERY_LOGS, ask_llm
 
@@ -192,20 +194,6 @@ def create_app() -> FastAPI:
     )
     logger.info(f"CORS middleware configured with origins: {allowed_origins}")
 
---- a/src/adaptive_graph_of_thoughts/app_setup.py
-+++ b/src/adaptive_graph_of_thoughts/app_setup.py
-@@
--from adaptive_graph_of_thoughts.config import (
--    RuntimeSettings,
--    runtime_settings,
--    settings,
--)
-+from adaptive_graph_of_thoughts.config import (
-+    env_settings,
-+    RuntimeSettings,
-+    runtime_settings,
-+    settings,
-+)
     # ----------------------- Setup Wizard -----------------------
     @app.get("/setup", response_class=HTMLResponse)
     async def setup_get(request: Request, _=Depends(get_basic_auth)):
