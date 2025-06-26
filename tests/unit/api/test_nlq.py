@@ -29,6 +29,11 @@ stub_config.env_settings = types.SimpleNamespace(
     anthropic_api_key=None,
 )
 stub_config.RuntimeSettings = object
+stub_config.LegacyConfig = object
+stub_config.Config = object
+stub_config.ExaSearchConfig = object
+stub_config.GoogleScholarConfig = object
+stub_config.PubMedConfig = object
 sys.modules.setdefault("adaptive_graph_of_thoughts.config", stub_config)
 sys.modules.setdefault("src.adaptive_graph_of_thoughts.config", stub_config)
 

@@ -270,7 +270,11 @@ def create_app() -> FastAPI:
         return RedirectResponse("/setup/settings", status_code=303)
 
     yaml_path = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
-    original_settings = yaml.safe_load(yaml_path.read_text()) or {}
+    try:
+        original_settings = yaml.safe_load(yaml_path.read_text()) or {}
+        logger.error(f"Failed to load YAML settings from {yaml_path}: {exc}")
+        logger.error(f"Failed to load YAML settings: {exc}")
+        original_settings = {}
 
     def _read_settings() -> dict[str, str]:
         """

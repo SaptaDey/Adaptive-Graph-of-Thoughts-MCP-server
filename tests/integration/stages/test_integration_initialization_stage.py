@@ -41,6 +41,11 @@ def stub_modules(monkeypatch: pytest.MonkeyPatch) -> Generator[None, None, None]
     stub_config.runtime_settings = types.SimpleNamespace(
         neo4j=types.SimpleNamespace(uri="bolt://localhost", user="neo4j", password="test", database="neo4j")
     )
+    stub_config.LegacyConfig = DummySettings
+    stub_config.Config = DummySettings
+    stub_config.ExaSearchConfig = DummySettings
+    stub_config.GoogleScholarConfig = DummySettings
+    stub_config.PubMedConfig = DummySettings
     monkeypatch.setitem(sys.modules, "adaptive_graph_of_thoughts.config", stub_config)
     monkeypatch.setitem(sys.modules, "src.adaptive_graph_of_thoughts.config", stub_config)
 

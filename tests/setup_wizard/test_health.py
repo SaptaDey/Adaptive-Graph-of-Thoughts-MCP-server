@@ -9,6 +9,7 @@ Testing Framework: pytest with FastAPI TestClient
 Mocking: Built-in monkeypatch fixture for dependency injection
 """
 import json
+import os
 import sys
 import types
 from unittest.mock import Mock, patch
@@ -38,8 +39,17 @@ stub_config.env_settings = types.SimpleNamespace(
     anthropic_api_key=None,
 )
 stub_config.RuntimeSettings = object
+stub_config.LegacyConfig = object
+stub_config.Config = object
+stub_config.ExaSearchConfig = object
+stub_config.GoogleScholarConfig = object
+stub_config.PubMedConfig = object
 sys.modules.setdefault("adaptive_graph_of_thoughts.config", stub_config)
 sys.modules.setdefault("src.adaptive_graph_of_thoughts.config", stub_config)
+
+AUTH = ("user", "pass")
+os.environ.setdefault("BASIC_AUTH_USER", AUTH[0])
+os.environ.setdefault("BASIC_AUTH_PASS", AUTH[1])
 
 from adaptive_graph_of_thoughts.app_setup import create_app
 
@@ -65,7 +75,7 @@ def test_health_ok(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 200
     assert resp.json()["neo4j"] == "up"
 
@@ -83,7 +93,8 @@ def test_health_down(monkeypatch):
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: BadDriver())
     headers = {"Authorization": "Basic dGVzdDp0ZXN0"}
-    resp = client.get("/health", headers=headers)
+    monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: BadDriver())
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -110,7 +121,7 @@ def test_health_response_structure(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
 
     assert resp.status_code == 200
     assert "neo4j" in resp.json()
@@ -132,7 +143,7 @@ def test_health_connection_timeout(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: TimeoutDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
     assert resp.json()["status"] == "unhealthy"
@@ -151,7 +162,7 @@ def test_health_connection_refused(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: RefusedDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -172,7 +183,7 @@ def test_health_authentication_error(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: AuthErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -199,7 +210,7 @@ def test_health_session_context_manager_exit_error(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: BadExitDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -226,7 +237,7 @@ def test_health_query_execution_error(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: QueryErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -240,7 +251,7 @@ def test_health_driver_creation_failure(monkeypatch):
         raise Exception("Driver creation failed")
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", failing_driver)
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -295,7 +306,7 @@ def test_health_endpoint_with_query_parameters(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
-    resp = client.get("/health?test=param&debug=true")
+    resp = client.get("/health?test=param&debug=true", auth=AUTH)
     assert resp.status_code == 200
     assert resp.json()["neo4j"] == "up"
 
@@ -323,7 +334,7 @@ def test_health_endpoint_with_headers(monkeypatch):
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
     headers = {"User-Agent": "test-client", "Accept": "application/json"}
-    resp = client.get("/health", headers=headers)
+    resp = client.get("/health", auth=AUTH, headers=headers)
     assert resp.status_code == 200
     assert resp.json()["neo4j"] == "up"
 
@@ -351,7 +362,7 @@ def test_health_multiple_consecutive_calls(monkeypatch):
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
     for _ in range(5):
-        resp = client.get("/health")
+        resp = client.get("/health", auth=AUTH)
         assert resp.status_code == 200
         assert resp.json()["neo4j"] == "up"
         assert resp.json()["status"] == "ok"
@@ -379,7 +390,7 @@ def test_health_driver_close_error(monkeypatch):
             raise Exception("Close failed")
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: BadCloseDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 200
     assert resp.json()["neo4j"] == "up"
 
@@ -406,7 +417,7 @@ def test_health_json_serialization(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
 
     json_data = resp.json()
     assert json.dumps(json_data) is not None
@@ -435,7 +446,7 @@ def test_health_response_content_type(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert "application/json" in resp.headers.get("content-type", "")
     assert resp.json() is not None
 
@@ -455,7 +466,7 @@ def test_health_service_unavailable_error(monkeypatch):
             pass
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: ServiceUnavailableDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
     assert resp.json()["status"] == "unhealthy"
@@ -471,7 +482,7 @@ def test_health_driver_timeout(monkeypatch):
 
     monkeypatch.setattr("neo4j.GraphDatabase.driver", TimeoutDriver)
     headers = {"Authorization": "Basic dGVzdDp0ZXN0"}
-    resp = client.get("/health", headers=headers)
+    resp = client.get("/health", auth=AUTH, headers=headers)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -507,7 +518,7 @@ def test_health_concurrent_requests(monkeypatch):
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
     
     def make_request():
-        resp = client.get("/health")
+        resp = client.get("/health", auth=AUTH)
         results.append((resp.status_code, resp.json()))
     
     threads = []
@@ -551,7 +562,7 @@ def test_health_session_creation_with_different_kwargs(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: KwargsCapturingDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     
     assert resp.status_code == 200
     assert len(session_kwargs_captured) >= 1
@@ -570,7 +581,7 @@ def test_health_memory_error_during_session(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: MemoryErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
     assert resp.json()["status"] == "unhealthy"
@@ -598,7 +609,7 @@ def test_health_keyboard_interrupt_during_query(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: InterruptDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -616,7 +627,7 @@ def test_health_system_exit_during_connection(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: SystemExitDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -634,7 +645,7 @@ def test_health_unicode_error_in_response(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: UnicodeErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -655,7 +666,7 @@ def test_health_recursive_exception_handling(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: NestedExceptionDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -682,7 +693,7 @@ def test_health_session_enter_failure(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: BadEnterDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -709,7 +720,7 @@ def test_health_response_headers_comprehensive(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     
     assert resp.status_code == 200
     assert "content-length" in resp.headers
@@ -732,7 +743,7 @@ def test_health_large_error_message_handling(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: LargeErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
     assert len(resp.content) < 50000  # Ensure response isn't too large
@@ -751,7 +762,7 @@ def test_health_null_byte_in_error(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: NullByteErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -769,7 +780,7 @@ def test_health_empty_string_error(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: EmptyErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -787,7 +798,7 @@ def test_health_none_error_message(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: NoneErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -821,7 +832,7 @@ def test_health_response_timing_consistency(monkeypatch):
     response_times = []
     for _ in range(5):
         start_time = time.time()
-        resp = client.get("/health")
+        resp = client.get("/health", auth=AUTH)
         end_time = time.time()
         response_times.append(end_time - start_time)
         assert resp.status_code == 200
@@ -857,7 +868,7 @@ def test_health_special_characters_in_query(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: QueryCapturingDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     
     assert resp.status_code == 200
     assert len(query_captured) == 1
@@ -891,7 +902,7 @@ def test_health_driver_version_compatibility(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", VersionCompatDriver)
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 200
     assert resp.json()["neo4j"] == "up"
 
@@ -921,7 +932,7 @@ def test_health_database_transaction_error(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: TransactionErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -939,7 +950,7 @@ def test_health_permission_denied_error(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: PermissionDeniedDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -957,7 +968,7 @@ def test_health_resource_exhaustion(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: ResourceExhaustionDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -984,7 +995,7 @@ def test_health_json_response_structure_deep_validation(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     
     assert resp.status_code == 200
     json_data = resp.json()
@@ -1039,7 +1050,7 @@ def test_health_various_auth_headers(monkeypatch, auth_header):
     if auth_header is not None:
         headers["Authorization"] = auth_header
     
-    resp = client.get("/health", headers=headers)
+    resp = client.get("/health", auth=AUTH, headers=headers)
     assert resp.status_code == 200
     assert resp.json()["neo4j"] == "up"
 
@@ -1068,7 +1079,7 @@ def test_health_endpoint_path_variations(monkeypatch):
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: GoodDriver())
     
     # Test exact path
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 200
     
     # Test with trailing slash (should depend on FastAPI configuration)
@@ -1095,7 +1106,7 @@ def test_health_error_logging_verification(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: LoggingErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
@@ -1129,7 +1140,7 @@ def test_health_graceful_degradation(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", GracefulDegradationDriver)
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     
     # Even with query failure, response should be properly structured
     assert resp.status_code == 500
@@ -1165,7 +1176,7 @@ def test_health_stress_test_rapid_requests(monkeypatch):
     # Make 50 rapid requests
     success_count = 0
     for _ in range(50):
-        resp = client.get("/health")
+        resp = client.get("/health", auth=AUTH)
         if resp.status_code == 200:
             success_count += 1
     
@@ -1207,7 +1218,7 @@ def test_health_with_extremely_long_uri(monkeypatch):
         mock_settings.neo4j.database = "neo4j"
         
         monkeypatch.setattr("neo4j.GraphDatabase.driver", LongUriDriver)
-        resp = client.get("/health")
+        resp = client.get("/health", auth=AUTH)
         
         # Should handle the error gracefully
         assert resp.status_code == 500
@@ -1231,7 +1242,7 @@ def test_health_with_malformed_json_response_handling(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: MalformedDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     
     assert resp.status_code == 500
     # Should still return valid JSON despite the unserializable exception
@@ -1254,7 +1265,7 @@ def test_health_connection_pool_exhaustion(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: PoolExhaustedDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -1274,7 +1285,7 @@ def test_health_ssl_certificate_error(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: SSLErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -1294,7 +1305,7 @@ def test_health_dns_resolution_failure(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: DNSErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
 
@@ -1326,7 +1337,7 @@ def test_health_driver_session_context_cleanup_verification(monkeypatch):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: ContextTrackingDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     
     assert resp.status_code == 500
     assert len(enter_called) == 1
@@ -1359,7 +1370,7 @@ def test_health_response_immutability(monkeypatch):
     # Make multiple requests and ensure response structure is identical
     responses = []
     for _ in range(3):
-        resp = client.get("/health")
+        resp = client.get("/health", auth=AUTH)
         responses.append(resp.json())
     
     # All responses should have the same structure
@@ -1388,7 +1399,7 @@ def test_health_network_level_exceptions(monkeypatch, exception_type):
             pass
     
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: NetworkErrorDriver())
-    resp = client.get("/health")
+    resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
     assert resp.json()["neo4j"] == "down"
     assert resp.json()["status"] == "unhealthy"
