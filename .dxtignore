@@ -1,0 +1,79 @@
+# DXT Ignore File - Auto-Compact Optimization
+
+# Documentation site files  
+_site/
+
+# Git repository
+.git/
+
+# Previous packages and backups
+*.dxt
+*.zip
+*.backup
+*.bak
+
+# Test and development files
+test_*.js
+test_*.json
+*_test.js
+*_test.json
+final_*.json
+VALIDATION_REPORT.json
+validate-dxt.js
+
+# Development artifacts
+.devcontainer/
+.codacy.yaml
+.pre-commit-config.yaml
+pmd-rules.xml
+Makefile
+
+# Logs and temporary files
+*.log
+standalone_test.log
+auth_test.log
+error_test.log
+security_test.log
+test_output.log
+
+# Python development files (not needed for Node.js DXT)
+scripts/
+mypy.ini
+pyrightconfig.json
+pytest.ini
+
+# Docker and deployment
+Dockerfile
+docker-compose*.yml
+helm/
+smithery.yaml
+
+# Documentation duplicates and extras
+docs_src/
+CONTRIBUTING.md
+ROADMAP.md
+SECURITY.md
+status.html
+index.html
+MCP_INSPECTOR_ISSUES.md
+MCP_TESTING_PLAN.md
+MCP_TESTING_RESULTS.md
+FINAL_VALIDATION_REPORT.md
+CLAUDE_REQUIREMENTS_ALIGNMENT.md
+CLAUDE_SUBMISSION_GUIDE.md
+CLAUDE_SUBMISSION_READY.md
+DXT_README.md
+
+# Old manifests and configs
+manifest.json.backup
+config.py
+mcp-test.js
+install-dxt.sh
+package-dxt.sh
+setup_claude_connection.py
+
+# Integration examples (keeping core only)
+integrations/
+
+# Markdown documentation in .md folder
+.md/

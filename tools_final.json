@@ -1,0 +1,144 @@
+{
+  "tools": [
+    {
+      "name": "scientific_reasoning_query",
+      "description": "Advanced scientific reasoning with graph analysis using the ASR-GoT framework",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "The scientific question or research query to analyze"
+          },
+          "parameters": {
+            "type": "object",
+            "description": "Optional parameters",
+            "properties": {
+              "include_reasoning_trace": {
+                "type": "boolean",
+                "description": "Include detailed reasoning steps",
+                "default": true
+              },
+              "include_graph_state": {
+                "type": "boolean",
+                "description": "Include graph state information",
+                "default": false
+              },
+              "max_depth": {
+                "type": "number",
+                "description": "Override maximum reasoning depth",
+                "minimum": 1,
+                "maximum": 10
+              },
+              "confidence_threshold": {
+                "type": "number",
+                "description": "Override confidence threshold",
+                "minimum": 0,
+                "maximum": 1
+              }
+            }
+          }
+        },
+        "required": [
+          "query"
+        ]
+      }
+    },
+    {
+      "name": "analyze_research_hypothesis",
+      "description": "Hypothesis evaluation with confidence scoring and evidence integration",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "hypothesis": {
+            "type": "string",
+            "description": "The research hypothesis to analyze"
+          },
+          "context": {
+            "type": "string",
+            "description": "Additional context or background information"
+          },
+          "evidence_sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific evidence sources to consider"
+          }
+        },
+        "required": [
+          "hypothesis"
+        ]
+      }
+    },
+    {
+      "name": "explore_scientific_relationships",
+      "description": "Concept relationship mapping through graph-based analysis",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "concepts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Scientific concepts to explore relationships between"
+          },
+          "relationship_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Specific types of relationships to focus on"
+          },
+          "depth": {
+            "type": "number",
+            "description": "Depth of relationship exploration",
+            "minimum": 1,
+            "maximum": 5,
+            "default": 3
+          }
+        },
+        "required": [
+          "concepts"
+        ]
+      }
+    },
+    {
+      "name": "validate_scientific_claims",
+      "description": "Evidence-based claim validation with external database integration",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "claims": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Scientific claims to validate"
+          },
+          "evidence_requirement": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ],
+            "description": "Level of evidence required",
+            "default": "medium"
+          },
+          "sources": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Preferred evidence sources"
+          }
+        },
+        "required": [
+          "claims"
+        ]
+      }
+    }
+  ]
+}

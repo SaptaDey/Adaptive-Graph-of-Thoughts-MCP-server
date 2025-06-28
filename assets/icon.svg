@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="32" cy="32" r="30" fill="#1e3a8a" stroke="#3b82f6" stroke-width="2"/>
+  
+  <!-- Brain/Network icon -->
+  <g transform="translate(12, 12)">
+    <!-- Central node -->
+    <circle cx="20" cy="20" r="4" fill="#60a5fa"/>
+    
+    <!-- Connection nodes -->
+    <circle cx="8" cy="12" r="2.5" fill="#93c5fd"/>
+    <circle cx="32" cy="12" r="2.5" fill="#93c5fd"/>
+    <circle cx="8" cy="28" r="2.5" fill="#93c5fd"/>
+    <circle cx="32" cy="28" r="2.5" fill="#93c5fd"/>
+    <circle cx="14" cy="32" r="2.5" fill="#93c5fd"/>
+    <circle cx="26" cy="32" r="2.5" fill="#93c5fd"/>
+    
+    <!-- Connection lines -->
+    <line x1="20" y1="20" x2="8" y2="12" stroke="#60a5fa" stroke-width="1.5" opacity="0.8"/>
+    <line x1="20" y1="20" x2="32" y2="12" stroke="#60a5fa" stroke-width="1.5" opacity="0.8"/>
+    <line x1="20" y1="20" x2="8" y2="28" stroke="#60a5fa" stroke-width="1.5" opacity="0.8"/>
+    <line x1="20" y1="20" x2="32" y2="28" stroke="#60a5fa" stroke-width="1.5" opacity="0.8"/>
+    <line x1="20" y1="20" x2="14" y2="32" stroke="#60a5fa" stroke-width="1.5" opacity="0.8"/>
+    <line x1="20" y1="20" x2="26" y2="32" stroke="#60a5fa" stroke-width="1.5" opacity="0.8"/>
+    
+    <!-- Secondary connections -->
+    <line x1="8" y1="12" x2="14" y2="32" stroke="#93c5fd" stroke-width="1" opacity="0.6"/>
+    <line x1="32" y1="12" x2="26" y2="32" stroke="#93c5fd" stroke-width="1" opacity="0.6"/>
+    <line x1="8" y1="28" x2="14" y2="32" stroke="#93c5fd" stroke-width="1" opacity="0.6"/>
+    <line x1="32" y1="28" x2="26" y2="32" stroke="#93c5fd" stroke-width="1" opacity="0.6"/>
+  </g>
+  
+  <!-- Thinking indicator -->
+  <g transform="translate(44, 8)">
+    <circle cx="4" cy="4" r="2" fill="#fbbf24" opacity="0.9"/>
+    <circle cx="10" cy="6" r="1.5" fill="#fbbf24" opacity="0.7"/>
+    <circle cx="14" cy="9" r="1" fill="#fbbf24" opacity="0.5"/>
+  </g>
+</svg>

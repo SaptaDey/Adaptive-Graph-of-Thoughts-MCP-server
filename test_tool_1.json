@@ -1,0 +1,9 @@
+{
+  "query": "What are the key molecular mechanisms underlying protein misfolding in Alzheimer's disease and how do they relate to neurodegeneration?",
+  "parameters": {
+    "include_reasoning_trace": true,
+    "include_graph_state": false,
+    "max_depth": 5,
+    "confidence_threshold": 0.8
+  }
+}

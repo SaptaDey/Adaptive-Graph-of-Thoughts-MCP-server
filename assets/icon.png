@@ -1,0 +1,6 @@
+# PNG Icon Placeholder
+# This file should be replaced with an actual 64x64 PNG icon
+# To create from the SVG:
+# 1. Use inkscape: inkscape --export-png=icon.png --export-width=64 --export-height=64 icon.svg
+# 2. Or use online converter: https://cloudconvert.com/svg-to-png
+# 3. Ensure final size is exactly 64x64 pixels

@@ -1,0 +1,52 @@
+{
+  "prompts": [
+    {
+      "name": "analyze_research_question",
+      "description": "Generate comprehensive analysis of a scientific research question",
+      "arguments": [
+        {
+          "name": "research_question",
+          "description": "The research question to analyze",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "description": "Scientific domain or field",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "hypothesis_generator",
+      "description": "Generate and evaluate multiple hypotheses for a given scientific problem",
+      "arguments": [
+        {
+          "name": "problem_statement",
+          "description": "The scientific problem to generate hypotheses for",
+          "required": true
+        },
+        {
+          "name": "constraints",
+          "description": "Any constraints or limitations to consider",
+          "required": false
+        }
+      ]
+    },
+    {
+      "name": "literature_synthesis",
+      "description": "Synthesize findings from multiple research papers into coherent insights",
+      "arguments": [
+        {
+          "name": "research_papers",
+          "description": "List of research papers or citations to synthesize",
+          "required": true
+        },
+        {
+          "name": "synthesis_focus",
+          "description": "Specific aspect or theme to focus the synthesis on",
+          "required": false
+        }
+      ]
+    }
+  ]
+}

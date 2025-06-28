@@ -1,0 +1,60 @@
+{
+  "summary": {
+    "totalTests": 8,
+    "passed": 3,
+    "failed": 5,
+    "successRate": 38,
+    "timestamp": "2025-06-27T22:19:24.907Z",
+    "ready": false
+  },
+  "results": [
+    {
+      "test": "Server Startup",
+      "status": "FAIL",
+      "details": "Errors: [2025-06-27T22:19:13.599Z] INFO: Initializing Adaptive Graph of Thoughts DXT Server\n[2025-06-27T22:1",
+      "timestamp": "2025-06-27T22:19:16.477Z"
+    },
+    {
+      "test": "Tool Discovery",
+      "status": "PASS",
+      "details": "All 4 tools discovered with valid schemas",
+      "timestamp": "2025-06-27T22:19:17.973Z"
+    },
+    {
+      "test": "Prompt Discovery",
+      "status": "PASS",
+      "details": "All 3 prompts discovered",
+      "timestamp": "2025-06-27T22:19:18.801Z"
+    },
+    {
+      "test": "DXT Manifest",
+      "status": "PASS",
+      "details": "Manifest validation successful",
+      "timestamp": "2025-06-27T22:19:18.898Z"
+    },
+    {
+      "test": "Security Validation",
+      "status": "FAIL",
+      "details": "Failed to sanitize MAX_REASONING_DEPTH",
+      "timestamp": "2025-06-27T22:19:20.902Z"
+    },
+    {
+      "test": "Security Validation",
+      "status": "FAIL",
+      "details": "Failed to sanitize CONFIDENCE_THRESHOLD",
+      "timestamp": "2025-06-27T22:19:22.905Z"
+    },
+    {
+      "test": "DXT Manifest",
+      "status": "FAIL",
+      "details": "Timeout after 5s",
+      "timestamp": "2025-06-27T22:19:23.803Z"
+    },
+    {
+      "test": "Security Validation",
+      "status": "FAIL",
+      "details": "Failed to sanitize NEO4J_URI",
+      "timestamp": "2025-06-27T22:19:24.907Z"
+    }
+  ]
+}

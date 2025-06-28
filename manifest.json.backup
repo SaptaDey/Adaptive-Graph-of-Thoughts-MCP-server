@@ -1,0 +1,151 @@
+{
+  "dxt_version": "0.1",
+  "name": "adaptive-graph-of-thoughts",
+  "version": "1.0.0",
+  "display_name": "Adaptive Graph of Thoughts",
+  "description": "Intelligent scientific reasoning through Graph-of-Thoughts with Neo4j integration",
+  "long_description": "Advanced Scientific Reasoning Graph-of-Thoughts (ASR-GoT) framework designed for complex research tasks. Leverages Neo4j graph database to perform sophisticated scientific reasoning with dynamic confidence scoring, real-time evidence gathering from PubMed, Google Scholar, and Exa Search, and multi-dimensional evaluations.",
+  "author": {
+    "name": "SaptaDey",
+    "email": "sapta@example.com",
+    "url": "https://github.com/SaptaDey"
+  },
+  "license": "MIT",
+  "keywords": [
+    "scientific-reasoning",
+    "graph-of-thoughts",
+    "neo4j",
+    "research",
+    "ai",
+    "mcp",
+    "evidence-gathering",
+    "hypothesis-testing"
+  ],
+  "icon": "assets/icon.png",
+  "screenshots": [
+    "assets/screenshots/dashboard.png",
+    "assets/screenshots/reasoning-graph.png"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/index.js"]
+    }
+  },
+  "tools": [
+    {
+      "name": "scientific_reasoning_query",
+      "description": "Advanced scientific reasoning with graph analysis using the ASR-GoT framework"
+    },
+    {
+      "name": "analyze_research_hypothesis",
+      "description": "Hypothesis evaluation with confidence scoring and evidence integration"
+    },
+    {
+      "name": "explore_scientific_relationships",
+      "description": "Concept relationship mapping through graph-based analysis"
+    },
+    {
+      "name": "validate_scientific_claims",
+      "description": "Evidence-based claim validation with external database integration"
+    }
+  ],
+  "prompts": [
+    {
+      "name": "analyze_research_question",
+      "description": "Generate comprehensive analysis of a scientific research question"
+    },
+    {
+      "name": "hypothesis_generator",
+      "description": "Generate and evaluate multiple hypotheses for a given scientific problem"
+    },
+    {
+      "name": "literature_synthesis",
+      "description": "Synthesize findings from multiple research papers into coherent insights"
+    }
+  ],
+  "compatibility": {
+    "minimum_host_version": "1.0.0",
+    "supported_platforms": ["win32", "darwin", "linux"]
+  },
+  "user_config": [
+    {
+      "key": "neo4j_uri",
+      "type": "string",
+      "name": "Neo4j Database URI",
+      "description": "URI for the Neo4j graph database connection",
+      "default": "bolt://localhost:7687",
+      "required": true
+    },
+    {
+      "key": "neo4j_username",
+      "type": "string", 
+      "name": "Neo4j Username",
+      "description": "Username for Neo4j database authentication",
+      "default": "neo4j",
+      "required": true
+    },
+    {
+      "key": "neo4j_password",
+      "type": "string",
+      "name": "Neo4j Password",
+      "description": "Password for Neo4j database authentication",
+      "required": true,
+      "sensitive": true
+    },
+    {
+      "key": "openai_api_key",
+      "type": "string",
+      "name": "OpenAI API Key",
+      "description": "API key for OpenAI services (optional, for enhanced reasoning)",
+      "required": false,
+      "sensitive": true
+    },
+    {
+      "key": "anthropic_api_key",
+      "type": "string",
+      "name": "Anthropic API Key", 
+      "description": "API key for Anthropic Claude services (optional, for enhanced reasoning)",
+      "required": false,
+      "sensitive": true
+    },
+    {
+      "key": "pubmed_api_key",
+      "type": "string",
+      "name": "PubMed/NCBI API Key",
+      "description": "API key for PubMed database access (optional, for evidence gathering)",
+      "required": false,
+      "sensitive": true
+    },
+    {
+      "key": "enable_external_search",
+      "type": "boolean",
+      "name": "Enable External Search",
+      "description": "Enable integration with external databases (PubMed, Google Scholar, Exa)",
+      "default": true,
+      "required": false
+    },
+    {
+      "key": "max_reasoning_depth",
+      "type": "number",
+      "name": "Maximum Reasoning Depth",
+      "description": "Maximum depth for graph-based reasoning traversal",
+      "default": 5,
+      "min": 1,
+      "max": 10,
+      "required": false
+    },
+    {
+      "key": "confidence_threshold",
+      "type": "number",
+      "name": "Confidence Threshold",
+      "description": "Minimum confidence threshold for hypothesis acceptance (0.0-1.0)",
+      "default": 0.7,
+      "min": 0.0,
+      "max": 1.0,
+      "required": false
+    }
+  ]
+}

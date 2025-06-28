@@ -1,0 +1,7 @@
+# Placeholder for Reasoning Graph Screenshot
+# This file should be replaced with an actual PNG screenshot of the graph visualization
+# Recommended size: 1200x800 pixels
+# To create the actual screenshot:
+# 1. Run a scientific reasoning query
+# 2. Take a screenshot of the Neo4j graph visualization
+# 3. Save as reasoning-graph.png and replace this file

@@ -1,0 +1,19 @@
+{
+  "name": "adaptive-graph-of-thoughts-dxt-server",
+  "version": "1.0.0",
+  "description": "DXT MCP Server for Adaptive Graph of Thoughts",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --inspect index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "axios": "^1.6.0",
+    "zod": "^3.22.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
