@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/saptadey-adaptive-graph-of-thoughts-mcp-server-badge.png)](https://mseep.ai/app/saptadey-adaptive-graph-of-thoughts-mcp-server)
+
 # 🧠 Adaptive Graph of Thoughts
 
 <div align="center">
