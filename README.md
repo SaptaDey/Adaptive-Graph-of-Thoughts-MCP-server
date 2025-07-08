@@ -43,7 +43,7 @@
 
 **For comprehensive information on Adaptive Graph of Thoughts, including detailed installation instructions, usage guides, configuration options, API references, contribution guidelines, and the project roadmap, please visit our full documentation site:**
 
-**[➡️ Adaptive Graph of Thoughts Documentation Site](https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/)**
+**[➡️ Adaptive Graph of Thoughts Documentation Site](https://adaptive-thought-web-weaver.lovable.app)**
 
 The site now includes interactive Mermaid diagrams and an improved layout. 
 
