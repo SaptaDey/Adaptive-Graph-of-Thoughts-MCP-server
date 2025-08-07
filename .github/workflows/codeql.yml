@@ -96,3 +96,6 @@ jobs:
       uses: github/codeql-action/analyze@v3
       with:
         category: "/language:${{matrix.language}}"
+
+    - name: Run Gemini CLI
+      uses: google-github-actions/run-gemini-cli@v0.1.5
