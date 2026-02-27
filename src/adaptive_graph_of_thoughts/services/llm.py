@@ -1,12 +1,25 @@
 from __future__ import annotations
 
 import os
+import time
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional
+from typing import Any, AsyncGenerator, Dict, List, Optional
 
 from loguru import logger
 
 from ..config import env_settings
+
+try:
+    import openai  # type: ignore
+    from openai import AsyncOpenAI  # type: ignore
+except ImportError:  # pragma: no cover
+    openai = None  # type: ignore
+    AsyncOpenAI = None  # type: ignore
+
+try:
+    import anthropic  # type: ignore
+except ImportError:  # pragma: no cover
+    anthropic = None  # type: ignore
 
 
 @dataclass
@@ -39,17 +52,145 @@ class LLMProvider:
 
 
 class OpenAIProvider(LLMProvider):
-    """Stub OpenAI provider used for unit tests."""
+    """OpenAI provider with async support."""
 
-    def complete(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:  # pragma: no cover - runtime only
+    def __init__(self, config: LLMConfig) -> None:
+        super().__init__(config)
+        self.client = AsyncOpenAI(
+            api_key=config.api_key,
+            base_url=config.base_url,
+            timeout=config.timeout,
+            max_retries=config.max_retries,
+            default_headers=config.additional_headers,
+        )
+
+    def complete(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:  # pragma: no cover
         return {"choices": [{"message": {"content": "ok"}}], "usage": {"total_tokens": len(messages)}}
+
+    async def generate_completion(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:
+        try:
+            response = await self.client.chat.completions.create(
+                model=self.config.model,
+                messages=messages,
+                max_tokens=self.config.max_tokens,
+                temperature=self.config.temperature,
+                **kwargs,
+            )
+            return {
+                "content": response.choices[0].message.content,
+                "usage": {
+                    "total_tokens": response.usage.total_tokens,
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                },
+                "model": response.model,
+                "finish_reason": response.choices[0].finish_reason,
+            }
+        except Exception as e:
+            msg = str(e)
+            if "token" in msg.lower():
+                raise TokenLimitExceeded(f"Token limit exceeded: {e}")
+            if "rate" in msg.lower():
+                raise RateLimitExceeded(f"Rate limit exceeded: {e}")
+            raise LLMException(f"OpenAI API error: {e}")
+
+    async def generate_streaming_completion(self, messages: List[Dict[str, str]], **kwargs: Any) -> AsyncGenerator[Dict[str, Any], None]:
+        try:
+            stream = await self.client.chat.completions.create(
+                model=self.config.model,
+                messages=messages,
+                max_tokens=self.config.max_tokens,
+                temperature=self.config.temperature,
+                stream=True,
+                **kwargs,
+            )
+            async for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content is not None:
+                    yield {
+                        "content": chunk.choices[0].delta.content,
+                        "finish_reason": chunk.choices[0].finish_reason,
+                    }
+        except (LLMException, TokenLimitExceeded, RateLimitExceeded):
+            raise
+        except Exception as e:
+            raise LLMException(f"OpenAI streaming error: {e}")
 
 
 class AnthropicProvider(LLMProvider):
-    """Stub Anthropic provider used for unit tests."""
+    """Anthropic provider with async support."""
 
-    def complete(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:  # pragma: no cover - runtime only
+    def __init__(self, config: LLMConfig) -> None:
+        super().__init__(config)
+        self.client = anthropic.AsyncAnthropic(
+            api_key=config.api_key,
+            timeout=config.timeout,
+            max_retries=config.max_retries,
+            default_headers=config.additional_headers,
+        )
+
+    def complete(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:  # pragma: no cover
         return {"content": [{"text": "ok"}], "usage": {"input_tokens": len(messages)}}
+
+    def _convert_messages(self, messages: List[Dict[str, str]]):
+        """Convert messages to Anthropic format, extracting system message."""
+        system_msg = ""
+        conv_msgs = []
+        for msg in messages:
+            if msg["role"] == "system":
+                system_msg = msg["content"]
+            else:
+                conv_msgs.append(msg)
+        return system_msg, conv_msgs
+
+    async def generate_completion(self, messages: List[Dict[str, str]], **kwargs: Any) -> Dict[str, Any]:
+        system_msg, conv_msgs = self._convert_messages(messages)
+        try:
+            response = await self.client.messages.create(
+                model=self.config.model,
+                messages=conv_msgs,
+                max_tokens=self.config.max_tokens,
+                system=system_msg or None,
+                **kwargs,
+            )
+            return {
+                "content": response.content[0].text,
+                "usage": {
+                    "total_tokens": response.usage.input_tokens + response.usage.output_tokens,
+                    "prompt_tokens": response.usage.input_tokens,
+                    "completion_tokens": response.usage.output_tokens,
+                },
+                "model": response.model,
+                "finish_reason": response.stop_reason,
+            }
+        except Exception as e:
+            msg = str(e)
+            if "token" in msg.lower():
+                raise TokenLimitExceeded(f"Token limit exceeded: {e}")
+            if "rate" in msg.lower():
+                raise RateLimitExceeded(f"Rate limit exceeded: {e}")
+            raise LLMException(f"Anthropic API error: {e}")
+
+    async def generate_streaming_completion(self, messages: List[Dict[str, str]], **kwargs: Any) -> AsyncGenerator[Dict[str, Any], None]:
+        system_msg, conv_msgs = self._convert_messages(messages)
+        try:
+            stream = await self.client.messages.create(
+                model=self.config.model,
+                messages=conv_msgs,
+                max_tokens=self.config.max_tokens,
+                system=system_msg or None,
+                stream=True,
+                **kwargs,
+            )
+            async for chunk in stream:
+                if hasattr(chunk, "delta") and hasattr(chunk.delta, "text") and chunk.delta.text is not None:
+                    yield {
+                        "content": chunk.delta.text,
+                        "finish_reason": chunk.stop_reason if hasattr(chunk, "stop_reason") else None,
+                    }
+        except (LLMException, TokenLimitExceeded, RateLimitExceeded):
+            raise
+        except Exception as e:
+            raise LLMException(f"Anthropic streaming error: {e}")
 
 
 class LLMException(Exception):
@@ -144,18 +285,20 @@ def ask_llm(prompt: str) -> str:
     provider = env_settings.llm_provider.lower()
     try:
         if provider == "claude":
-            import anthropic  # type: ignore
+            if anthropic is None:  # pragma: no cover
+                raise ImportError("anthropic package is required")
             client = anthropic.Anthropic(api_key=env_settings.anthropic_api_key)
             resp = client.messages.create(
-                model=os.getenv("CLAUDE_MODEL", "claude-3-sonnet-20240229"),
+                model=os.getenv("CLAUDE_MODEL") or "claude-3-sonnet-20240229",
                 messages=[{"role": "user", "content": prompt}],
             )
             result = resp.content[0].text
         else:
-            import openai  # type: ignore
+            if openai is None:  # pragma: no cover
+                raise ImportError("openai package is required")
             client = openai.OpenAI(api_key=env_settings.openai_api_key)
             resp = client.chat.completions.create(
-                model=os.getenv("OPENAI_MODEL", "gpt-3.5-turbo"),
+                model=os.getenv("OPENAI_MODEL") or "gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}],
             )
             result = resp.choices[0].message.content.strip()
