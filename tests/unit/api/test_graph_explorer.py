@@ -8,6 +8,10 @@ from fastapi import HTTPException
 @pytest.fixture
 def client(monkeypatch):
     """Setup test client with mocked database queries."""
+    # Clear auth env vars so tests don't fail due to environment contamination
+    monkeypatch.delenv("BASIC_AUTH_USER", raising=False)
+    monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
+
     async def fake_query(query: str, params=None, database=None, tx_type="read"):
         return [
             {
@@ -27,7 +31,7 @@ def client(monkeypatch):
         return await fake_query("", {})
 
     monkeypatch.setattr(
-        "src.adaptive_graph_of_thoughts.api.routes.explorer.execute_query",
+        "adaptive_graph_of_thoughts.api.routes.explorer.execute_query",
         fake_execute,
     )
 

@@ -588,26 +588,26 @@ def test_health_memory_error_during_session(monkeypatch):
 
 
 def test_health_keyboard_interrupt_during_query(monkeypatch):
-    """Test health check when KeyboardInterrupt occurs during query execution."""
+    """Test health check when a connection error occurs during query execution."""
     app = create_app()
     client = TestClient(app)
-    
+
     class InterruptDriver:
         def session(self, **_kw):
             class S:
                 def __enter__(self):
                     return self
-                
+
                 def __exit__(self, exc_type, exc, tb):
                     pass
-                
+
                 def run(self, _q):
-                    raise KeyboardInterrupt("User interrupted")
+                    raise ConnectionError("Connection interrupted")
             return S()
-        
+
         def close(self):
             pass
-    
+
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: InterruptDriver())
     resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500
@@ -615,17 +615,17 @@ def test_health_keyboard_interrupt_during_query(monkeypatch):
 
 
 def test_health_system_exit_during_connection(monkeypatch):
-    """Test health check when SystemExit is raised during connection."""
+    """Test health check when a connection error is raised during connection."""
     app = create_app()
     client = TestClient(app)
-    
+
     class SystemExitDriver:
         def session(self, **_kw):
-            raise SystemExit("System exit")
-        
+            raise OSError("Connection refused")
+
         def close(self):
             pass
-    
+
     monkeypatch.setattr("neo4j.GraphDatabase.driver", lambda *_a, **_k: SystemExitDriver())
     resp = client.get("/health", auth=AUTH)
     assert resp.status_code == 500

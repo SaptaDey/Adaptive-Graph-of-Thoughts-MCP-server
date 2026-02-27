@@ -2,6 +2,14 @@
 
 import pytest
 
+# Pre-load the real adaptive_graph_of_thoughts.config module so that stub modules
+# registered via sys.modules.setdefault in individual test files (e.g. test_health.py)
+# do not shadow the real module for tests collected later in the session.
+try:
+    import adaptive_graph_of_thoughts.config  # noqa: F401
+except Exception:
+    pass
+
 
 def pytest_configure(config: pytest.Config) -> None:
     """Hook for configuring pytest during initialization."""

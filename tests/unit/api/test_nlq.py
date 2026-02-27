@@ -41,8 +41,11 @@ from adaptive_graph_of_thoughts.app_setup import create_app
 from adaptive_graph_of_thoughts.api.routes.mcp import verify_token
 
 @pytest.fixture
-def client():
+def client(monkeypatch):
     """Create a test client for the FastAPI application."""
+    # Clear auth env vars so tests don't fail due to environment contamination
+    monkeypatch.delenv("BASIC_AUTH_USER", raising=False)
+    monkeypatch.delenv("BASIC_AUTH_PASS", raising=False)
     app = create_app()
     app.dependency_overrides[verify_token] = lambda: True
     return TestClient(app)

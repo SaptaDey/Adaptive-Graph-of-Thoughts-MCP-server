@@ -7,7 +7,7 @@ import yaml
 
 from adaptive_graph_of_thoughts.config import validate_config_schema
 
-BASE_CONFIG_PATH = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
+BASE_CONFIG_PATH = Path(__file__).resolve().parents[3] / "config" / "settings.yaml"
 
 
 @pytest.fixture
@@ -80,7 +80,7 @@ def test_missing_keys(tmp_path, base_config_dict, missing_key):
         ("mcp_settings.protocol_version", 123),
     ],
 )
-def test_wrong_types(tmp_path, field, value):
+def test_wrong_types(tmp_path, base_config_dict, field, value):
     cfg = copy.deepcopy(base_config_dict)
     section, key = field.split(".")
     cfg[section][key] = value
@@ -127,7 +127,7 @@ def test_unreadable_file(tmp_path):
     "port",
     [1, 65535],
 )
-def test_boundary_values(tmp_path, port):
+def test_boundary_values(tmp_path, base_config_dict, port):
     cfg = copy.deepcopy(base_config_dict)
     cfg["app"]["port"] = port
     file_path = tmp_path / f"config_port_{port}.yaml"
