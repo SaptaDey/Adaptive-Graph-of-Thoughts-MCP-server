@@ -68,49 +68,49 @@ asr_got:
     # Parameters for Stage 8: Reflection (P1.7)
     # Thresholds for audit checks, e.g., high_confidence_coverage_min: 0.3
 
-  pipeline_stages:
-    - name: "Initialization"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_1_initialization.InitializationStage"
-      enabled: true
-    - name: "Decomposition"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_2_decomposition.DecompositionStage"
-      enabled: true
-    - name: "Hypothesis Generation" # Renamed for clarity from "HypothesisStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_3_hypothesis.HypothesisStage"
-      enabled: true
-    - name: "Evidence Integration" # Renamed for clarity from "EvidenceStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.EvidenceStage"
-      enabled: true
-    - name: "Pruning and Merging" # Renamed for clarity from "PruningMergingStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_5_pruning_merging.PruningMergingStage"
-      enabled: true
-    - name: "Subgraph Extraction" # Renamed for clarity from "SubgraphExtractionStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_6_subgraph_extraction.SubgraphExtractionStage"
-      enabled: true
-    - name: "Composition" # Renamed for clarity from "CompositionStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_7_composition.CompositionStage"
-      enabled: true
-    - name: "Reflection" # Renamed for clarity from "ReflectionStage"
-      module_path: "adaptive_graph_of_thoughts.domain.stages.stage_8_reflection.ReflectionStage"
-      enabled: true
+    pipeline_stages:
+      - name: "Initialization"
+        module_path: "adaptive_graph_of_thoughts.domain.stages.stage_1_initialization.InitializationStage"
+        enabled: true
+      - name: "Decomposition"
+        module_path: "adaptive_graph_of_thoughts.domain.stages.stage_2_decomposition.DecompositionStage"
+        enabled: true
+      - name: "Hypothesis Generation" # Renamed for clarity from "HypothesisStage"
+        module_path: "adaptive_graph_of_thoughts.domain.stages.stage_3_hypothesis.HypothesisStage"
+        enabled: true
+      - name: "Evidence Integration" # Renamed for clarity from "EvidenceStage"
+        module_path: "adaptive_graph_of_thoughts.domain.stages.stage_4_evidence.EvidenceStage"
+        enabled: true
+      - name: "Pruning and Merging" # Renamed for clarity from "PruningMergingStage"
+        module_path: "adaptive_graph_of_thoughts.domain.stages.stage_5_pruning_merging.PruningMergingStage"
+        enabled: true
+      - name: "Subgraph Extraction" # Renamed for clarity from "SubgraphExtractionStage"
+        module_path: "adaptive_graph_of_thoughts.domain.stages.stage_6_subgraph_extraction.SubgraphExtractionStage"
+        enabled: true
+      - name: "Composition" # Renamed for clarity from "CompositionStage"
+        module_path: "adaptive_graph_of_thoughts.domain.stages.stage_7_composition.CompositionStage"
+        enabled: true
+      - name: "Reflection" # Renamed for clarity from "ReflectionStage"
+        module_path: "adaptive_graph_of_thoughts.domain.stages.stage_8_reflection.ReflectionStage"
+        enabled: true
 
-  # Multi-layer network configuration (P1.23)
-  # Define layers that hypotheses or other elements can belong to.
-  # This is a global definition; specific node assignments happen during graph construction.
-  layers:
-    root_layer:
-      description: "Core foundational layer for initial task understanding and decomposition."
-    evidence_layer:
-      description: "Layer primarily containing evidence nodes and their direct connections."
-    hypothesis_analysis_layer:
-      description: "Layer focused on hypothesis development, competition, and refinement."
-    integration_synthesis_layer:
-      description: "Layer for integrating diverse findings and synthesizing overall conclusions."
-    # Add more domain-specific layers as needed, e.g.:
-    # "immunology_perspective":
-    #   description: "Nodes and analyses related to immunological aspects."
-    # "molecular_perspective":
-    #   description: "Nodes and analyses related to molecular biology aspects."
+    # Multi-layer network configuration (P1.23)
+    # Define layers that hypotheses or other elements can belong to.
+    # This is a global definition; specific node assignments happen during graph construction.
+    layers:
+      root_layer:
+        description: "Core foundational layer for initial task understanding and decomposition."
+      evidence_layer:
+        description: "Layer primarily containing evidence nodes and their direct connections."
+      hypothesis_analysis_layer:
+        description: "Layer focused on hypothesis development, competition, and refinement."
+      integration_synthesis_layer:
+        description: "Layer for integrating diverse findings and synthesizing overall conclusions."
+      # Add more domain-specific layers as needed, e.g.:
+      # "immunology_perspective":
+      #   description: "Nodes and analyses related to immunological aspects."
+      # "molecular_perspective":
+      #   description: "Nodes and analyses related to molecular biology aspects."
 
 # Configuration for Model Context Protocol (MCP) Server behavior
 mcp_settings:
@@ -118,43 +118,6 @@ mcp_settings:
     server_name: "Adaptive Graph of Thoughts MCP Server"
     server_version: "0.1.0"        # Match app.version
     vendor_name: "Adaptive Graph of Thoughts Development Team"
-    # Enhanced capabilities for better inspector compatibility
-    capabilities:
-      tools:
-        listChanged: false
-        supportsProgress: true
-      prompts:
-        listChanged: false
-      resources:
-        subscribe: false
-        listChanged: false
-      logging: {}
-    # Inspector testing specific settings
-    inspector:
-      enable_verbose_logging: true
-      ready_signal_timeout: 10    # Seconds to wait for ready signal
-      handshake_timeout: 30       # Seconds for MCP handshake
-      validation_timeout: 180     # Seconds for full validation
-  vendor_name: "Adaptive Graph of Thoughts Development Team"
-  # Enhanced capabilities for better inspector compatibility
-  capabilities:
-    tools:
-      listChanged: false
-      supportsProgress: true
-    prompts:
-      listChanged: false
-    resources:
-      subscribe: false
-      listChanged: false
-    logging: {}
-  # Inspector testing specific settings
-  inspector:
-    enable_verbose_logging: true
-    ready_signal_timeout: 10  # Seconds to wait for ready signal
-    handshake_timeout: 30     # Seconds for MCP handshake
-    validation_timeout: 180   # Seconds for full validation
-  # display_name: "Adaptive Graph of Thoughts" # If needed by MCP client
-  # description: "Adaptive Graph of Thoughts provides advanced scientific reasoning capabilities." # If needed
 
 
 # Optional API configurations

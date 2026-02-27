@@ -513,11 +513,11 @@ class TestLLMStressAndPerformance:
         mock_env_settings.llm_provider = "openai"
         mock_env_settings.openai_api_key = "test_key"
 
-        # Mock import failure
+        # Mock openai.OpenAI to raise ImportError
         with patch(
-            "adaptive_graph_of_thoughts.services.llm.openai",
-            side_effect=ImportError("Module not found"),
-        ):
+            "adaptive_graph_of_thoughts.services.llm.openai"
+        ) as mock_openai_module:
+            mock_openai_module.OpenAI.side_effect = ImportError("Module not found")
             result = ask_llm("Test prompt")
 
             assert result == "LLM error: Module not found"

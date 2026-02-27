@@ -272,8 +272,8 @@ def create_app() -> FastAPI:
     yaml_path = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
     try:
         original_settings = yaml.safe_load(yaml_path.read_text()) or {}
+    except Exception as exc:
         logger.error(f"Failed to load YAML settings from {yaml_path}: {exc}")
-        logger.error(f"Failed to load YAML settings: {exc}")
         original_settings = {}
 
     def _read_settings() -> dict[str, str]:
@@ -308,18 +308,8 @@ def create_app() -> FastAPI:
                 fh.seek(0)
                 fh.truncate()
                 yaml.safe_dump(existing, fh)
-
-        except neo4j.exceptions.ServiceUnavailable as e:
-            logger.warning(f"Neo4j connection failed: Service unavailable. Error: {e}")
-            return False
-        except neo4j.exceptions.AuthError as e:
-            logger.warning(f"Neo4j connection failed: Authentication error. Error: {e}")
-            return False
         except Exception as e:
-            logger.error(
-                f"An unexpected error occurred during Neo4j connection test: {e}"
-            )
-            return False
+            logger.error(f"An unexpected error occurred while writing settings: {e}")
 
     @app.get("/setup/settings", response_class=HTMLResponse)
     async def edit_settings(request: Request, _=Depends(get_basic_auth)):
@@ -438,8 +428,11 @@ def create_app() -> FastAPI:
             )
             with driver.session(database=runtime_settings.neo4j.database) as session:
                 session.run("RETURN 1")
-            driver.close()
             payload["neo4j"] = "up"
+            try:
+                driver.close()
+            except Exception as e:
+                logger.warning(f"Error closing Neo4j driver: {e}")
             return payload
         except Exception:
             payload["neo4j"] = "down"

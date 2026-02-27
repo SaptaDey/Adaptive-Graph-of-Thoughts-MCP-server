@@ -264,7 +264,7 @@ def test_env_file_complete_structure(tmp_path, monkeypatch):
     
     # Verify all expected variables are present
     assert f"NEO4J_URI='{test_uri}'" in content
-    assert f"NEO4J_USERNAME='{test_username}'" in content
+    assert f"NEO4J_USER='{test_username}'" in content
     assert f"NEO4J_PASSWORD='{test_password}'" in content
     assert f"NEO4J_DATABASE='{test_database}'" in content
     

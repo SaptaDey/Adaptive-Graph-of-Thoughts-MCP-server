@@ -4,20 +4,6 @@
 
 <div align="center">
 
-```
-                    ╔══════════════════════════════════════╗
-                    ║                                      ║
-                    ║   🧠 Adaptive Graph of Thoughts 🧠  ║
-                    ║                                      ║
-                    ║       Intelligent Scientific         ║
-                    ║         Reasoning through            ║
-                    ║         Graph-of-Thoughts            ║
-                    ║                                      ║
-                    ╚══════════════════════════════════════╝
-```
-
-#### **Intelligent Scientific Reasoning through Graph-of-Thoughts**
-
 [![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://saptadey.github.io/Adaptive-Graph-of-Thoughts-MCP-server/)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-Apache_2.0-green.svg)](LICENSE)
@@ -31,34 +17,284 @@
 [![Dependabot Updates](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/dependabot/dependabot-updates/badge.svg)](https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server/actions/workflows/dependabot/dependabot-updates)
 [![Verified on MseeP](https://mseep.ai/badge.svg)](https://mseep.ai/app/b56538c9-7a30-45b3-851c-447fe2eb24a6)
 
+**🚀 Next-Generation AI Reasoning Framework for Scientific Research**
+
+*Leveraging graph structures to transform how AI systems approach scientific reasoning*
 
 </div>
 
-<div align="center">
-  <p><strong>🚀 Next-Generation AI Reasoning Framework for Scientific Research</strong></p>
-  <p><em>Leveraging graph structures to transform how AI systems approach scientific reasoning</em></p>
-</div>
-
-## 📚 Documentation
-
-**For comprehensive information on Adaptive Graph of Thoughts, including detailed installation instructions, usage guides, configuration options, API references, contribution guidelines, and the project roadmap, please visit our full documentation site:**
-
-**[➡️ Adaptive Graph of Thoughts Documentation Site](https://adaptive-thought-web-weaver.lovable.app)**
-
-The site now includes interactive Mermaid diagrams and an improved layout. 
+---
 
 ## 🔍 Overview
 
-Adaptive Graph of Thoughts leverages a **Neo4j graph database** to perform sophisticated scientific reasoning, with graph operations managed within its pipeline stages. It implements the **Model Context Protocol (MCP)** to integrate with AI applications like Claude Desktop, providing an Advanced Scientific Reasoning Graph-of-Thoughts (ASR-GoT) framework designed for complex research tasks.
+Adaptive Graph of Thoughts (AGoT) is a **high-performance MCP server** that implements the **Advanced Scientific Reasoning Graph-of-Thoughts (ASR-GoT)** framework. It uses a **Neo4j graph database** as a dynamic knowledge store and exposes reasoning capabilities through the **Model Context Protocol (MCP)**, enabling seamless integration with AI assistants like Claude Desktop.
 
-**Key highlights:**
-- Process complex scientific queries using graph-based reasoning
-- Dynamic confidence scoring with multi-dimensional evaluations 
-- **Connects to external databases (PubMed, Google Scholar, Exa Search) for real-time evidence gathering**
-- Built with modern Python and FastAPI for high performance
-- Dockerized for easy deployment
-- Modular design for extensibility and customization
-- Integration with Claude Desktop via MCP protocol
+### Key Highlights
+
+| Feature | Description |
+|---------|-------------|
+| 🧠 **Graph-Based Reasoning** | Multi-stage pipeline with 8 specialized reasoning stages |
+| 📊 **Dynamic Confidence Scoring** | Multi-dimensional evaluation with uncertainty quantification |
+| 🔬 **Evidence Integration** | Real-time connection to PubMed, Google Scholar & Exa Search |
+| ⚡ **High Performance** | Async FastAPI with Neo4j graph operations |
+| 🔌 **MCP Protocol** | Native Claude Desktop & VS Code integration |
+| 🐳 **Cloud-Ready** | Full Docker + Kubernetes (Helm) support |
+
+---
+
+## 🏗️ System Architecture
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#4A90D9', 'primaryTextColor': '#fff', 'primaryBorderColor': '#2C5F8A', 'lineColor': '#666', 'secondaryColor': '#52B788', 'tertiaryColor': '#F8F9FA'}}}%%
+graph TB
+    subgraph Clients["🖥️ Client Layer"]
+        CD["🤖 Claude Desktop"]
+        VS["💻 VS Code / Cursor"]
+        CC["🔗 Custom MCP Clients"]
+    end
+
+    subgraph Gateway["🌐 API Gateway Layer"]
+        MCP_EP["⚡ MCP Endpoint\n/mcp"]
+        NLQ_EP["🔍 NLQ Endpoint\n/nlq"]
+        GE_EP["📊 Graph Explorer\n/graph"]
+        HE["💚 Health Check\n/health"]
+    end
+
+    subgraph Core["🧠 Core Application Layer"]
+        direction TB
+        GTP["🔄 GoT Processor\nOrchestrator"]
+        subgraph Pipeline["ASR-GoT 8-Stage Pipeline"]
+            S1["1️⃣ Init &\nContext Setup"]
+            S2["2️⃣ Query\nDecomposition"]
+            S3["3️⃣ Hypothesis\nGeneration"]
+            S4["4️⃣ Evidence\nIntegration"]
+            S5["5️⃣ Pruning &\nMerging"]
+            S6["6️⃣ Subgraph\nExtraction"]
+            S7["7️⃣ Synthesis &\nComposition"]
+            S8["8️⃣ Reflection &\nAudit"]
+            S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
+        end
+        GTP --> Pipeline
+    end
+
+    subgraph Services["🛠️ Service Layer"]
+        LLM["🤖 LLM Service\nOpenAI / Claude"]
+        EDB["📚 Evidence DB\nPubMed · Scholar · Exa"]
+    end
+
+    subgraph Storage["🗄️ Storage Layer"]
+        NEO4J["📦 Neo4j\nGraph Database"]
+        CONFIG["⚙️ Config\n(YAML + ENV)"]
+    end
+
+    Clients -->|"MCP JSON-RPC\nBearer Auth"| Gateway
+    MCP_EP --> GTP
+    NLQ_EP --> LLM
+    GE_EP --> NEO4J
+    GTP --> Services
+    GTP --> NEO4J
+    LLM --> EDB
+
+    style Clients fill:#E3F2FD,stroke:#1565C0
+    style Gateway fill:#F3E5F5,stroke:#6A1B9A
+    style Core fill:#E8F5E9,stroke:#1B5E20
+    style Services fill:#FFF8E1,stroke:#F57F17
+    style Storage fill:#FCE4EC,stroke:#880E4F
+```
+
+---
+
+## 🔄 ASR-GoT Reasoning Pipeline
+
+The 8-stage reasoning pipeline transforms a raw question into a comprehensive, evidence-backed answer stored in the knowledge graph:
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#7B68EE', 'edgeLabelBackground': '#fff'}}}%%
+flowchart LR
+    Q([❓ Scientific\nQuestion]) --> S1
+
+    subgraph S1["Stage 1: Initialization"]
+        I1["Set context\n& parameters"]
+        I2["Create root\ngraph node"]
+        I1 --> I2
+    end
+
+    subgraph S2["Stage 2: Decomposition"]
+        D1["Identify\nsub-questions"]
+        D2["Map knowledge\ndomains"]
+        D1 --> D2
+    end
+
+    subgraph S3["Stage 3: Hypothesis"]
+        H1["Generate\nhypotheses"]
+        H2["Score initial\nconfidence"]
+        H1 --> H2
+    end
+
+    subgraph S4["Stage 4: Evidence"]
+        E1["Query PubMed\nScholar · Exa"]
+        E2["Integrate\nevidence nodes"]
+        E1 --> E2
+    end
+
+    subgraph S5["Stage 5: Pruning"]
+        P1["Remove weak\nhypotheses"]
+        P2["Merge related\nnodes"]
+        P1 --> P2
+    end
+
+    subgraph S6["Stage 6: Subgraph"]
+        SG1["Extract key\nsubgraphs"]
+        SG2["Score relevance\n& centrality"]
+        SG1 --> SG2
+    end
+
+    subgraph S7["Stage 7: Synthesis"]
+        C1["Compose final\nnarrative"]
+        C2["Build\nconclusions"]
+        C1 --> C2
+    end
+
+    subgraph S8["Stage 8: Reflection"]
+        R1["Audit\nconsistency"]
+        R2["Return final\nresult"]
+        R1 --> R2
+    end
+
+    S1 --> S2 --> S3 --> S4 --> S5 --> S6 --> S7 --> S8
+    S8 --> A([✅ Reasoned\nAnswer])
+
+    style Q fill:#FFD700,stroke:#DAA520,color:#000
+    style A fill:#90EE90,stroke:#228B22,color:#000
+```
+
+---
+
+## 🕸️ Knowledge Graph Connectome
+
+The Neo4j knowledge graph captures the reasoning structure as a rich connectome — nodes represent concepts, hypotheses, and evidence, while edges represent semantic and logical relationships:
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#6C63FF', 'primaryTextColor': '#fff', 'edgeLabelBackground': '#f0f0ff'}}}%%
+graph TD
+    RootQuery["🔍 Root Query\n(Session Node)"]
+
+    subgraph Decomp["📐 Decomposition Layer"]
+        D1["📌 Sub-question A\n[domain: biology]"]
+        D2["📌 Sub-question B\n[domain: chemistry]"]
+        D3["📌 Sub-question C\n[domain: physics]"]
+    end
+
+    subgraph Hypo["💡 Hypothesis Layer"]
+        H1["💭 Hypothesis 1\nconf: 0.85"]
+        H2["💭 Hypothesis 2\nconf: 0.72"]
+        H3["💭 Hypothesis 3\nconf: 0.61"]
+        H4["💭 Hypothesis 4\nconf: 0.90"]
+    end
+
+    subgraph Evid["🔬 Evidence Layer"]
+        E1["📄 PubMed Paper\nPMID: 38492"]
+        E2["📄 Scholar Article\nDOI: 10.1038/..."]
+        E3["🌐 Exa Result\nexpert consensus"]
+        E4["📊 Statistical\nMeta-analysis"]
+    end
+
+    subgraph Synth["🎯 Synthesis Layer"]
+        C1["✅ Merged\nConclusion A"]
+        C2["✅ Merged\nConclusion B"]
+        FINAL["🏆 Final Answer\n[confidence: 0.88]"]
+    end
+
+    RootQuery -->|"DECOMPOSES_TO"| D1
+    RootQuery -->|"DECOMPOSES_TO"| D2
+    RootQuery -->|"DECOMPOSES_TO"| D3
+
+    D1 -->|"GENERATES"| H1
+    D1 -->|"GENERATES"| H2
+    D2 -->|"GENERATES"| H3
+    D3 -->|"GENERATES"| H4
+
+    H1 -->|"SUPPORTED_BY"| E1
+    H2 -->|"SUPPORTED_BY"| E2
+    H3 -->|"CONTRADICTED_BY"| E3
+    H4 -->|"SUPPORTED_BY"| E4
+
+    H1 -->|"MERGES_WITH"| C1
+    H4 -->|"MERGES_WITH"| C1
+    H2 -->|"MERGES_WITH"| C2
+    C1 -->|"SYNTHESIZES_TO"| FINAL
+    C2 -->|"SYNTHESIZES_TO"| FINAL
+
+    style RootQuery fill:#4A90D9,color:#fff,stroke:#2C5F8A
+    style FINAL fill:#27AE60,color:#fff,stroke:#1E8449
+    style H3 fill:#E74C3C,color:#fff,stroke:#C0392B
+```
+
+---
+
+## 🔁 Request Flow
+
+```mermaid
+%%{init: {'theme': 'base'}}%%
+sequenceDiagram
+    actor User as 🤖 Claude / MCP Client
+    participant API as ⚡ FastAPI Server
+    participant Auth as 🔐 Auth Middleware
+    participant GTP as 🧠 GoT Processor
+    participant NEO as 📦 Neo4j DB
+    participant LLM as 🤖 LLM Service
+
+    User->>API: POST /mcp {"method": "asr_got.query"}
+    API->>Auth: Verify Bearer Token
+    Auth-->>API: ✅ Authorized
+
+    API->>GTP: Process query
+    GTP->>NEO: Create session + root node
+
+    loop 8 Pipeline Stages
+        GTP->>LLM: Generate hypotheses / summaries
+        LLM-->>GTP: LLM response
+        GTP->>NEO: Write nodes & relationships
+        NEO-->>GTP: Confirmed
+    end
+
+    GTP->>NEO: Extract final subgraph
+    NEO-->>GTP: Final answer graph
+    GTP-->>API: Structured result
+
+    API-->>User: JSON-RPC response\n{result, confidence, graph_state}
+```
+
+---
+
+## 📚 Documentation
+
+**Full documentation including API reference, configuration guide, and contribution guidelines:**
+
+**[➡️ Adaptive Graph of Thoughts Documentation Site](https://adaptive-thought-web-weaver.lovable.app)**
+
+## 📂 Project Structure
+
+```
+Adaptive-Graph-of-Thoughts-MCP-server/
+├── 📁 .github/             # CI/CD workflows (CodeQL, Dependabot)
+├── 📁 agt_setup/           # Interactive setup wizard CLI
+├── 📁 config/              # settings.yaml configuration
+├── 📁 docs_src/            # MkDocs documentation source
+├── 📁 helm/                # Kubernetes Helm chart
+├── 📁 src/
+│   └── 📁 adaptive_graph_of_thoughts/
+│       ├── 📁 api/         # FastAPI routes & schemas
+│       ├── 📁 application/ # GoTProcessor orchestrator
+│       ├── 📁 domain/      # 8-stage pipeline & models
+│       ├── 📁 infrastructure/ # Neo4j utilities
+│       └── 📁 services/    # LLM & external API clients
+├── 📁 tests/               # Comprehensive test suite
+├── Dockerfile
+├── docker-compose.yml
+├── pyproject.toml
+└── README.md
+```
 
 ## 🚀 Quick Start
 
@@ -66,33 +302,11 @@ Adaptive Graph of Thoughts leverages a **Neo4j graph database** to perform sophi
 git clone https://github.com/SaptaDey/Adaptive-Graph-of-Thoughts-MCP-server.git
 cd Adaptive-Graph-of-Thoughts-MCP-server
 poetry install
-poetry run uvicorn src.adaptive_graph_of_thoughts.main:app --reload
+poetry run python -m agt_setup   # Interactive credential setup wizard
+poetry run uvicorn adaptive_graph_of_thoughts.main:app --reload
 ```
 
-Open [http://localhost:8000/setup](http://localhost:8000/setup) and complete the
-wizard. You'll land on the dashboard when finished.
-
-## 📂 Project Structure
-
-The project is organized as follows (see the documentation site for more details):
-```
-Adaptive Graph of Thoughts/
-├── 📁 .github/                           # GitHub specific files (workflows)
-├── 📁 config/                            # Configuration files (settings.yaml)
-├── 📁 docs_src/                          # Source files for MkDocs documentation
-├── 📁 src/                               # Source code
-│   └── 📁 adaptive_graph_of_thoughts     # Main application package
-├── 📁 tests/                             # Test suite
-├── Dockerfile                            # Docker container definition
-├── docker-compose.yml                    # Docker Compose for development
-├── docker-compose.prod.yml               # Docker Compose for production
-├── mkdocs.yml                            # MkDocs configuration
-├── poetry.lock                           # Poetry dependency lock file
-├── pyproject.toml                        # Python project configuration (Poetry)
-├── pyrightconfig.json                    # Pyright type checker configuration
-├── README.md                             # This file
-└── setup_claude_connection.py            # Script for Claude Desktop connection setup (manual run)
-```
+Visit `http://localhost:8000/docs` for the interactive API documentation.
 
 ## 🚀 Getting Started
 
@@ -298,11 +512,15 @@ Adaptive Graph of Thoughts supports integration with various MCP clients:
   }
 }
 ```
-##Available MCP Tools
-        1. scientific_reasoning_query - Advanced scientific reasoning with graph analysis
-        2. analyze_research_hypothesis - Hypothesis evaluation with confidence scoring
-        3. explore_scientific_relationships - Concept relationship mapping
-        4. validate_scientific_claims - Evidence-based claim validation
+
+## Available MCP Tools
+
+| Tool | Description |
+|------|-------------|
+| `scientific_reasoning_query` | Advanced scientific reasoning with graph analysis |
+| `analyze_research_hypothesis` | Hypothesis evaluation with confidence scoring |
+| `explore_scientific_relationships` | Concept relationship mapping |
+| `validate_scientific_claims` | Evidence-based claim validation |
 
 
 ## 🔌 API Endpoints
@@ -337,7 +555,6 @@ The primary API endpoints exposed by Adaptive Graph of Thoughts are:
       "version": "0.1.0" 
     }
     ```
-    *(Note: The timestamp field shown previously is not part of the current health check response.)*
 
 The advanced API endpoints previously listed (e.g., `/api/v1/graph/query`) are not implemented in the current version and are reserved for potential future development.
 
@@ -486,3 +703,4 @@ Please see our [Security Policy](SECURITY.md) for reporting vulnerabilities and 
   <p><strong>Built with ❤️ for the scientific research community</strong></p>
   <p><em>Adaptive Graph of Thoughts - Advancing scientific reasoning through intelligent graph structures</em></p>
 </div>
+

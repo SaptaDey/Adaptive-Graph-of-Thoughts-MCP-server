@@ -145,11 +145,6 @@ def create_neo4j_driver(settings: Neo4jSettings) -> Driver:
         max_connection_lifetime=3600,  # 1 hour
         max_connection_pool_size=50,
         connection_acquisition_timeout=60,
-        connection_timeout=30,
-        max_retry_time=30,
-        initial_retry_delay=1.0,
-        retry_delay_multiplier=2.0,
-        retry_delay_jitter_factor=0.2,
     )
     driver.verify_connectivity()
     logger.info("Neo4j driver initialized and connectivity verified.")
