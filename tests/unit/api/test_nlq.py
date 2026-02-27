@@ -5,7 +5,7 @@ import sys
 import types
 from fastapi import HTTPException, status
 from fastapi.testclient import TestClient
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 
 stub_config = types.ModuleType("adaptive_graph_of_thoughts.config")
 stub_config.Settings = object
@@ -64,9 +64,9 @@ def invalid_auth_headers():
 def mock_llm_service():
     """Mock LLM service that returns predictable responses."""
     def fake_llm(prompt: str) -> str:
-        if "Convert this natural language" in prompt:
+        if "Translate the question" in prompt or "Translate" in prompt:
             return "MATCH (n) RETURN n LIMIT 1"
-        elif "Summarize these results" in prompt:
+        elif "Answer the question" in prompt or "Summarize" in prompt:
             return "Query executed successfully"
         return "Mock LLM response"
     return fake_llm
@@ -74,23 +74,23 @@ def mock_llm_service():
 @pytest.fixture
 def mock_neo4j_service():
     """Mock Neo4j service that returns predictable results."""
-    return lambda query: [{"n": {"id": 1, "name": "test_node"}}]
+    return AsyncMock(return_value=[{"n": {"id": 1, "name": "test_node"}}])
 
 def test_nlq_endpoint_basic_functionality(client, auth_headers, monkeypatch, mock_llm_service, mock_neo4j_service):
     """Test basic NLQ endpoint functionality with valid input."""
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", mock_llm_service)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", mock_neo4j_service)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", mock_llm_service)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", mock_neo4j_service)
 
     response = client.post("/nlq", json={"question": "Show me all nodes"}, headers=auth_headers)
     
     assert response.status_code == 200
-    assert response.headers["content-type"] == "text/plain; charset=utf-8"
+    assert "application/json" in response.headers["content-type"]
     
     lines = response.text.strip().split("\n")
     assert len(lines) == 3
-    assert lines[0].startswith("Query:")
-    assert lines[1].startswith("Results:")
-    assert lines[2].startswith("Summary:")
+    assert lines[0].startswith("{")
+    assert lines[1].startswith("{")
+    assert lines[2].startswith("{")
     assert "MATCH (n) RETURN n LIMIT 1" in lines[0]
 
 def test_nlq_endpoint_empty_results(client, auth_headers, monkeypatch):
@@ -100,8 +100,8 @@ def test_nlq_endpoint_empty_results(client, auth_headers, monkeypatch):
             return "MATCH (n:NonExistent) RETURN n"
         return "No results found in the database"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", fake_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [])
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", fake_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[]))
 
     response = client.post("/nlq", json={"question": "Find non-existent data"}, headers=auth_headers)
     assert response.status_code == 200
@@ -122,8 +122,8 @@ def test_nlq_endpoint_complex_question(client, auth_headers, monkeypatch):
         {"p": {"name": "Charlie", "age": 35}, "f": {"name": "Diana", "age": 27}}
     ]
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", fake_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: complex_results)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", fake_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=complex_results))
 
     question = "Find all people over 25 years old who know other people"
     response = client.post("/nlq", json={"question": question}, headers=auth_headers)
@@ -135,8 +135,8 @@ def test_nlq_endpoint_complex_question(client, auth_headers, monkeypatch):
 
 def test_nlq_endpoint_empty_question(client, auth_headers, monkeypatch, mock_llm_service, mock_neo4j_service):
     """Test NLQ endpoint with empty question string."""
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", mock_llm_service)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", mock_neo4j_service)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", mock_llm_service)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", mock_neo4j_service)
 
     response = client.post("/nlq", json={"question": ""}, headers=auth_headers)
     assert response.status_code == 200  # Should still process empty questions
@@ -148,8 +148,8 @@ def test_nlq_endpoint_very_long_question(client, auth_headers, monkeypatch):
             return "MATCH (n) RETURN n LIMIT 100"
         return "Processed long query successfully"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", fake_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [])
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", fake_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[]))
 
     long_question = "What is the meaning of life and how does it relate to graph databases " * 50
     response = client.post("/nlq", json={"question": long_question}, headers=auth_headers)
@@ -164,8 +164,8 @@ def test_nlq_endpoint_special_characters(client, auth_headers, monkeypatch):
             return "MATCH (n) WHERE n.name =~ '.*[!@#$%].*' RETURN n"
         return "Found nodes with special characters: !@#$%^&*()"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", fake_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [{"n": {"name": "test!@#$%"}}])
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", fake_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[{"n": {"name": "test!@#$%"}}]))
 
     special_question = "Find nodes with names containing @#$%^&*()!"
     response = client.post("/nlq", json={"question": special_question}, headers=auth_headers)
@@ -180,8 +180,8 @@ def test_nlq_endpoint_unicode_characters(client, auth_headers, monkeypatch):
             return "MATCH (n) WHERE n.name CONTAINS 'ñoño' RETURN n"
         return "Encontrado nodos con caracteres unicode: 你好世界"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", fake_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [{"n": {"name": "niño 你好"}}])
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", fake_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[{"n": {"name": "niño 你好"}}]))
 
     unicode_question = "Buscar nodos con nombres que contengan 'ñoño' y 你好"
     response = client.post("/nlq", json={"question": unicode_question}, headers=auth_headers)
@@ -196,8 +196,8 @@ def test_nlq_endpoint_json_injection_attempt(client, auth_headers, monkeypatch):
             return "MATCH (n) RETURN n"
         return "Processed potentially malicious input safely"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", fake_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [])
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", fake_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[]))
 
     malicious_question = '{"malicious": "payload", "injection": true}'
     response = client.post("/nlq", json={"question": malicious_question}, headers=auth_headers)
@@ -288,8 +288,8 @@ def test_nlq_endpoint_wrong_content_type(client, auth_headers):
 
 def test_nlq_endpoint_extra_fields_ignored(client, auth_headers, monkeypatch, mock_llm_service, mock_neo4j_service):
     """Test NLQ endpoint ignores extra fields in request body."""
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", mock_llm_service)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", mock_neo4j_service)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", mock_llm_service)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", mock_neo4j_service)
 
     response = client.post("/nlq", json={
         "question": "test question",
@@ -304,7 +304,7 @@ def test_nlq_endpoint_llm_service_exception(client, auth_headers, monkeypatch):
     def failing_llm(prompt: str) -> str:
         raise Exception("LLM service is temporarily unavailable")
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", failing_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", failing_llm)
     
     response = client.post("/nlq", json={"question": "test question"}, headers=auth_headers)
     assert response.status_code == 500
@@ -317,8 +317,8 @@ def test_nlq_endpoint_neo4j_service_exception(client, auth_headers, monkeypatch)
     def failing_neo4j(query: str):
         raise Exception("Neo4j database connection timeout")
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", fake_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", failing_neo4j)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", fake_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", failing_neo4j)
     
     response = client.post("/nlq", json={"question": "test question"}, headers=auth_headers)
     assert response.status_code == 500
@@ -332,7 +332,7 @@ def test_nlq_endpoint_first_llm_call_fails(client, auth_headers, monkeypatch):
             raise Exception("Failed to generate Cypher query")
         return "This shouldn't be reached"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", failing_first_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", failing_first_llm)
     
     response = client.post("/nlq", json={"question": "test question"}, headers=auth_headers)
     assert response.status_code == 500
@@ -346,8 +346,8 @@ def test_nlq_endpoint_second_llm_call_fails(client, auth_headers, monkeypatch):
             return "MATCH (n) RETURN n"
         raise Exception("Failed to generate summary")
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", failing_second_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [])
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", failing_second_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[]))
     
     response = client.post("/nlq", json={"question": "test question"}, headers=auth_headers)
     assert response.status_code == 500
@@ -366,8 +366,8 @@ def test_nlq_endpoint_llm_returns_invalid_cypher(client, auth_headers, monkeypat
             raise Exception("Cypher syntax error")
         return []
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", invalid_cypher_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", failing_neo4j_for_invalid_cypher)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", invalid_cypher_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", failing_neo4j_for_invalid_cypher)
     
     response = client.post("/nlq", json={"question": "test question"}, headers=auth_headers)
     assert response.status_code == 500
@@ -377,8 +377,8 @@ def test_nlq_endpoint_llm_returns_empty_response(client, auth_headers, monkeypat
     def empty_llm(prompt: str) -> str:
         return ""
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", empty_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [])
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", empty_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[]))
     
     response = client.post("/nlq", json={"question": "test question"}, headers=auth_headers)
     assert response.status_code == 200  # Should handle empty responses gracefully
@@ -418,12 +418,12 @@ def test_nlq_endpoint_options_method(client):
 
 def test_nlq_endpoint_response_content_type(client, auth_headers, monkeypatch, mock_llm_service, mock_neo4j_service):
     """Test that response has correct content type for streaming."""
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", mock_llm_service)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", mock_neo4j_service)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", mock_llm_service)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", mock_neo4j_service)
 
     response = client.post("/nlq", json={"question": "test"}, headers=auth_headers)
     assert response.status_code == 200
-    assert response.headers["content-type"] == "text/plain; charset=utf-8"
+    assert "application/json" in response.headers["content-type"]
 
 def test_nlq_endpoint_response_structure(client, auth_headers, monkeypatch):
     """Test that response follows expected 3-line structure."""
@@ -432,18 +432,18 @@ def test_nlq_endpoint_response_structure(client, auth_headers, monkeypatch):
             return "MATCH (p:Person) RETURN p.name"
         return "Found 3 people: Alice, Bob, Charlie"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", structured_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", structured_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[
         {"p.name": "Alice"}, {"p.name": "Bob"}, {"p.name": "Charlie"}
-    ])
+    ]))
 
     response = client.post("/nlq", json={"question": "List all people"}, headers=auth_headers)
     assert response.status_code == 200
     lines = response.text.strip().split("\n")
     assert len(lines) == 3
-    assert lines[0].startswith("Query:")
-    assert lines[1].startswith("Results:")
-    assert lines[2].startswith("Summary:")
+    assert lines[0].startswith("{")
+    assert lines[1].startswith("{")
+    assert lines[2].startswith("{")
     assert "MATCH (p:Person) RETURN p.name" in lines[0]
     assert "Alice" in lines[1] or "Alice" in lines[2]
     assert "Found 3 people" in lines[2]
@@ -457,8 +457,8 @@ def test_nlq_endpoint_large_dataset_response(client, auth_headers, monkeypatch):
 
     large_results = [{"n": {"id": i, "name": f"node_{i}", "property": f"value_{i}"}} for i in range(1000)]
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", llm_for_large_data)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: large_results)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", llm_for_large_data)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=large_results))
 
     response = client.post("/nlq", json={"question": "Get all nodes"}, headers=auth_headers)
     assert response.status_code == 200
@@ -472,8 +472,8 @@ def test_nlq_endpoint_multiline_summary(client, auth_headers, monkeypatch):
             return "MATCH (n) RETURN n"
         return "Summary line 1\nSummary line 2\nSummary line 3"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", multiline_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [])
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", multiline_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[]))
 
     response = client.post("/nlq", json={"question": "test"}, headers=auth_headers)
     assert response.status_code == 200
@@ -491,8 +491,8 @@ def test_nlq_endpoint_response_encoding(client, auth_headers, monkeypatch):
 
     unicode_results = [{"n.姓名": "张三"}, {"n.姓名": "李四"}, {"n.姓名": "王五"}]
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", unicode_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: unicode_results)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", unicode_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=unicode_results))
 
     response = client.post("/nlq", json={"question": "查找所有用户"}, headers=auth_headers)
     assert response.status_code == 200
@@ -511,8 +511,8 @@ def test_nlq_endpoint_concurrent_requests(client, auth_headers, monkeypatch):
             return f"MATCH (n) RETURN n // Request at {time.time()}"
         return f"Concurrent processing completed at {time.time()}"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", slow_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [])
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", slow_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[]))
 
     responses = []
     def make_request(idx):
@@ -537,8 +537,8 @@ def test_nlq_endpoint_timeout_resilience(client, auth_headers, monkeypatch):
             return "MATCH (n) RETURN n"
         return "Slow processing completed"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", very_slow_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: [])
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", very_slow_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=[]))
 
     start = time.time()
     resp = client.post("/nlq", json={"question": "slow test"}, headers=auth_headers)
@@ -566,8 +566,8 @@ def test_nlq_endpoint_memory_usage_with_large_data(client, auth_headers, monkeyp
             }
         })
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", memory_test_llm)
-    monkeypatch.setattr("adaptive_graph_of_thoughts.infrastructure.neo4j_utils.execute_query", lambda query: huge_results)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", memory_test_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.execute_query", AsyncMock(return_value=huge_results))
 
     resp = client.post("/nlq", json={"question": "memory test"}, headers=auth_headers)
     assert resp.status_code == 200
@@ -581,7 +581,7 @@ def test_nlq_endpoint_db_timeout(client, auth_headers, monkeypatch):
     def timeout_query(query: str):
         raise TimeoutError("db timeout")
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", fake_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", fake_llm)
     monkeypatch.setattr(
         "adaptive_graph_of_thoughts.api.routes.nlq.ask_llm",
         fake_llm,
@@ -648,7 +648,7 @@ def test_nlq_endpoint_armor_function_escapes_braces(client, auth_headers, monkey
             return "MATCH (n) RETURN n"
         return "Armored prompt processed safely"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", test_armor_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", test_armor_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", lambda query: [])
 
     brace_question = "Find users where {name: 'test', age: {$gt: 25}}"
@@ -669,7 +669,7 @@ def test_nlq_endpoint_llm_query_logs_management(client, auth_headers, monkeypatc
             return "MATCH (n) RETURN n // Query for test"
         return "Test response"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", tracking_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", tracking_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", lambda query: [])
 
     # Make multiple requests to test log management
@@ -691,7 +691,7 @@ def test_nlq_endpoint_question_stripped_of_whitespace(client, auth_headers, monk
             return "MATCH (n) RETURN n"
         return "Whitespace stripped correctly"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", whitespace_test_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", whitespace_test_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", lambda query: [])
 
     response = client.post("/nlq", json={"question": "   test question with lots of whitespace   "}, headers=auth_headers)
@@ -706,7 +706,7 @@ def test_nlq_endpoint_streaming_response_format(client, auth_headers, monkeypatc
 
     test_results = [{"p.name": "Alice"}, {"p.name": "Bob"}]
     
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", format_test_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", format_test_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", lambda query: test_results)
 
     response = client.post("/nlq", json={"question": "list people"}, headers=auth_headers)
@@ -716,9 +716,9 @@ def test_nlq_endpoint_streaming_response_format(client, auth_headers, monkeypatc
     assert len(lines) == 3
     
     # Verify exact format
-    assert lines[0].startswith("Query: ")
-    assert lines[1].startswith("Results: ")
-    assert lines[2].startswith("Summary: ")
+    assert lines[0].startswith("{")
+    assert lines[1].startswith("{")
+    assert lines[2].startswith("{")
     
     # Verify content
     assert "MATCH (p:Person) RETURN p.name LIMIT 5" in lines[0]
@@ -732,13 +732,13 @@ def test_nlq_endpoint_async_streaming_generator(client, auth_headers, monkeypatc
             return "MATCH (n:Test) RETURN n"
         return "Async streaming test completed"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", async_test_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", async_test_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", lambda query: [{"n": {"id": 1}}])
 
     response = client.post("/nlq", json={"question": "async test"}, headers=auth_headers)
     
     assert response.status_code == 200
-    assert response.headers["content-type"] == "text/plain; charset=utf-8"
+    assert "application/json" in response.headers["content-type"]
     
     # Verify we can read the response as a stream
     content = b""
@@ -784,7 +784,7 @@ def test_nlq_endpoint_question_encoding_edge_cases(client, auth_headers, monkeyp
             return "MATCH (n) RETURN n"
         return "Handled various encodings successfully"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", encoding_test_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", encoding_test_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", lambda query: [])
 
     test_questions = [
@@ -814,7 +814,7 @@ def test_nlq_endpoint_cypher_injection_prevention(client, auth_headers, monkeypa
             return "MATCH (n:SafeNode) WHERE n.name = 'filtered' RETURN n"
         return "Potential injection attempt safely handled"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", injection_prevention_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", injection_prevention_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", lambda query: [])
 
     injection_attempts = [
@@ -843,7 +843,7 @@ def test_nlq_endpoint_neo4j_connection_recovery(client, auth_headers, monkeypatc
     def fake_llm(prompt: str) -> str:
         return "MATCH (n) RETURN n" if "Convert" in prompt else "Connection recovered"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", fake_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", fake_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", intermittent_neo4j_failure)
 
     # First request should fail
@@ -872,7 +872,7 @@ def test_nlq_endpoint_response_size_limits(client, auth_headers, monkeypatch):
             }
         })
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", large_response_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", large_response_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", lambda query: large_results)
 
     response = client.post("/nlq", json={"question": "large data test"}, headers=auth_headers)
@@ -901,7 +901,7 @@ def test_nlq_endpoint_json_serialization_edge_cases(client, auth_headers, monkey
         }
     ]
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", json_test_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", json_test_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", lambda query: complex_results)
 
     response = client.post("/nlq", json={"question": "json test"}, headers=auth_headers)
@@ -924,7 +924,7 @@ def test_nlq_endpoint_concurrent_llm_calls_isolation(client, auth_headers, monke
             return f"MATCH (n) RETURN n // Thread {thread_id}"
         return f"Response from thread {thread_id}"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", thread_safe_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", thread_safe_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", lambda query: [])
 
     responses = []
@@ -960,7 +960,7 @@ def test_nlq_endpoint_graceful_degradation(client, auth_headers, monkeypatch):
         # Neo4j returns minimal data
         return [{"total": 0}]
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", degraded_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", degraded_llm)
     monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", minimal_neo4j)
 
     response = client.post("/nlq", json={"question": "degraded service test"}, headers=auth_headers)
@@ -1005,7 +1005,7 @@ def test_nlq_endpoint_response_consistency_check(client, auth_headers, monkeypat
             return "MATCH (n) RETURN n"
         return "Consistent response format"
 
-    monkeypatch.setattr("adaptive_graph_of_thoughts.services.llm.ask_llm", consistent_llm)
+    monkeypatch.setattr("adaptive_graph_of_thoughts.api.routes.nlq.ask_llm", consistent_llm)
     
     for scenario_name, result_generator in scenarios:
         monkeypatch.setattr("adaptive_graph_of_thoughts.domain.services.neo4j_utils.execute_query", result_generator)
@@ -1015,7 +1015,7 @@ def test_nlq_endpoint_response_consistency_check(client, auth_headers, monkeypat
         
         lines = response.text.strip().split("\n")
         assert len(lines) == 3, f"Inconsistent format in scenario {scenario_name}"
-        assert lines[0].startswith("Query: "), f"Missing Query prefix in {scenario_name}"
-        assert lines[1].startswith("Results: "), f"Missing Results prefix in {scenario_name}"
-        assert lines[2].startswith("Summary: "), f"Missing Summary prefix in {scenario_name}"
+        assert lines[0].startswith("{"), f"Missing Query prefix in {scenario_name}"
+        assert lines[1].startswith("{"), f"Missing Results prefix in {scenario_name}"
+        assert lines[2].startswith("{"), f"Missing Summary prefix in {scenario_name}"
 

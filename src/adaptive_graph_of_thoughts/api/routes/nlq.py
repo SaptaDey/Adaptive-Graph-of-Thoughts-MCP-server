@@ -85,8 +85,8 @@ async def nlq_endpoint(payload: dict[str, str] = Body(...)) -> StreamingResponse
             rows = [dict(r) for r in records]
         except Exception as e:
             logger.error(f"Query execution failed: {e}")
-            raise HTTPException(status_code=500, detail="Query execution failed")
-            rows = {"error": "Query execution failed"}
+            yield json.dumps({"error": "Query execution failed"}).encode() + b"\n"
+            return
         yield json.dumps({"records": rows}).encode() + b"\n"
         summary_prompt = (
             f"Answer the question '{safe_question}' using this data: {rows}."
@@ -97,5 +97,4 @@ async def nlq_endpoint(payload: dict[str, str] = Body(...)) -> StreamingResponse
         yield json.dumps({"summary": summary}).encode() + b"\n"
 
     response = StreamingResponse(event_stream(), media_type="application/json")
-    event_stream.response = response
     return response
