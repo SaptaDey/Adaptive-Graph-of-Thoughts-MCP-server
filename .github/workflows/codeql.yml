@@ -98,4 +98,4 @@ jobs:
         category: "/language:${{matrix.language}}"
 
     - name: Run Gemini CLI
-      uses: google-github-actions/run-gemini-cli@v0.1.5
+      uses: google-github-actions/run-gemini-cli@v0.1.22
